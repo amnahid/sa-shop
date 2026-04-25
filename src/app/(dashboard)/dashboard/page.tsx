@@ -2,9 +2,25 @@
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { DollarSign, Package, Users, AlertTriangle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getDashboardMetrics } from "@/lib/actions/invoices";
 import { Membership, Branch } from "@/models";
+import { PageHeader } from "@/components/app/PageHeader";
+import { StatCard } from "@/components/app/StatCard";
+import { StatusBadge } from "@/components/app/StatusBadge";
+import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+interface RecentInvoice {
+  _id: { toString(): string };
+  invoiceNumber: string;
+  branch: { name: string };
+  issuedAt: Date;
+  grandTotal: { toString(): string };
+  status: string;
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -12,128 +28,117 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await Membership.findOne({
+    userId: session.user.id,
+    status: "active",
+  });
   if (!membership) {
     return <div>No active membership</div>;
   }
 
-  const branches = await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
+  await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
   const metrics = await getDashboardMetrics(membership.tenantId.toString());
 
-  const statusColors: Record<string, string> = {
-    completed: "bg-green-100 text-green-800",
-    voided: "bg-gray-100 text-gray-800",
-    refunded: "bg-blue-100 text-blue-800",
-    draft: "bg-yellow-100 text-yellow-800",
-  };
+  const columns: DataTableColumn<RecentInvoice>[] = [
+    { key: "invoice", header: "Invoice", render: (r) => r.invoiceNumber },
+    { key: "branch", header: "Branch", render: (r) => r.branch.name },
+    {
+      key: "date",
+      header: "Date",
+      render: (r) => r.issuedAt.toLocaleDateString(),
+    },
+    {
+      key: "total",
+      header: "Total",
+      align: "right",
+      render: (r) =>
+        `SAR ${parseFloat(r.grandTotal.toString()).toFixed(2)}`,
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "right",
+      render: (r) => <StatusBadge status={r.status} />,
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back{ session?.user?.name ? `, ${session.user.name}` : "" }
-        </p>
-      </div>
+    <>
+      <PageHeader
+        title="Dashboard"
+        description={`Welcome back${session?.user?.name ? `, ${session.user.name}` : ""}`}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">Today&apos;s Sales</p>
-          <p className="text-2xl font-bold text-foreground">
-            SAR {metrics.todaySales.toFixed(2)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">{metrics.todayCount} transactions</p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">Products</p>
-          <p className="text-2xl font-bold text-foreground">{metrics.productCount}</p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">Customers</p>
-          <p className="text-2xl font-bold text-foreground">{metrics.customerCount}</p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground">Low Stock Alerts</p>
-          <p className={`text-2xl font-bold ${metrics.lowStockCount > 0 ? "text-red-500" : "text-foreground"}`}>
-            {metrics.lowStockCount}
-          </p>
-          {metrics.lowStockCount > 0 && (
-            <Link href="/inventory/stock" className="text-xs text-primary hover:underline mt-1 block">
-              View stock
-            </Link>
-          )}
-        </div>
+        <StatCard
+          variant="emerald"
+          label="Today's Sales"
+          value={`SAR ${metrics.todaySales.toFixed(2)}`}
+          subLabel={`${metrics.todayCount} transactions`}
+          icon={DollarSign}
+        />
+        <StatCard
+          variant="teal"
+          label="Products"
+          value={metrics.productCount}
+          icon={Package}
+        />
+        <StatCard
+          variant="orange"
+          label="Customers"
+          value={metrics.customerCount}
+          icon={Users}
+        />
+        <StatCard
+          variant="rose"
+          label="Low Stock Alerts"
+          value={metrics.lowStockCount}
+          icon={AlertTriangle}
+          href={metrics.lowStockCount > 0 ? "/inventory/stock" : undefined}
+        />
       </div>
 
       {metrics.recentInvoices.length > 0 && (
         <div className="mt-8">
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Recent Sales</h2>
-              <Link href="/pos/invoices" className="text-sm text-primary hover:underline">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Recent Sales</CardTitle>
+              <Link
+                href="/pos/invoices"
+                className="text-sm text-primary hover:underline"
+              >
                 View all →
               </Link>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left p-2 font-medium">Invoice</th>
-                  <th className="text-left p-2 font-medium">Branch</th>
-                  <th className="text-left p-2 font-medium">Date</th>
-                  <th className="text-right p-2 font-medium">Total</th>
-                  <th className="text-right p-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metrics.recentInvoices.map(inv => (
-                  <tr key={inv._id.toString()} className="border-t">
-                    <td className="p-2">{inv.invoiceNumber}</td>
-                    <td className="p-2 text-muted-foreground">{inv.branch.name}</td>
-                    <td className="p-2 text-muted-foreground">{inv.issuedAt.toLocaleDateString()}</td>
-                    <td className="p-2 text-right font-medium">
-                      SAR {parseFloat(inv.grandTotal.toString()).toFixed(2)}
-                    </td>
-                    <td className="p-2 text-right">
-                      <span className={`text-xs px-2 py-1 rounded ${statusColors[inv.status] || ""}`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={columns}
+                rows={metrics.recentInvoices as unknown as RecentInvoice[]}
+                rowKey={(r) => r._id.toString()}
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
 
       <div className="mt-8">
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
-          <div className="flex gap-4 flex-wrap">
-            <Link
-              href="/pos"
-              className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium hover:bg-primary/90"
-            >
-              New Sale
-            </Link>
-            <Link
-              href="/pos/invoices"
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium hover:bg-accent"
-            >
-              View Invoices
-            </Link>
-            <Link
-              href="/inventory/products/add"
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium hover:bg-accent"
-            >
-              Add Product
-            </Link>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link href="/pos">New Sale</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/pos/invoices">View Invoices</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/inventory/products/add">Add Product</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </>
   );
 }
