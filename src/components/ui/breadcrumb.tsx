@@ -15,7 +15,7 @@ interface BreadcrumbProps {
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Link href="/" className="hover:text-foreground">
+      <Link href="/dashboard" className="hover:text-foreground">
         <Home className="size-4" />
       </Link>
       {items.map((item, i) => (
