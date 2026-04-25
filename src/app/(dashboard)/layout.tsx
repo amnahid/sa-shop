@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
-import { SidebarWithToggle } from "./components/SidebarWithToggle";
+import { AppShell } from "@/components/app/shell/AppShell";
 
 export default async function DashboardLayout({
   children,
@@ -8,17 +8,14 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  
+
   if (!session) {
     redirect("/login");
   }
 
   return (
-    <div className="flex min-h-screen">
-      <SidebarWithToggle />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
+    <AppShell userName={session.user?.name} userEmail={session.user?.email}>
+      {children}
+    </AppShell>
   );
 }
