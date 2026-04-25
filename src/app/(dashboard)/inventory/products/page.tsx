@@ -1,133 +1,152 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Product, Category, Membership, StockLevel, Branch } from "@/models";
-import { generateSKU } from "@/lib/utils/csv";
+import { PageHeader } from "@/components/app/PageHeader";
+import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
+import { StatusBadge } from "@/components/app/StatusBadge";
+
+interface ProductRow {
+  id: string;
+  sku: string;
+  name: string;
+  nameAr?: string;
+  category: string;
+  price: number;
+  trackStock: boolean;
+  stock: number;
+  threshold: number;
+}
 
 export default async function ProductsPage() {
   const session = await auth();
-  if (!session?.user?.id) {
-    return <div>Please log in</div>;
-  }
+  if (!session?.user?.id) return <div>Please log in</div>;
 
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return <div>No active membership</div>;
-  }
+  const membership = await Membership.findOne({
+    userId: session.user.id,
+    status: "active",
+  });
+  if (!membership) return <div>No active membership</div>;
 
   const tenantId = membership.tenantId;
 
   const products = await Product.find({ tenantId, deletedAt: null })
     .populate("categoryId")
     .sort({ name: 1 });
-
-  const categories = await Category.find({ tenantId, deletedAt: null, parentId: null })
-    .sort({ name: 1 });
-
+  await Category.find({ tenantId, deletedAt: null, parentId: null }).sort({ name: 1 });
   const branches = await Branch.find({ tenantId, active: true });
-
   const stockLevels = await StockLevel.find({
     tenantId,
     branchId: { $in: branches.map((b) => b._id) },
   });
 
+  const headOffice = branches.find((b) => b.isHeadOffice);
   const getStock = (productId: string) => {
-    const headOffice = branches.find((b) => b.isHeadOffice);
     if (!headOffice) return 0;
     const stock = stockLevels.find(
-      (s) => s.productId.toString() === productId && s.branchId.toString() === headOffice._id.toString()
+      (s) =>
+        s.productId.toString() === productId &&
+        s.branchId.toString() === headOffice._id.toString()
     );
     return stock ? parseFloat(stock.quantity.toString()) : 0;
   };
 
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Products</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/inventory/categories"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium"
-          >
-            Categories
-          </Link>
-          <Link
-            href="/inventory/products/add"
-            className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium"
-          >
-            Add Product
-          </Link>
-        </div>
-      </div>
+  const rows: ProductRow[] = products.map((p) => ({
+    id: p._id.toString(),
+    sku: p.sku,
+    name: p.name,
+    nameAr: p.nameAr,
+    category: p.categoryId ? (p.categoryId as unknown as { name: string }).name : "—",
+    price: parseFloat(p.sellingPrice.toString()),
+    trackStock: p.trackStock,
+    stock: getStock(p._id.toString()),
+    threshold: p.lowStockThreshold,
+  }));
 
-      <div className="bg-card border rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-left p-3 text-sm font-medium">SKU</th>
-              <th className="text-left p-3 text-sm font-medium">Name</th>
-              <th className="text-left p-3 text-sm font-medium">Category</th>
-              <th className="text-right p-3 text-sm font-medium">Price</th>
-              <th className="text-right p-3 text-sm font-medium">Stock</th>
-              <th className="text-right p-3 text-sm font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                  No products yet.{" "}
-                  <Link href="/inventory/products/add" className="text-primary hover:underline">
-                    Add your first product
-                  </Link>
-                </td>
-              </tr>
-            ) : (
-              products.map((product) => (
-                <tr key={product._id.toString()} className="border-t">
-                  <td className="p-3 text-sm font-mono">{product.sku}</td>
-                  <td className="p-3 text-sm">
-                    {product.name}
-                    {product.nameAr && (
-                      <span className="block text-xs text-muted-foreground" dir="rtl">
-                        {product.nameAr}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 text-sm">
-                    {product.categoryId ? (product.categoryId as any).name : "-"}
-                  </td>
-                  <td className="p-3 text-sm text-right">
-                    SAR {parseFloat(product.sellingPrice.toString()).toFixed(2)}
-                  </td>
-                  <td className="p-3 text-sm text-right">
-                    {product.trackStock ? (
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                          getStock(product._id.toString()) <= product.lowStockThreshold
-                            ? "bg-red-100 text-red-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {getStock(product._id.toString())}
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="p-3 text-sm text-right">
-                    <Link
-                      href={`/inventory/products/${product._id}`}
-                      className="text-primary hover:underline"
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  const columns: DataTableColumn<ProductRow>[] = [
+    {
+      key: "sku",
+      header: "SKU",
+      render: (r) => <span className="font-mono">{r.sku}</span>,
+    },
+    {
+      key: "name",
+      header: "Name",
+      render: (r) => (
+        <div>
+          <div>{r.name}</div>
+          {r.nameAr && (
+            <div className="text-xs text-muted-foreground" dir="rtl">
+              {r.nameAr}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    { key: "category", header: "Category", render: (r) => r.category },
+    {
+      key: "price",
+      header: "Price",
+      align: "right",
+      render: (r) => `SAR ${r.price.toFixed(2)}`,
+    },
+    {
+      key: "stock",
+      header: "Stock",
+      align: "right",
+      render: (r) =>
+        r.trackStock ? (
+          <StatusBadge
+            status={String(r.stock)}
+            variant={r.stock <= r.threshold ? "danger" : "success"}
+          />
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (r) => (
+        <Link
+          href={`/inventory/products/${r.id}`}
+          className="text-primary hover:underline"
+        >
+          Edit
+        </Link>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <PageHeader
+        title="Products"
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href="/inventory/categories">Categories</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/inventory/products/add">Add Product</Link>
+            </Button>
+          </>
+        }
+      />
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty={{
+          title: "No products yet",
+          action: (
+            <Button asChild>
+              <Link href="/inventory/products/add">Add your first product</Link>
+            </Button>
+          ),
+        }}
+      />
+    </>
   );
 }
