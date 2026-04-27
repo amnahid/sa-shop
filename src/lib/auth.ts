@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/lib/mongodb";
 
 export const authOptions: NextAuthConfig = {
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "credentials",
