@@ -5,6 +5,21 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Supplier, Membership } from "@/models";
 import { createSupplier } from "@/lib/actions/suppliers";
+import { PageHeader } from "@/components/app/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
+import { FormField } from "@/components/app/FormField";
+
+interface SupplierRow {
+  id: string;
+  name: string;
+  nameAr?: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  paymentTerms: string;
+}
 
 export default async function SuppliersPage() {
   const session = await auth();
@@ -18,65 +33,106 @@ export default async function SuppliersPage() {
     deletedAt: null,
   }).sort({ name: 1 });
 
-  return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Suppliers</h1>
-      </div>
+  const rows: SupplierRow[] = suppliers.map((s) => ({
+    id: s._id.toString(),
+    name: s.name,
+    nameAr: s.nameAr,
+    contactName: s.contactName || "-",
+    phone: s.phone || "-",
+    email: s.email || "-",
+    paymentTerms: s.paymentTerms || "-",
+  }));
 
-      <form action={async (formData) => {
-        "use server";
-        await createSupplier(formData);
-      }} className="mb-6 p-4 bg-card border rounded-lg space-y-3">
+  const columns: DataTableColumn<SupplierRow>[] = [
+    {
+      key: "name",
+      header: "Supplier",
+      render: (r) => (
+        <div>
+          <div className="font-medium">{r.name}</div>
+          {r.nameAr && (
+            <div className="text-xs text-muted-foreground" dir="rtl">
+              {r.nameAr}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "contactName",
+      header: "Contact",
+      render: (r) => <span className="text-muted-foreground">{r.contactName}</span>,
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      render: (r) => <span className="text-muted-foreground">{r.phone}</span>,
+    },
+    {
+      key: "email",
+      header: "Email",
+      render: (r) => <span className="text-muted-foreground">{r.email}</span>,
+    },
+    {
+      key: "paymentTerms",
+      header: "Payment Terms",
+      render: (r) => <span className="text-muted-foreground">{r.paymentTerms}</span>,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (r) => (
+        <Link href={`/inventory/suppliers/${r.id}`} className="text-primary hover:underline">
+          View
+        </Link>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <PageHeader title="Suppliers" />
+
+      <form
+        action={async (formData) => {
+          "use server";
+          await createSupplier(formData);
+        }}
+        className="mb-6 p-4 bg-card border rounded-lg space-y-3"
+      >
         <h2 className="text-sm font-medium">Add Supplier</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <input name="name" type="text" placeholder="Supplier name *" required className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <input name="contactName" type="text" placeholder="Contact person" className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <input name="phone" type="tel" placeholder="Phone" className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <input name="email" type="email" placeholder="Email" className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <FormField label="Supplier name" htmlFor="name" required>
+            <Input id="name" name="name" type="text" placeholder="Supplier name" required />
+          </FormField>
+          <FormField label="Contact person" htmlFor="contactName">
+            <Input id="contactName" name="contactName" type="text" placeholder="Contact person" />
+          </FormField>
+          <FormField label="Phone" htmlFor="phone">
+            <Input id="phone" name="phone" type="tel" placeholder="Phone" />
+          </FormField>
+          <FormField label="Email" htmlFor="email">
+            <Input id="email" name="email" type="email" placeholder="Email" />
+          </FormField>
         </div>
-        <div className="flex gap-3">
-          <input name="vatNumber" type="text" placeholder="VAT Number" className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <input name="paymentTerms" type="text" placeholder="Payment terms" className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-9 px-4 text-sm font-medium">Add Supplier</button>
+        <div className="flex gap-3 items-end">
+          <FormField label="VAT Number" htmlFor="vatNumber">
+            <Input id="vatNumber" name="vatNumber" type="text" placeholder="VAT Number" />
+          </FormField>
+          <FormField label="Payment terms" htmlFor="paymentTerms">
+            <Input id="paymentTerms" name="paymentTerms" type="text" placeholder="Payment terms" />
+          </FormField>
+          <Button type="submit">Add Supplier</Button>
         </div>
       </form>
 
-      <div className="bg-card border rounded-lg overflow-hidden">
-        {suppliers.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">No suppliers yet</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-3 font-medium">Supplier</th>
-                <th className="text-left p-3 font-medium">Contact</th>
-                <th className="text-left p-3 font-medium">Phone</th>
-                <th className="text-left p-3 font-medium">Email</th>
-                <th className="text-left p-3 font-medium">Payment Terms</th>
-                <th className="text-center p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suppliers.map(s => (
-                <tr key={s._id.toString()} className="border-t">
-                  <td className="p-3 font-medium">
-                    {s.name}
-                    {s.nameAr && <span className="block text-xs text-muted-foreground" dir="rtl">{s.nameAr}</span>}
-                  </td>
-                  <td className="p-3 text-muted-foreground">{s.contactName || "-"}</td>
-                  <td className="p-3 text-muted-foreground">{s.phone || "-"}</td>
-                  <td className="p-3 text-muted-foreground">{s.email || "-"}</td>
-                  <td className="p-3 text-muted-foreground">{s.paymentTerms || "-"}</td>
-                  <td className="p-3 text-center">
-                    <Link href={`/inventory/suppliers/${s._id}`} className="text-primary hover:underline">View</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty={{ title: "No suppliers yet" }}
+      />
+    </>
   );
 }
