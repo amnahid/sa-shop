@@ -1,9 +1,7 @@
-"use server";
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Membership, Branch } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Branch } from "@/models";
 import { getLowStockReport } from "@/lib/actions/reports";
 
 interface Props {
@@ -13,10 +11,7 @@ interface Props {
 export default async function LowStockPage({ searchParams }: Props) {
   const { branchId } = await searchParams;
 
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) return <div>No active membership</div>;
 
   const branches = await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });

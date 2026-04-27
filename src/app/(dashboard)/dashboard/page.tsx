@@ -1,11 +1,10 @@
-"use server";
-
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DollarSign, Package, Users, AlertTriangle } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getDashboardMetrics } from "@/lib/actions/invoices";
-import { Membership, Branch } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Branch } from "@/models";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatCard } from "@/components/app/StatCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -24,14 +23,7 @@ interface RecentInvoice {
 
 export default async function DashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({
-    userId: session.user.id,
-    status: "active",
-  });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }

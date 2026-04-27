@@ -1,12 +1,10 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Membership } from "@/models";
 import { getCustomerWithHistory, updateCustomer, deleteCustomer } from "@/lib/actions/customers";
-import mongoose from "mongoose";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,17 +13,12 @@ interface Props {
 export default async function CustomerDetailPage({ params }: Props) {
   const { id } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
 
-  const result = await getCustomerWithHistory(id, membership.tenantId);
+  const result = await getCustomerWithHistory(id, membership.tenantId.toString());
   if (!result) {
     return <div>Customer not found</div>;
   }

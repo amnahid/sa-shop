@@ -1,19 +1,12 @@
-"use server";
-
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { Product, StockLevel, Branch, Membership, Category } from "@/models";
-import mongoose from "mongoose";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Product, StockLevel, Branch, Category } from "@/models";
 import { POSClient } from "@/components/pos/POSClient";
 
 export default async function POSPage() {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
+  const membership = await getCurrentMembership();
+  if (!membership || !session?.user?.id) {
     return <div>No active membership</div>;
   }
 

@@ -1,10 +1,9 @@
-"use server";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Supplier, PurchaseOrder, Membership } from "@/models";
+import { Supplier, PurchaseOrder } from "@/models";
 import { updateSupplier, deleteSupplier } from "@/lib/actions/suppliers";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,10 +12,7 @@ interface Props {
 export default async function SupplierDetailPage({ params }: Props) {
   const { id } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) return <div>No active membership</div>;
 
   const supplier = await Supplier.findOne({ _id: id, tenantId: membership.tenantId, deletedAt: null });

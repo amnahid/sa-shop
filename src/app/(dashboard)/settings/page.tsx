@@ -1,17 +1,11 @@
-"use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Membership, Tenant } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Tenant } from "@/models";
 import { updateTenantSettings } from "@/lib/actions/team";
 
 export default async function SettingsPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }

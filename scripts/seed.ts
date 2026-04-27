@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
+import { 
+  User, Tenant, Membership, Branch, Category, Product, 
+  StockLevel, Customer, InvoiceCounter, Invoice, 
+  Supplier, PurchaseOrder, StockBatch, StockMovement 
+} from "../src/models";
 
 // ── DB Connection ─────────────────────────────────────────────────────────────
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/sa-shop";
@@ -61,103 +66,6 @@ function randomDate(daysAgo: number, daysRange: number): Date {
   return new Date(start + Math.random() * (end - start));
 }
 
-// ── ZATCA XML Builder ──────────────────────────────────────────────────────────
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function buildInvoiceXml(data: {
-  invoiceNumber: string;
-  uuid: string;
-  issuedAt: Date;
-  lines: Array<{
-    sku: string;
-    name: string;
-    nameAr?: string;
-    quantity: number;
-    unitPrice: number;
-    netAmount: number;
-    vatAmount: number;
-    totalAmount: number;
-    vatRate: number;
-    discountAmount: number;
-  }>;
-  subtotal: number;
-  discountTotal: number;
-  vatTotal: number;
-  grandTotal: number;
-  sellerName: string;
-  sellerVatNumber: string;
-  sellerAddress: string;
-  sellerCrNumber: string;
-  invoiceType: "simplified" | "standard";
-  invoiceHash: string;
-}): string {
-  const lines = data.lines
-    .map(
-      (line) => `
-    <inv:InvoiceLine>
-      <inv:ID>${escapeXml(line.sku)}</inv:ID>
-      <inv:ItemName>${escapeXml(line.name)}</inv:ItemName>
-      ${line.nameAr ? `<inv:ItemNameAr>${escapeXml(line.nameAr)}</inv:ItemNameAr>` : ""}
-      <inv:Quantity unitCode="C62">${line.quantity}</inv:Quantity>
-      <inv:UnitPrice>${line.unitPrice.toFixed(2)}</inv:UnitPrice>
-      <inv:TaxableAmount>${line.netAmount.toFixed(2)}</inv:TaxableAmount>
-      <inv:TaxAmount>${line.vatAmount.toFixed(2)}</inv:TaxAmount>
-      <inv:TaxPercentage>${(line.vatRate * 100).toFixed(0)}</inv:TaxPercentage>
-      <inv:DiscountAmount>${line.discountAmount.toFixed(2)}</inv:DiscountAmount>
-      <inv:LineTotalAmount>${line.totalAmount.toFixed(2)}</inv:LineTotalAmount>
-    </inv:InvoiceLine>`
-    )
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<inv:Invoice xmlns:inv="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-             xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-             xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
-             xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
-  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
-  <cbc:ProfileID>reporting:1.0</cbc:ProfileID>
-  <cbc:ID>${escapeXml(data.invoiceNumber)}</cbc:ID>
-  <cbc:UUID>${data.uuid}</cbc:UUID>
-  <cbc:IssueDate>${data.issuedAt.toISOString().split("T")[0]}</cbc:IssueDate>
-  <cbc:IssueTime>${data.issuedAt.toISOString().split("T")[1]?.substring(0, 8) || "00:00:00"}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode>388</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
-  <inv:Seller>
-    <inv:SellerName>${escapeXml(data.sellerName)}</inv:SellerName>
-    <inv:SellerAddress>${escapeXml(data.sellerAddress)}</inv:SellerAddress>
-    <inv:SellerTIN>${escapeXml(data.sellerCrNumber)}</inv:SellerTIN>
-    <inv:SellerVATNumber>${escapeXml(data.sellerVatNumber)}</inv:SellerVATNumber>
-  </inv:Seller>
-  <inv:InvoiceLines>${lines}
-  </inv:InvoiceLines>
-  <inv:TaxTotal>
-    <inv:TaxAmount currencyID="SAR">${data.vatTotal.toFixed(2)}</inv:TaxAmount>
-    <inv:TaxSubtotal>
-      <inv:TaxableAmount currencyID="SAR">${data.subtotal.toFixed(2)}</inv:TaxableAmount>
-      <inv:TaxAmount currencyID="SAR">${data.vatTotal.toFixed(2)}</inv:TaxAmount>
-      <inv:TaxCategory>S</inv:TaxCategory>
-      <inv:TaxPercentage>15</inv:TaxPercentage>
-    </inv:TaxSubtotal>
-  </inv:TaxTotal>
-  <inv:LegalMonetaryTotal>
-    <inv:LineExtensionAmount currencyID="SAR">${data.subtotal.toFixed(2)}</inv:LineExtensionAmount>
-    <inv:DiscountTotalAmount currencyID="SAR">${data.discountTotal.toFixed(2)}</inv:DiscountTotalAmount>
-    <inv:TaxExclusiveAmount currencyID="SAR">${(data.subtotal - data.discountTotal).toFixed(2)}</inv:TaxExclusiveAmount>
-    <inv:TaxInclusiveAmount currencyID="SAR">${data.grandTotal.toFixed(2)}</inv:TaxInclusiveAmount>
-    <inv:PayableAmount currencyID="SAR">${data.grandTotal.toFixed(2)}</inv:PayableAmount>
-  </inv:LegalMonetaryTotal>
-  <inv:InvoiceHash>${escapeXml(data.invoiceHash)}</inv:InvoiceHash>
-</inv:Invoice>`;
-}
-
 // ── Seed Data ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -175,7 +83,7 @@ const PRODUCTS_DATA: Array<{
   category: string;
   name: string;
   nameAr: string;
-  unit: string;
+  unit: 'piece' | 'kg' | 'g' | 'l' | 'ml' | 'pack';
   costPrice: number;
   sellingPrice: number;
   vatRate: number;
@@ -238,7 +146,7 @@ const PRODUCTS_DATA: Array<{
   { category: "Dish Soap", name: "Dish Soap 750ml", nameAr: "غسول صحون ٧٥٠ مل", unit: "piece", costPrice: 4.00, sellingPrice: 5.99, vatRate: 0.15, sku: "CLN-001", barcode: "6281000000047" },
   { category: "Laundry Detergent", name: "Laundry Powder 3kg", nameAr: "مسحوق غسيل ٣ كغ", unit: "piece", costPrice: 15.00, sellingPrice: 21.99, vatRate: 0.15, sku: "CLN-002", barcode: "6281000000048" },
   { category: "Tissue Box", name: "Tissue Box 200 sheets", nameAr: "مناديل ٢٠٠ ورقة", unit: "piece", costPrice: 2.50, sellingPrice: 3.99, vatRate: 0.15, sku: "CLN-003", barcode: "6281000000049" },
-  { category: "Plastic Bags", name: "Plastic Bags Roll 30pc", nameAr: "أكياس بلاستيك ٣٠ حبة", unit: "roll", costPrice: 4.00, sellingPrice: 5.99, vatRate: 0.15, sku: "CLN-004", barcode: "6281000000050" },
+  { category: "Plastic Bags", name: "Plastic Bags Roll 30pc", nameAr: "أكياس بلاستيك ٣٠ حبة", unit: "pack", costPrice: 4.00, sellingPrice: 5.99, vatRate: 0.15, sku: "CLN-004", barcode: "6281000000050" },
   { category: "Bleach", name: "Bleach 2L", nameAr: "مبيض ٢ لتر", unit: "piece", costPrice: 5.00, sellingPrice: 7.50, vatRate: 0.15, sku: "CLN-005", barcode: "6281000000051" },
   // Personal Care
   { category: "Shampoo", name: "Shampoo 400ml", nameAr: "شامبو ٤٠٠ مل", unit: "piece", costPrice: 8.00, sellingPrice: 12.00, vatRate: 0.15, sku: "PER-001", barcode: "6281000000052" },
@@ -262,10 +170,10 @@ const CUSTOMERS_DATA = [
 ];
 
 const SUPPLIERS_DATA = [
-  { name: "Al Safeer Distribution", nameAr: "توزيع الصفير", contactName: "Omar Khalid", phone: "0112345678", email: "orders@alsafeer.sa", vatNumber: "310123456789001", paymentTerms: "net30" },
-  { name: "Gulf Fresh Foods", nameAr: "غولف فريش فودز", contactName: "Saeed Al-Mutairi", phone: "0113456789", email: "supply@gulffresh.sa", vatNumber: "310234567890002", paymentTerms: "net15" },
+  { name: "Al Safeer Distribution", nameAr: "توزيع الصفير", contactName: "Omar Khalid", phone: "0112345678", email: "orders@alsafeer.sa", vatNumber: "310123456789003", paymentTerms: "net30" },
+  { name: "Gulf Fresh Foods", nameAr: "غولف فريش فودز", contactName: "Saeed Al-Mutairi", phone: "0113456789", email: "supply@gulffresh.sa", vatNumber: "310234567890003", paymentTerms: "net15" },
   { name: "Nakheel Trading Co.", nameAr: "شركة نخيل التجارية", contactName: "Fahad Al-Harbi", phone: "0114567890", email: "info@nakheeltrading.sa", vatNumber: "310345678901003", paymentTerms: "net30" },
-  { name: "Saudi Beverages Ltd.", nameAr: "المشروبات السعودية", contactName: "Hassan Al-Dosari", phone: "0115678901", email: "orders@saudibev.sa", vatNumber: "310456789012004", paymentTerms: "net45" },
+  { name: "Saudi Beverages Ltd.", nameAr: "المشروبات السعودية", contactName: "Hassan Al-Dosari", phone: "0115678901", email: "orders@saudibev.sa", vatNumber: "310456789012003", paymentTerms: "net45" },
 ];
 
 // ── Main Seeder ────────────────────────────────────────────────────────────────
@@ -275,55 +183,50 @@ async function seed() {
   await connect();
   console.log("✅ Connected\n");
 
-  console.log("🧹 Cleaning previous demo data...");
   const demoTenantId = new mongoose.Types.ObjectId("000000000000000000000001");
 
-  const collections = [
-    "stockmovements", "stockbatches", "stocklevels",
-    "parkedsales", "cashdrawers", "invoices", "invoicecounters",
-    "customers", "purchaseorders", "suppliers",
-    "products", "categories",
-    "branches",
-    "memberships",
-    "tenants",
-    "users",
+  console.log("🧹 Cleaning previous demo data...");
+  const models = [
+    StockMovement, StockBatch, StockLevel,
+    Invoice, InvoiceCounter,
+    Customer, PurchaseOrder, Supplier,
+    Product, Category,
+    Branch,
+    Membership,
+    Tenant,
+    User,
   ];
 
-  for (const col of collections) {
-    try {
-      await mongoose.connection.collection(col).deleteMany({});
-    } catch {
-      // collection might not exist yet
+  for (const model of models) {
+    if (model === User) {
+      await User.deleteMany({ email: "demo@sa-shop.com" });
+    } else if (model === Tenant) {
+      await Tenant.deleteMany({ _id: demoTenantId });
+    } else {
+      await (model as any).deleteMany({ tenantId: demoTenantId } as any);
     }
   }
   console.log("✅ Cleaned\n");
 
   // ── Step 1: User + Tenant + Membership ────────────────────────────────────
   console.log("👤 Creating user, tenant, membership...");
-  const passwordHash = await bcrypt.hash("demo1234", 10);
-
-  const user = await mongoose.connection.collection("users").insertOne({
+  
+  const user = await User.create({
     email: "demo@sa-shop.com",
     name: "Demo Owner",
-    passwordHash,
+    passwordHash: "demo1234", // Will be hashed by pre-save hook
     emailVerifiedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
   });
-  const userId = user.insertedId;
   console.log(`   User: demo@sa-shop.com / demo1234`);
 
-  const tenantId = new mongoose.Types.ObjectId("000000000000000000000001");
-  await mongoose.connection.collection("tenants").insertOne({
-    _id: tenantId,
+  const tenant = await Tenant.create({
+    _id: demoTenantId,
     name: "Al Nakheel Grocery",
     nameAr: "بقالة النخيل",
-    vatNumber: "310987654321000",
+    vatNumber: "310987654321003",
     crNumber: "CR123456789",
     address: "King Fahd Road, Al Nakheel District",
     addressAr: "طريق الملك فهد، حي النخيل",
-    city: "Riyadh",
-    region: "Riyadh",
     phone: "0112345678",
     email: "info@alnakhilgrocery.sa",
     baseCurrency: "SAR",
@@ -336,27 +239,24 @@ async function seed() {
     zatcaCertificateId: "CERT-DEMO-001",
     plan: "starter",
     planExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
   });
+  const tenantId = tenant._id;
   console.log(`   Tenant: Al Nakheel Grocery (Riyadh)`);
 
-  await mongoose.connection.collection("memberships").insertOne({
-    userId,
+  await Membership.create({
+    userId: user._id,
     tenantId,
     role: "owner",
     branchIds: [],
     status: "active",
     acceptedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
   });
 
   // ── Step 2: Branches ────────────────────────────────────────────────────────
   console.log("\n🏪 Creating branches...");
   const branchIds: mongoose.Types.ObjectId[] = [];
 
-  const hqBranch = await mongoose.connection.collection("branches").insertOne({
+  const hqBranch = await Branch.create({
     tenantId,
     name: "Al Nakheel Branch",
     nameAr: "فرع النخيل",
@@ -368,12 +268,10 @@ async function seed() {
     vatBranchCode: "BR001",
     isHeadOffice: true,
     active: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   });
-  branchIds.push(hqBranch.insertedId);
+  branchIds.push(hqBranch._id);
 
-  const olayaBranch = await mongoose.connection.collection("branches").insertOne({
+  const olayaBranch = await Branch.create({
     tenantId,
     name: "Olaya Branch",
     nameAr: "فرع العليا",
@@ -385,54 +283,46 @@ async function seed() {
     vatBranchCode: "BR002",
     isHeadOffice: false,
     active: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   });
-  branchIds.push(olayaBranch.insertedId);
+  branchIds.push(olayaBranch._id);
   console.log(`   2 branches created: HQ + Olaya`);
 
   // ── Step 3: Categories ─────────────────────────────────────────────────────
   console.log("\n📂 Creating categories...");
   const categoryMap: Record<string, mongoose.Types.ObjectId> = {};
-  const parentIds: Record<string, mongoose.Types.ObjectId> = {};
 
   for (const cat of CATEGORIES) {
-    const parent = await mongoose.connection.collection("categories").insertOne({
+    const parent = await Category.create({
       tenantId,
       name: cat.name,
       nameAr: cat.nameAr,
-      parentId: null,
+      parentId: undefined,
       sortOrder: 0,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
-    parentIds[cat.name] = parent.insertedId;
-    categoryMap[cat.name] = parent.insertedId;
+    categoryMap[cat.name] = parent._id;
 
     for (const childName of cat.children) {
-      const child = await mongoose.connection.collection("categories").insertOne({
+      const child = await Category.create({
         tenantId,
         name: childName,
-        nameAr: "",
-        parentId: parent.insertedId,
+        nameAr: childName, // For demo, use same name
+        parentId: parent._id,
         sortOrder: 0,
         active: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
-      categoryMap[childName] = child.insertedId;
+      categoryMap[childName] = child._id;
     }
   }
   console.log(`   ${CATEGORIES.length} parent + ${CATEGORIES.reduce((s, c) => s + c.children.length, 0)} child categories created`);
 
   // ── Step 4: Products ───────────────────────────────────────────────────────
   console.log("\n📦 Creating products...");
-  const productIds: Array<{ _id: mongoose.Types.ObjectId; data: (typeof PRODUCTS_DATA)[0] }> = [];
+  const products: any[] = [];
 
   for (const p of PRODUCTS_DATA) {
     const categoryId = categoryMap[p.category];
-    const result = await mongoose.connection.collection("products").insertOne({
+    const product = await Product.create({
       tenantId,
       sku: p.sku,
       barcode: p.barcode,
@@ -449,27 +339,24 @@ async function seed() {
       lowStockThreshold: 10,
       expiryTracking: false,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
-    productIds.push({ _id: result.insertedId, data: p });
+    products.push(product);
   }
-  console.log(`   ${productIds.length} products created`);
+  console.log(`   ${products.length} products created`);
 
   // ── Step 5: Stock Levels ───────────────────────────────────────────────────
   console.log("\n📊 Creating stock levels...");
   let stockCount = 0;
 
-  for (const product of productIds) {
+  for (const product of products) {
     for (const branchId of branchIds) {
       const qty = randomInt(20, 200);
-      await mongoose.connection.collection("stocklevels").insertOne({
+      await StockLevel.create({
         tenantId,
         productId: product._id,
         branchId,
         quantity: qty,
         reservedQuantity: 0,
-        updatedAt: new Date(),
       });
       stockCount++;
     }
@@ -481,7 +368,7 @@ async function seed() {
   const customerIds: mongoose.Types.ObjectId[] = [];
 
   for (const c of CUSTOMERS_DATA) {
-    const result = await mongoose.connection.collection("customers").insertOne({
+    const result = await Customer.create({
       tenantId,
       name: c.name,
       nameAr: c.nameAr,
@@ -489,24 +376,27 @@ async function seed() {
       city: c.city,
       totalSpent: 0,
       visitCount: 0,
-      pdplConsent: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      pdplConsent: {
+        givenAt: new Date(),
+        version: "1.0",
+        ipAddress: "127.0.0.1",
+      },
     });
-    customerIds.push(result.insertedId);
+    customerIds.push(result._id);
   }
   console.log(`   ${customerIds.length} customers created`);
 
   // ── Step 7: Invoice Counters ───────────────────────────────────────────────
   console.log("\n🔢 Creating invoice counters...");
   for (const branchId of branchIds) {
-    await mongoose.connection.collection("invoicecounters").insertOne({
+    await InvoiceCounter.create({
       tenantId,
       branchId,
       currentValue: 0,
     });
   }
-  await mongoose.connection.collection("invoicecounters").insertOne({
+  // Global counter
+  await InvoiceCounter.create({
     tenantId,
     currentValue: 0,
   });
@@ -523,34 +413,33 @@ async function seed() {
   let invoiceCount = 0;
 
   for (let i = 0; i < 25; i++) {
-    const branchIdx = i < 15 ? 0 : 1; // more at HQ
+    const branchIdx = i < 15 ? 0 : 1;
     const branchId = branchIds[branchIdx];
     const issuedAt = randomDate(30, 1);
     const numItems = randomInt(3, 8);
 
-    // Pick random products
-    const shuffled = [...productIds].sort(() => Math.random() - 0.5);
+    const shuffled = [...products].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, numItems);
 
     const lines = selected.map((p) => {
       const qty = randomInt(1, 5);
-      const vatInclusive = p.data.vatRate > 0;
-      const net = vatInclusive ? p.data.sellingPrice / 1.15 : p.data.sellingPrice;
+      const vatInclusive = p.vatRate > 0;
+      const net = vatInclusive ? p.sellingPrice / 1.15 : p.sellingPrice;
       const netAmount = Math.round(net * qty * 100) / 100;
-      const vatAmount = Math.round(netAmount * p.data.vatRate * 100) / 100;
+      const vatAmount = Math.round(netAmount * p.vatRate * 100) / 100;
       const totalAmount = Math.round((netAmount + vatAmount) * 100) / 100;
       return {
         productId: p._id,
-        sku: p.data.sku,
-        name: p.data.name,
-        nameAr: p.data.nameAr,
+        sku: p.sku,
+        name: p.name,
+        nameAr: p.nameAr,
         quantity: qty,
-        unitPrice: p.data.sellingPrice,
+        unitPrice: p.sellingPrice,
         discountAmount: 0,
-        netAmount: Math.round(netAmount * 100) / 100,
-        vatRate: p.data.vatRate,
-        vatAmount: Math.round(vatAmount * 100) / 100,
-        totalAmount: Math.round(totalAmount * 100) / 100,
+        netAmount: netAmount,
+        vatRate: p.vatRate,
+        vatAmount: vatAmount,
+        totalAmount: totalAmount,
       };
     });
 
@@ -558,8 +447,7 @@ async function seed() {
     const vatTotal = lines.reduce((s, l) => s + Number(l.vatAmount), 0);
     const grandTotal = lines.reduce((s, l) => s + Number(l.totalAmount), 0);
 
-    // Get next invoice number
-    const counter = await mongoose.connection.collection("invoicecounters").findOneAndUpdate(
+    const counter = await InvoiceCounter.findOneAndUpdate(
       { tenantId },
       { $inc: { currentValue: 1 } },
       { returnDocument: "after" }
@@ -569,7 +457,6 @@ async function seed() {
     const uuid = uuidv4();
     const prevHash = previousHashes[branchId.toString()];
 
-    // Build hash
     const hashPayload = [
       invoiceNum,
       issuedAt.toISOString(),
@@ -579,47 +466,22 @@ async function seed() {
     ].join("||");
     const invoiceHash = sha256Hash(hashPayload);
 
-    // Generate TLV QR
     const qrData = await generateTlvQr({
       sellerName: "Al Nakheel Grocery",
-      sellerVatNumber: "310987654321000",
+      sellerVatNumber: "310987654321003",
       timestamp: issuedAt.toISOString(),
       invoiceTotal: grandTotal,
       vatTotal: vatTotal,
     });
 
-    // Build XML
-    const xmlPayload = buildInvoiceXml({
-      invoiceNumber: invoiceNum,
-      uuid,
-      issuedAt,
-      lines,
-      subtotal,
-      discountTotal: 0,
-      vatTotal,
-      grandTotal,
-      sellerName: "Al Nakheel Grocery",
-      sellerVatNumber: "310987654321000",
-      sellerAddress: "King Fahd Road, Al Nakheel District, Riyadh",
-      sellerCrNumber: "CR123456789",
-      invoiceType: "simplified",
-      invoiceHash,
-    });
+    const customerId = Math.random() < 0.3 ? customerIds[randomInt(0, customerIds.length - 1)] : undefined;
+    const paymentMethod = Math.random() < 0.6 ? "cash" : "mada";
+    const status = i === 12 ? "refunded" : "completed";
 
-    // Assign customer randomly (30% chance)
-    const customerId = Math.random() < 0.3 ? customerIds[randomInt(0, customerIds.length - 1)] : null;
-
-    // Payment method
-    const paymentMethod = Math.random() < 0.6 ? "cash" : "card";
-    const cashReceived = paymentMethod === "cash" ? Math.ceil(grandTotal / 5) * 5 + 5 : undefined;
-
-    const isRefunded = i === 12; // Invoice #13 is refunded
-    const status = isRefunded ? "refunded" : "completed";
-
-    await mongoose.connection.collection("invoices").insertOne({
+    await Invoice.create({
       tenantId,
       branchId,
-      cashierId: userId,
+      cashierId: user._id,
       invoiceNumber: invoiceNum,
       uuid,
       invoiceType: "simplified",
@@ -628,7 +490,6 @@ async function seed() {
       previousHash: prevHash,
       invoiceHash,
       qrCode: qrData,
-      xmlPayload,
       customerId,
       subtotal,
       discountTotal: 0,
@@ -638,78 +499,37 @@ async function seed() {
         {
           method: paymentMethod,
           amount: grandTotal,
-          cashReceived: cashReceived || 0,
-          changeGiven: cashReceived ? Math.max(0, cashReceived - grandTotal) : 0,
+          receivedAt: issuedAt,
         },
       ],
-      lines: lines.map((l) => ({
-        ...l,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountAmount: l.discountAmount,
-        netAmount: l.netAmount,
-        vatAmount: l.vatAmount,
-        totalAmount: l.totalAmount,
-      })),
-      refundedInvoiceId: null,
-      voidedAt: null,
-      voidedBy: null,
-      voidReason: null,
-      idempotencyKey: null,
+      lines,
       createdAt: issuedAt,
-      updatedAt: issuedAt,
     });
 
-    // Update previous hash
     previousHashes[branchId.toString()] = invoiceHash;
     invoiceCount++;
 
-    // Create stock movements
     for (const line of lines) {
-      await mongoose.connection.collection("stockmovements").insertOne({
+      await StockMovement.create({
         tenantId,
         productId: line.productId,
         branchId,
-        batchId: null,
         type: "sale",
         quantityDelta: -line.quantity,
         quantityAfter: 0,
-        refCollection: "invoices",
-        refId: null,
-        userId,
+        userId: user._id,
         createdAt: issuedAt,
-        updatedAt: issuedAt,
       });
     }
-
-    // If refunded, also create refund movement
-    if (isRefunded) {
-      for (const line of lines) {
-        await mongoose.connection.collection("stockmovements").insertOne({
-          tenantId,
-          productId: line.productId,
-          branchId,
-          batchId: null,
-          type: "refund",
-          quantityDelta: line.quantity,
-          quantityAfter: 0,
-          refCollection: "invoices",
-          refId: null,
-          userId,
-          createdAt: new Date(issuedAt.getTime() + 5 * 60 * 1000),
-          updatedAt: new Date(issuedAt.getTime() + 5 * 60 * 1000),
-        });
-      }
-    }
   }
-  console.log(`   ${invoiceCount} invoices created (with ZATCA QR + XML + hash chain)`);
+  console.log(`   ${invoiceCount} invoices created (with ZATCA QR + hash chain)`);
 
   // ── Step 9: Suppliers ─────────────────────────────────────────────────────
   console.log("\n🚚 Creating suppliers...");
-  const supplierIds: mongoose.Types.ObjectId[] = [];
+  const suppliers: any[] = [];
 
   for (const s of SUPPLIERS_DATA) {
-    const result = await mongoose.connection.collection("suppliers").insertOne({
+    const result = await Supplier.create({
       tenantId,
       name: s.name,
       nameAr: s.nameAr,
@@ -719,12 +539,10 @@ async function seed() {
       vatNumber: s.vatNumber,
       paymentTerms: s.paymentTerms,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
-    supplierIds.push(result.insertedId);
+    suppliers.push(result);
   }
-  console.log(`   ${supplierIds.length} suppliers created`);
+  console.log(`   ${suppliers.length} suppliers created`);
 
   // ── Step 10: Purchase Orders ───────────────────────────────────────────────
   console.log("\n📋 Creating purchase orders...");
@@ -733,14 +551,13 @@ async function seed() {
   let poCount = 0;
 
   for (let i = 0; i < 6; i++) {
-    const supplierId = supplierIds[i % supplierIds.length];
+    const supplier = suppliers[i % suppliers.length];
     const branchId = branchIds[i % 2];
     const status = poStatuses[i];
     const createdAt = randomDate(45, 1);
     const issuedAt = status !== "draft" ? new Date(createdAt.getTime() + 2 * 60 * 60 * 1000) : null;
 
-    // Select products for PO
-    const poProducts = productIds.slice(i * 8, i * 8 + 8);
+    const poProducts = products.slice(i * 8, i * 8 + 8);
     const lines = poProducts.map((p) => {
       const orderedQty = randomInt(20, 100);
       let receivedQty = 0;
@@ -749,81 +566,64 @@ async function seed() {
 
       return {
         productId: p._id,
-        sku: p.data.sku,
-        name: p.data.name,
-        nameAr: p.data.nameAr,
-        orderedQty,
-        receivedQty,
-        unitCost: p.data.costPrice,
-        totalCost: Math.round(p.data.costPrice * orderedQty * 100) / 100,
+        sku: p.sku,
+        name: p.name,
+        nameAr: p.nameAr,
+        quantityOrdered: orderedQty,
+        quantityReceived: receivedQty,
+        unitCost: p.costPrice,
+        totalCost: Math.round(p.costPrice * orderedQty * 100) / 100,
       };
     });
 
-    const counter = await mongoose.connection.collection("invoicecounters").findOneAndUpdate(
-      { tenantId },
-      { $inc: { currentValue: 1 } },
-      { returnDocument: "after" }
-    );
-    const poNumber = `PO-${String(counter!.currentValue).padStart(6, "0")}`;
+    const poNumber = `PO-${String(i + 1).padStart(6, "0")}`;
 
-    await mongoose.connection.collection("purchaseorders").insertOne({
+    await PurchaseOrder.create({
       tenantId,
-      supplierId,
+      supplierId: supplier._id,
       branchId,
-      createdById: userId,
+      createdById: user._id,
       poNumber,
       status,
-      issuedAt: issuedAt || null,
-      deliveredAt: status === "received" ? new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000) : null,
-      notes: "",
+      issuedAt: issuedAt || undefined,
+      deliveredAt: status === "received" ? new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000) : undefined,
       expectedDate: new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000),
       lines,
       createdAt,
-      updatedAt: new Date(),
     });
 
     poCount++;
 
-    // If received, create stock batches + movements
     if (status === "received" || status === "partially_received") {
       for (const line of lines) {
-        if (line.receivedQty > 0) {
+        if (line.quantityReceived > 0) {
           const batchNumber = `BATCH-${poNumber}-${line.sku}`;
-          await mongoose.connection.collection("stockbatches").insertOne({
+          await StockBatch.create({
             tenantId,
             productId: line.productId,
             branchId,
             batchNumber,
             expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            quantity: line.receivedQty,
+            quantity: line.quantityReceived,
             costPrice: line.unitCost,
-            supplierId,
+            supplierId: supplier._id,
             receivedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
           });
 
-          // Update stock level
-          await mongoose.connection.collection("stocklevels").updateOne(
+          await StockLevel.updateOne(
             { tenantId, productId: line.productId, branchId },
-            { $inc: { quantity: line.receivedQty }, $set: { updatedAt: new Date() } }
+            { $inc: { quantity: line.quantityReceived } }
           );
 
-          // Stock movement
-          await mongoose.connection.collection("stockmovements").insertOne({
+          await StockMovement.create({
             tenantId,
             productId: line.productId,
             branchId,
-            batchId: null,
             type: "purchase",
-            quantityDelta: line.receivedQty,
+            quantityDelta: line.quantityReceived,
             quantityAfter: 0,
-            refCollection: "purchaseorders",
-            refId: null,
             reason: `PO ${poNumber}`,
-            userId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            userId: user._id,
           });
         }
       }
@@ -837,7 +637,6 @@ async function seed() {
   console.log("   Email:    demo@sa-shop.com");
   console.log("   Password: demo1234");
   console.log("   Tenant:   Al Nakheel Grocery (Riyadh)");
-  console.log("\n🌱 Run 'npm run seed:clean' to clean demo data");
 
   await mongoose.disconnect();
 }

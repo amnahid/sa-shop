@@ -93,12 +93,13 @@ export async function searchCustomers(tenantId: string, query?: string) {
   }));
 }
 
-export async function getCustomerWithHistory(customerId: string, tenantId: mongoose.Types.ObjectId) {
-  const customer = await Customer.findOne({ _id: customerId, tenantId, deletedAt: null });
+export async function getCustomerWithHistory(customerId: string, tenantId: string) {
+  const tId = new mongoose.Types.ObjectId(tenantId);
+  const customer = await Customer.findOne({ _id: customerId, tenantId: tId, deletedAt: null });
   if (!customer) return null;
 
   const invoices = await Invoice.find({
-    tenantId,
+    tenantId: tId,
     customerId: customer._id,
     status: "completed",
   }).sort({ issuedAt: -1 }).limit(20);

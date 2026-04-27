@@ -1,17 +1,10 @@
-"use server";
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Product, StockLevel, StockMovement, Branch, Membership } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Product, StockLevel, Branch } from "@/models";
 
 export default async function StockPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }

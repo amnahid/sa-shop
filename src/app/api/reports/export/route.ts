@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth-utils";
-import { Membership } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 import {
   getSalesReport,
   getStockMovements,
@@ -13,12 +12,7 @@ import {
 } from "@/lib/utils/csv-export";
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return NextResponse.json({ error: "No active membership" }, { status: 403 });
   }

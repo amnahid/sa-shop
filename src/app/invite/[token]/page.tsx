@@ -1,4 +1,4 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
 import { acceptInvite } from "@/lib/actions/invite";

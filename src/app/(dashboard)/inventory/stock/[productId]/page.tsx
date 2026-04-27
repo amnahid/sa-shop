@@ -1,10 +1,9 @@
-"use server";
 
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Product, StockLevel, StockMovement, Branch, Membership } from "@/models";
+
 import mongoose from "mongoose";
+import Link from "next/link";
+import { Product, StockLevel, StockMovement, Branch } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
   params: Promise<{ productId: string }>;
@@ -13,15 +12,8 @@ interface Props {
 export default async function ProductStockPage({ params }: Props) {
   const { productId } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return <div>No active membership</div>;
-  }
+  const membership = await getCurrentMembership();
+  if (!membership) return <div>No active membership</div>;
 
   const tenantId = membership.tenantId;
 

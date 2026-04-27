@@ -1,4 +1,4 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
 import { resetPassword } from "@/lib/actions/password-reset";

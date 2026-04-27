@@ -1,17 +1,11 @@
-"use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Membership, User } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Membership } from "@/models";
 import { updateMemberRole, suspendMember, reactivateMember } from "@/lib/actions/team";
 
 export default async function TeamPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -55,7 +49,7 @@ export default async function TeamPage() {
             {members.map(m => {
               const user = m.userId as unknown as { _id: string; name: string; email: string };
               const isOwner = m.role === "owner";
-              const isCurrentUser = user._id === session?.user?.id;
+              const isCurrentUser = user._id === membership.userId.toString();
               const canManage = membership.role === "owner" && !isCurrentUser && !isOwner;
 
               return (

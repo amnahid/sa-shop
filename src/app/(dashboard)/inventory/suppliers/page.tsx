@@ -1,9 +1,7 @@
-"use server";
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Supplier, Membership } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Supplier } from "@/models";
 import { createSupplier } from "@/lib/actions/suppliers";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -22,10 +20,7 @@ interface SupplierRow {
 }
 
 export default async function SuppliersPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) return <div>No active membership</div>;
 
   const suppliers = await Supplier.find({

@@ -78,6 +78,7 @@ const purchaseOrderSchema = new Schema<IPurchaseOrder>(
     },
     notes: String,
     expectedDate: Date,
+    issuedAt: Date,
     deliveredAt: Date,
     lines: [purchaseOrderLineSchema],
   },

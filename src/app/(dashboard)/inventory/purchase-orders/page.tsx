@@ -1,9 +1,6 @@
-"use server";
-
-import { redirect } from "next/navigation";
+import mongoose from "mongoose";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Membership } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 import { loadPurchaseOrders } from "@/lib/actions/purchase-orders";
 
 interface Props {
@@ -13,10 +10,7 @@ interface Props {
 export default async function PurchaseOrdersPage({ searchParams }: Props) {
   const { status } = await searchParams;
 
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) return <div>No active membership</div>;
 
   const pos = await loadPurchaseOrders(membership.tenantId.toString(), status);

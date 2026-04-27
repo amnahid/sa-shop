@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Product, Category, Membership, StockLevel, Branch } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Product, Category, StockLevel, Branch } from "@/models";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
@@ -19,13 +19,7 @@ interface ProductRow {
 }
 
 export default async function ProductsPage() {
-  const session = await auth();
-  if (!session?.user?.id) return <div>Please log in</div>;
-
-  const membership = await Membership.findOne({
-    userId: session.user.id,
-    status: "active",
-  });
+  const membership = await getCurrentMembership();
   if (!membership) return <div>No active membership</div>;
 
   const tenantId = membership.tenantId;

@@ -1,10 +1,9 @@
-"use server";
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { voidInvoice, refundInvoice } from "@/lib/actions/invoices";
-import { Invoice, Branch, Tenant, Membership } from "@/models";
+import { Invoice, Branch, Tenant } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,12 +12,7 @@ interface Props {
 export default async function InvoiceDetailPage({ params }: Props) {
   const { id } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -227,9 +221,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
 async function VoidButton({ invoiceId }: { invoiceId: string }) {
   async function action() {
     "use server";
-    const session = await auth();
-    if (!session?.user?.id) return;
-    await voidInvoice(invoiceId, session.user.id);
+    const membership = await getCurrentMembership();
+    if (!membership) return;
+    await voidInvoice(invoiceId, membership.userId.toString());
     redirect("/pos/invoices");
   }
   return (
@@ -247,9 +241,9 @@ async function VoidButton({ invoiceId }: { invoiceId: string }) {
 async function RefundButton({ invoiceId }: { invoiceId: string }) {
   async function action() {
     "use server";
-    const session = await auth();
-    if (!session?.user?.id) return;
-    await refundInvoice(invoiceId, session.user.id);
+    const membership = await getCurrentMembership();
+    if (!membership) return;
+    await refundInvoice(invoiceId, membership.userId.toString());
     redirect("/pos/invoices");
   }
   return (

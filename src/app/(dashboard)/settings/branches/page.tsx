@@ -1,17 +1,11 @@
-"use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Branch, Membership, Invoice } from "@/models";
+import { Branch } from "@/models";
 import { updateBranch, deactivateBranch } from "@/lib/actions/branches";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 export default async function SettingsBranchesPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }

@@ -1,18 +1,13 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Product, Category, Membership, Branch, StockLevel, StockMovement } from "@/models";
-import { generateSKU } from "@/lib/utils/csv";
 import mongoose from "mongoose";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { Product, Category, Branch, StockLevel } from "@/models";
+import { generateSKU } from "@/lib/utils/csv";
 
 export default async function AddProductPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -24,14 +19,11 @@ export default async function AddProductPage() {
 
   const createProductAction = async (formData: FormData) => {
     "use server";
-    const session = await auth();
-    if (!session?.user?.id) return;
-
-    const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+    const membership = await getCurrentMembership();
     if (!membership) return;
 
     const tenantId = membership.tenantId;
-    const userId = session.user.id;
+    const userId = membership.userId;
 
     const sku = formData.get("sku") as string || generateSKU();
     const name = formData.get("name") as string;

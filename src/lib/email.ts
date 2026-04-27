@@ -1,6 +1,15 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+let resend: Resend | null = null;
+
+function getResend() {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return null;
+    resend = new Resend(apiKey);
+  }
+  return resend;
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "SA Shop";
@@ -149,7 +158,12 @@ export async function sendEmail(template: EmailTemplate, data: EmailData) {
   };
 
   try {
-    const result = await resend.emails.send({
+    const client = getResend();
+    if (!client) {
+      console.log(`[EMAIL] Skipped (no Resend client): ${template} → ${data.to}`);
+      return { success: false, error: "No Resend client" };
+    }
+    const result = await client.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: data.to,
       subject: subjectMap[template],

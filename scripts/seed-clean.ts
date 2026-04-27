@@ -7,8 +7,8 @@ async function clean() {
     await mongoose.connect(MONGODB_URI);
   }
 
-  console.log("🧹 Cleaning demo data (tenantId: 00000000000000000000000001)...");
-  const tenantId = new mongoose.Types.ObjectId("000000000000000000000000001");
+  console.log("🧹 Cleaning demo data (tenantId: 000000000000000000000001)...");
+  const tenantId = new mongoose.Types.ObjectId("000000000000000000000001");
 
   const collections = [
     "stockmovements", "stockbatches", "stocklevels",

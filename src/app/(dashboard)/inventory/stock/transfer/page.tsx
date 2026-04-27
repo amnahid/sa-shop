@@ -1,20 +1,13 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Product, StockLevel, Branch, Membership, StockMovement } from "@/models";
 import mongoose from "mongoose";
+import { Product, StockLevel, Branch, StockMovement } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 export default async function TransferStockPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return <div>No active membership</div>;
-  }
+  const membership = await getCurrentMembership();
+  if (!membership) return <div>No active membership</div>;
 
   const tenantId = membership.tenantId;
 
@@ -27,14 +20,11 @@ export default async function TransferStockPage() {
 
       <form action={async (formData) => {
         "use server";
-        const session = await auth();
-        if (!session?.user?.id) return;
-
-        const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+        const membership = await getCurrentMembership();
         if (!membership) return;
 
         const tenantId = membership.tenantId;
-        const userId = session.user.id;
+        const userId = membership.userId;
 
         const productId = formData.get("productId") as string;
         const fromBranchId = formData.get("fromBranchId") as string;

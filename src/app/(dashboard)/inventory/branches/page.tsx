@@ -1,16 +1,9 @@
-"use server";
 
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Branch, Membership } from "@/models";
+import { Branch } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 export default async function BranchesPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -27,10 +20,7 @@ export default async function BranchesPage() {
 
       <form action={async (formData) => {
         "use server";
-        const session = await auth();
-        if (!session?.user?.id) return;
-
-        const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+        const membership = await getCurrentMembership();
         if (!membership) return;
 
         const name = formData.get("name") as string;

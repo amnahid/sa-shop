@@ -1,10 +1,7 @@
-"use server";
 
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { Invoice, Branch, Tenant, Membership } from "@/models";
-import mongoose from "mongoose";
+import { Invoice, Branch, Tenant } from "@/models";
+import { getCurrentMembership } from "@/lib/utils/membership";
+import { ReceiptActions } from "@/components/pos/ReceiptActions";
 
 interface Props {
   params: Promise<{ invoiceId: string }>;
@@ -13,12 +10,7 @@ interface Props {
 export default async function ReceiptPage({ params }: Props) {
   const { invoiceId } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -150,20 +142,7 @@ export default async function ReceiptPage({ params }: Props) {
           )}
         </div>
 
-        <div className="p-4 border-t flex gap-2">
-          <Link
-            href="/pos"
-            className="flex-1 text-center py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
-          >
-            New Sale
-          </Link>
-          <button
-            onClick={() => typeof window !== "undefined" && window.print()}
-            className="flex-1 py-2 rounded-md border border-gray-300 text-sm font-medium"
-          >
-            Print
-          </button>
-        </div>
+        <ReceiptActions />
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
-"use server";
+
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { Product, Category, Membership, Branch } from "@/models";
 import mongoose from "mongoose";
+import { Product, Category } from "@/models";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -13,12 +13,7 @@ interface Props {
 export default async function EditProductPage({ params }: Props) {
   const { id } = await params;
   
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+  const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
@@ -34,10 +29,7 @@ export default async function EditProductPage({ params }: Props) {
 
   const updateProductAction = async (formData: FormData) => {
     "use server";
-    const session = await auth();
-    if (!session?.user?.id) return;
-
-    const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
+    const membership = await getCurrentMembership();
     if (!membership) return;
 
     const categoryIdStr = formData.get("categoryId") as string;
