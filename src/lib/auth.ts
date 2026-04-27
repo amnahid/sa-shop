@@ -4,8 +4,13 @@ import { User } from "@/models";
 import bcrypt from "bcryptjs";
 import connectDB from "@/lib/mongodb";
 
+// Auth.js v5 requirement
+if (!process.env.AUTH_SECRET && process.env.NEXTAUTH_SECRET) {
+  process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
+}
+
 export const authOptions: NextAuthConfig = {
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "credentials",
