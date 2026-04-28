@@ -38,6 +38,8 @@ export async function requestPasswordReset(formData: FormData) {
     name: user.name,
     token,
     businessName,
+  }, {
+    tenantId: membership?.tenantId,
   });
 
   return { success: true };

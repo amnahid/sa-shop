@@ -1,94 +1,126 @@
 "use server";
 
-import { getSession } from "@/lib/auth-utils";
-import { Branch, Membership } from "@/models";
-import mongoose from "mongoose";
+import { Branch } from "@/models";
+import { getAuthorizedSessionMembership } from "@/lib/utils/server-authorization";
+import { revalidatePath } from "next/cache";
 
-export async function createBranch(formData: FormData) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
+function getBranchPayload(formData: FormData) {
+  const name = (formData.get("name") as string)?.trim();
+  const nameAr = (formData.get("nameAr") as string)?.trim();
+  const address = (formData.get("address") as string)?.trim();
+  const city = (formData.get("city") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim();
+  const vatBranchCode = (formData.get("vatBranchCode") as string)?.trim();
 
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return { error: "No active membership" };
-  }
-
-  const tenantId = membership.tenantId;
-  const name = formData.get("name") as string;
-
-  if (!name) {
-    return { error: "Branch name is required" };
-  }
-
-  const nameAr = formData.get("nameAr") as string;
-  const address = formData.get("address") as string;
-  const city = formData.get("city") as string;
-  const phone = formData.get("phone") as string;
-  const vatBranchCode = formData.get("vatBranchCode") as string;
-
-  await Branch.create({
-    tenantId,
+  return {
     name,
-    nameAr: nameAr || undefined,
+    nameAr: nameAr || name,
     address: address || undefined,
     city: city || undefined,
     phone: phone || undefined,
     vatBranchCode: vatBranchCode || undefined,
-    isHeadOffice: false,
-    active: true,
-  });
-
-  return { success: true };
+  };
 }
 
-export async function updateBranch(id: string, formData: FormData) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
+export async function createBranch(formData: FormData) {
+  const auth = await getAuthorizedSessionMembership("settings.branches:view");
+  if ("error" in auth) return { error: auth.error };
 
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return { error: "No active membership" };
-  }
+  const tenantId = auth.membership.tenantId;
+  const { name, nameAr, address, city, phone, vatBranchCode } = getBranchPayload(formData);
 
-  const name = formData.get("name") as string;
   if (!name) {
     return { error: "Branch name is required" };
   }
 
-  await Branch.findOneAndUpdate(
-    { _id: id, tenantId: membership.tenantId },
-    {
+  try {
+    await Branch.create({
+      tenantId,
       name,
-      nameAr: formData.get("nameAr") as string || undefined,
-      address: formData.get("address") as string || undefined,
-      city: formData.get("city") as string || undefined,
-      phone: formData.get("phone") as string || undefined,
-      vatBranchCode: formData.get("vatBranchCode") as string || undefined,
-    }
+      nameAr,
+      address,
+      city,
+      phone,
+      vatBranchCode,
+      isHeadOffice: false,
+      active: true,
+    });
+  } catch {
+    return { error: "Failed to create branch. Please try again." };
+  }
+
+  revalidatePath("/settings/branches");
+
+  return { success: true, message: "Branch created successfully." };
+}
+
+export async function updateBranch(id: string, formData: FormData) {
+  const auth = await getAuthorizedSessionMembership("settings.branches:view");
+  if ("error" in auth) return { error: auth.error };
+
+  const { name, nameAr, address, city, phone, vatBranchCode } = getBranchPayload(formData);
+
+  if (!name) {
+    return { error: "Branch name is required" };
+  }
+
+  const updated = await Branch.findOneAndUpdate(
+    { _id: id, tenantId: auth.membership.tenantId },
+    { name, nameAr, address, city, phone, vatBranchCode },
+    { new: true }
   );
 
-  return { success: true };
+  if (!updated) {
+    return { error: "Branch not found." };
+  }
+
+  revalidatePath("/settings/branches");
+
+  return { success: true, message: "Branch updated successfully." };
 }
 
 export async function deactivateBranch(id: string) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
+  const auth = await getAuthorizedSessionMembership("settings.branches:view");
+  if ("error" in auth) return { error: auth.error };
+
+  const branch = await Branch.findOne({ _id: id, tenantId: auth.membership.tenantId });
+  if (!branch) {
+    return { error: "Branch not found." };
   }
 
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) {
-    return { error: "No active membership" };
+  if (branch.isHeadOffice) {
+    return { error: "Head office cannot be deactivated." };
   }
 
-  await Branch.findOneAndUpdate(
-    { _id: id, tenantId: membership.tenantId },
+  if (!branch.active) {
+    return { error: "Branch is already inactive." };
+  }
+
+  await Branch.updateOne(
+    { _id: id, tenantId: auth.membership.tenantId, isHeadOffice: false, active: true },
     { active: false }
   );
 
-  return { success: true };
+  revalidatePath("/settings/branches");
+
+  return { success: true, message: "Branch deactivated successfully." };
+}
+
+export async function reactivateBranch(id: string) {
+  const auth = await getAuthorizedSessionMembership("settings.branches:view");
+  if ("error" in auth) return { error: auth.error };
+
+  const updated = await Branch.findOneAndUpdate(
+    { _id: id, tenantId: auth.membership.tenantId, active: false },
+    { active: true },
+    { new: true }
+  );
+
+  if (!updated) {
+    return { error: "Inactive branch not found." };
+  }
+
+  revalidatePath("/settings/branches");
+
+  return { success: true, message: "Branch reactivated successfully." };
 }

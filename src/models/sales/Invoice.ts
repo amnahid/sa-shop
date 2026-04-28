@@ -109,6 +109,7 @@ export interface IInvoice extends Document {
   qrCode?: string;
   xmlPayload?: string;
   customerId?: mongoose.Types.ObjectId;
+  retainerId?: mongoose.Types.ObjectId;
   customerVatNumber?: string;
   customerName?: string;
   customerAddress?: string;
@@ -175,6 +176,10 @@ const invoiceSchema = new Schema<IInvoice>(
       type: Schema.Types.ObjectId,
       ref: 'Customer',
     },
+    retainerId: {
+      type: Schema.Types.ObjectId,
+      ref: "Retainer",
+    },
     customerVatNumber: String,
     customerName: String,
     customerAddress: String,
@@ -217,6 +222,7 @@ invoiceSchema.index({ tenantId: 1, invoiceNumber: 1 }, { unique: true });
 invoiceSchema.index({ tenantId: 1, branchId: 1, issuedAt: -1 });
 invoiceSchema.index({ tenantId: 1, status: 1, issuedAt: -1 });
 invoiceSchema.index({ tenantId: 1, cashierId: 1, issuedAt: -1 });
+invoiceSchema.index({ tenantId: 1, retainerId: 1, issuedAt: -1 });
 invoiceSchema.index({ uuid: 1 }, { unique: true, sparse: true });
 
 export const Invoice = (mongoose.models.Invoice as mongoose.Model<IInvoice>) ||

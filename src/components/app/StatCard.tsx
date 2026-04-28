@@ -2,34 +2,28 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Tailwind safelist (these classes are used dynamically in VARIANT_CLASSES below):
-// from-orange-50 to-orange-100 border-orange-200 text-orange-700
-// from-teal-50 to-teal-100 border-teal-200 text-teal-700
-// from-emerald-50 to-emerald-100 border-emerald-200 text-emerald-700
-// from-rose-50 to-rose-100 border-rose-200 text-rose-700
+export type StatCardVariant = "primary" | "info" | "success" | "warning" | "danger";
 
-export type StatCardVariant = "orange" | "teal" | "emerald" | "rose";
-
-const VARIANT_CLASSES: Record<StatCardVariant, { bg: string; border: string; text: string }> = {
-  orange: {
-    bg: "bg-gradient-to-r from-orange-50 to-orange-100",
-    border: "border-orange-200",
-    text: "text-orange-700",
+const VARIANT_CLASSES: Record<StatCardVariant, { bg: string; text: string }> = {
+  primary: {
+    bg: "bg-gradient-to-br from-[#377dff] to-[#75a4ff]",
+    text: "text-white",
   },
-  teal: {
-    bg: "bg-gradient-to-r from-teal-50 to-teal-100",
-    border: "border-teal-200",
-    text: "text-teal-700",
+  info: {
+    bg: "bg-gradient-to-br from-[#25bcf1] to-[#69d4f6]",
+    text: "text-white",
   },
-  emerald: {
-    bg: "bg-gradient-to-r from-emerald-50 to-emerald-100",
-    border: "border-emerald-200",
-    text: "text-emerald-700",
+  success: {
+    bg: "bg-gradient-to-br from-[#0abb75] to-[#4dd4a5]",
+    text: "text-white",
   },
-  rose: {
-    bg: "bg-gradient-to-r from-rose-50 to-rose-100",
-    border: "border-rose-200",
-    text: "text-rose-700",
+  warning: {
+    bg: "bg-gradient-to-br from-[#ffc519] to-[#ffd75d]",
+    text: "text-white",
+  },
+  danger: {
+    bg: "bg-gradient-to-br from-[#ef486a] to-[#f4859a]",
+    text: "text-white",
   },
 };
 
@@ -54,23 +48,31 @@ export function StatCard({
   const inner = (
     <div
       className={cn(
-        "rounded-lg border p-6 shadow-sm transition-shadow",
+        "relative overflow-hidden rounded-xl p-6 shadow-sm transition-all duration-200",
         v.bg,
-        v.border,
-        href && "hover:shadow-md"
+        v.text,
+        href && "hover:-translate-y-1 hover:shadow-md active:scale-[0.98]"
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between relative z-10">
         <div className="space-y-1">
-          <p className={cn("text-sm font-medium tracking-tight", v.text)}>
+          <p className="text-xs font-bold uppercase tracking-wider opacity-80">
             {label}
           </p>
-          <p className={cn("text-2xl font-bold", v.text)}>{value}</p>
-          {subLabel && <p className={cn("text-sm opacity-80", v.text)}>{subLabel}</p>}
+          <p className="text-3xl font-extrabold tracking-tight">{value}</p>
+          {subLabel && <p className="mt-2 text-[13px] font-medium opacity-90">{subLabel}</p>}
         </div>
-        {Icon && <Icon className={cn("size-6 opacity-80", v.text)} />}
+        {Icon && (
+          <div className="rounded-lg bg-white/20 p-2 backdrop-blur-sm">
+            <Icon className="size-5" />
+          </div>
+        )}
       </div>
+      
+      {/* Decorative Wave-like circles (based on screenshot style) */}
+      <div className="absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+      <div className="absolute -top-6 -left-6 h-24 w-24 rounded-full bg-black/5 blur-xl" />
     </div>
   );
-  return href ? <Link href={href}>{inner}</Link> : inner;
+  return href ? <Link href={href} className="block">{inner}</Link> : inner;
 }

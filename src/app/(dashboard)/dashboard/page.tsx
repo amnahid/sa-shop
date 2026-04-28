@@ -64,26 +64,26 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          variant="emerald"
+          variant="success"
           label="Today's Sales"
           value={`SAR ${metrics.todaySales.toFixed(2)}`}
           subLabel={`${metrics.todayCount} transactions`}
           icon={DollarSign}
         />
         <StatCard
-          variant="teal"
+          variant="info"
           label="Products"
           value={metrics.productCount}
           icon={Package}
         />
         <StatCard
-          variant="orange"
+          variant="primary"
           label="Customers"
           value={metrics.customerCount}
           icon={Users}
         />
         <StatCard
-          variant="rose"
+          variant="danger"
           label="Low Stock Alerts"
           value={metrics.lowStockCount}
           icon={AlertTriangle}
@@ -103,11 +103,12 @@ export default async function DashboardPage() {
                 View all →
               </Link>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <DataTable
                 columns={columns}
                 rows={metrics.recentInvoices as unknown as RecentInvoice[]}
                 rowKey={(r) => r._id.toString()}
+                noCard
               />
             </CardContent>
           </Card>

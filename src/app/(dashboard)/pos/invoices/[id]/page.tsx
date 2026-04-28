@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { voidInvoice, refundInvoice } from "@/lib/actions/invoices";
-import { Invoice, Branch, Tenant } from "@/models";
+import { Invoice, Branch, Retainer, Tenant } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 
 interface Props {
@@ -28,6 +28,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   const branch = await Branch.findById(invoice.branchId);
   const tenant = await Tenant.findById(invoice.tenantId);
+  const linkedRetainer = invoice.retainerId
+    ? await Retainer.findById(invoice.retainerId).select("_id retainerNumber")
+    : null;
 
   const grandTotal = parseFloat(invoice.grandTotal.toString());
   const subtotal = parseFloat(invoice.subtotal.toString());
@@ -93,6 +96,16 @@ export default async function InvoiceDetailPage({ params }: Props) {
               <div>
                 <dt className="text-muted-foreground">Customer VAT #</dt>
                 <dd className="font-medium">{invoice.customerVatNumber}</dd>
+              </div>
+            )}
+            {linkedRetainer && (
+              <div>
+                <dt className="text-muted-foreground">Retainer</dt>
+                <dd className="font-medium">
+                  <Link href={`/retainers/${linkedRetainer._id.toString()}`} className="text-primary hover:underline">
+                    {linkedRetainer.retainerNumber}
+                  </Link>
+                </dd>
               </div>
             )}
             {tenant?.vatNumber && (

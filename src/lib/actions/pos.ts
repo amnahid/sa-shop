@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import {
   Invoice, InvoiceCounter, ParkedSale, Product, StockLevel, StockMovement,
-  Branch, Customer, Membership, IdempotencyRecord, Tenant,
+  Branch, Customer, Membership, IdempotencyRecord, Retainer, Tenant,
 } from "@/models";
 import { generateInvoiceHash, generateQrCodePng } from "@/lib/utils/zatca-qr";
 import { buildInvoiceXml } from "@/lib/utils/zatca-xml";
 import { sendInvoiceReceipt } from "@/lib/email";
+import { reportCriticalFailure } from "@/lib/ops-monitoring";
 import mongoose from "mongoose";
 
 function round2(n: number) {
@@ -50,47 +51,94 @@ export async function processSale(formData: FormData) {
   const tenantId = membership.tenantId;
   const userId = session.user.id;
 
-  const linesRaw = formData.get("lines");
-  if (!linesRaw) return { error: "No items" };
-
-  let lines: Array<{
-    productId: string;
-    sku: string;
-    name: string;
-    nameAr?: string;
-    quantity: number;
-    unitPrice: number;
-    discountAmount: number;
-    netAmount: number;
-    vatRate: number;
-    vatAmount: number;
-    totalAmount: number;
-  }>;
   try {
-    lines = JSON.parse(linesRaw as string);
-  } catch {
-    return { error: "Invalid cart data" };
-  }
+    const linesRaw = formData.get("lines");
+    if (!linesRaw) return { error: "No items" };
 
-  if (lines.length === 0) return { error: "Cart is empty" };
+    let lines: Array<{
+      productId: string;
+      sku: string;
+      name: string;
+      nameAr?: string;
+      quantity: number;
+      unitPrice: number;
+      discountAmount: number;
+      netAmount: number;
+      vatRate: number;
+      vatAmount: number;
+      totalAmount: number;
+    }>;
+    try {
+      lines = JSON.parse(linesRaw as string);
+    } catch {
+      return { error: "Invalid cart data" };
+    }
 
-  const branchId = formData.get("branchId") as string;
-  const customerId = formData.get("customerId") as string || undefined;
-  const paymentMethod = formData.get("paymentMethod") as string;
-  const cashReceived = parseFloat(formData.get("cashReceived") as string) || 0;
-  const idempotencyKey = formData.get("idempotencyKey") as string;
+    if (lines.length === 0) return { error: "Cart is empty" };
 
-  if (!branchId) return { error: "No branch selected" };
+    const branchId = formData.get("branchId") as string;
+    const customerId = formData.get("customerId") as string || undefined;
+    const retainerId = formData.get("retainerId") as string || undefined;
+    const paymentMethod = formData.get("paymentMethod") as string;
+    const cashReceived = parseFloat(formData.get("cashReceived") as string) || 0;
+    const idempotencyKey = formData.get("idempotencyKey") as string;
 
-  if (idempotencyKey) {
-    const existing = await checkIdempotency(idempotencyKey);
-    if (existing) return { invoiceId: (existing.responseBody as { invoiceId: string }).invoiceId };
-  }
+    if (!branchId) return { error: "No branch selected" };
+
+    if (idempotencyKey) {
+      const existing = await checkIdempotency(idempotencyKey);
+      if (existing) return { invoiceId: (existing.responseBody as { invoiceId: string }).invoiceId };
+    }
 
   const subtotal = round2(lines.reduce((s, l) => s + l.netAmount, 0));
   const discountTotal = round2(lines.reduce((s, l) => s + l.discountAmount, 0));
   const vatTotal = round2(lines.reduce((s, l) => s + l.vatAmount, 0));
   const grandTotal = round2(subtotal + vatTotal - discountTotal);
+  let resolvedCustomerId = customerId;
+
+  let sourceRetainer:
+    | {
+        _id: mongoose.Types.ObjectId;
+        totalAmount: number;
+        consumedAmount: number;
+        customerId?: mongoose.Types.ObjectId;
+      }
+    | undefined;
+
+  if (retainerId) {
+    const retainer = await Retainer.findOne({
+      _id: new mongoose.Types.ObjectId(retainerId),
+      tenantId,
+      status: "active",
+    }).select("_id totalAmount consumedAmount customerId");
+
+    if (!retainer) return { error: "Retainer not found or closed" };
+
+    const retainerTotal = parseFloat(retainer.totalAmount.toString());
+    const retainerConsumed = parseFloat(retainer.consumedAmount.toString());
+    const retainerRemaining = round2(retainerTotal - retainerConsumed);
+
+    if (retainerRemaining <= 0) return { error: "Retainer has no remaining balance" };
+    if (grandTotal > retainerRemaining) {
+      return {
+        error: `Invoice total exceeds retainer balance (remaining SAR ${retainerRemaining.toFixed(2)})`,
+      };
+    }
+
+    if (retainer.customerId) {
+      if (resolvedCustomerId && resolvedCustomerId !== retainer.customerId.toString()) {
+        return { error: "Invoice customer must match retainer customer" };
+      }
+      resolvedCustomerId = retainer.customerId.toString();
+    }
+
+    sourceRetainer = {
+      _id: retainer._id as mongoose.Types.ObjectId,
+      totalAmount: retainerTotal,
+      consumedAmount: retainerConsumed,
+      customerId: retainer.customerId as mongoose.Types.ObjectId | undefined,
+    };
+  }
 
   const products = await Product.find({
     _id: { $in: lines.map(l => new mongoose.Types.ObjectId(l.productId)) },
@@ -211,7 +259,8 @@ export async function processSale(formData: FormData) {
     vatTotal: mongoose.Types.Decimal128.fromString(vatTotal.toString()),
     grandTotal: mongoose.Types.Decimal128.fromString(grandTotal.toString()),
     payments,
-    customerId: customerId ? new mongoose.Types.ObjectId(customerId) : undefined,
+    customerId: resolvedCustomerId ? new mongoose.Types.ObjectId(resolvedCustomerId) : undefined,
+    retainerId: sourceRetainer?._id,
     lines: invoiceLines,
   });
 
@@ -237,10 +286,30 @@ export async function processSale(formData: FormData) {
     });
   }
 
-  if (customerId) {
-    await Customer.findByIdAndUpdate(customerId, {
+  if (resolvedCustomerId) {
+    await Customer.findByIdAndUpdate(resolvedCustomerId, {
       $inc: { visitCount: 1 },
       $set: { lastVisitAt: now },
+    });
+  }
+
+  if (sourceRetainer) {
+    const newConsumed = round2(sourceRetainer.consumedAmount + grandTotal);
+    const shouldClose = newConsumed >= sourceRetainer.totalAmount;
+    await Retainer.findByIdAndUpdate(sourceRetainer._id, {
+      consumedAmount: mongoose.Types.Decimal128.fromString(newConsumed.toFixed(2)),
+      status: shouldClose ? "closed" : "active",
+      closedAt: shouldClose ? now : undefined,
+      closedById: shouldClose ? new mongoose.Types.ObjectId(userId) : undefined,
+      $push: {
+        consumptions: {
+          invoiceId,
+          invoiceNumber,
+          amount: mongoose.Types.Decimal128.fromString(grandTotal.toFixed(2)),
+          consumedAt: now,
+          consumedById: new mongoose.Types.ObjectId(userId),
+        },
+      },
     });
   }
 
@@ -266,6 +335,9 @@ export async function processSale(formData: FormData) {
       vatTotal,
       grandTotal,
       paymentMethod: paymentMethod.replace("_", " "),
+    }, {
+      tenantId,
+      actorTenantId: membership.tenantId,
     });
   }
 
@@ -273,7 +345,33 @@ export async function processSale(formData: FormData) {
     await saveIdempotency(idempotencyKey, tenantId, new mongoose.Types.ObjectId(userId), { invoiceId: invoiceId.toString() });
   }
 
-  return { invoiceId: invoiceId.toString() };
+    return { invoiceId: invoiceId.toString() };
+  } catch (error) {
+    await reportCriticalFailure({
+      domain: "pos-checkout",
+      operation: "process-sale",
+      error,
+      tenantId,
+      actorTenantId: membership.tenantId,
+      branchId: (formData.get("branchId") as string) || undefined,
+      route: "/pos",
+      metadata: {
+        lineCount: (() => {
+          try {
+            const lines = JSON.parse((formData.get("lines") as string) || "[]");
+            return Array.isArray(lines) ? lines.length : 0;
+          } catch {
+            return 0;
+          }
+        })(),
+        paymentMethod: (formData.get("paymentMethod") as string) || undefined,
+        hasRetainer: Boolean(formData.get("retainerId")),
+        hasCustomer: Boolean(formData.get("customerId")),
+        hasIdempotencyKey: Boolean(formData.get("idempotencyKey")),
+      },
+    });
+    return { error: "Checkout failed due to a system issue. Please try again." };
+  }
 }
 
 export async function holdSale(formData: FormData) {

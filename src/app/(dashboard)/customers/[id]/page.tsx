@@ -1,16 +1,22 @@
-
-
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getCustomerWithHistory, updateCustomer, deleteCustomer } from "@/lib/actions/customers";
+import {
+  archiveCustomer,
+  getCustomerWithHistory,
+  permanentlyDeleteCustomer,
+  restoreCustomer,
+  updateCustomer,
+} from "@/lib/actions/customers";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { FormFeedback } from "@/components/app/FormFeedback";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }
 
-export default async function CustomerDetailPage({ params }: Props) {
+export default async function CustomerDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
 
   const membership = await getCurrentMembership();
@@ -18,12 +24,17 @@ export default async function CustomerDetailPage({ params }: Props) {
     return <div>No active membership</div>;
   }
 
-  const result = await getCustomerWithHistory(id, membership.tenantId.toString());
+  const result = await getCustomerWithHistory(id);
+  if (result && "error" in result) {
+    return <div>{result.error}</div>;
+  }
   if (!result) {
     return <div>Customer not found</div>;
   }
 
+  const { error, success } = await searchParams;
   const { customer, invoices } = result;
+  const isArchived = customer.deletedAt !== null;
 
   return (
     <div className="p-6 max-w-3xl">
@@ -35,23 +46,58 @@ export default async function CustomerDetailPage({ params }: Props) {
         </div>
         <Link href="/customers" className="text-primary hover:underline">← Back to Customers</Link>
       </div>
+      <FormFeedback status="error" message={error} />
+      <FormFeedback status="success" message={success} />
 
       <div className="bg-card border rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">Customer Details</h2>
-          <form action={async () => {
-            "use server";
-            await deleteCustomer(id);
-            redirect("/customers");
-          }}>
-            <button type="submit" className="text-sm text-red-500 hover:text-red-700">Delete</button>
-          </form>
+          <div className="flex items-center gap-3">
+            {isArchived ? (
+              <>
+                <form action={async () => {
+                  "use server";
+                  const response = await restoreCustomer(id);
+                  if ("error" in response) {
+                    redirect(`/customers/${id}?error=${encodeURIComponent(response.error ?? "Operation failed")}`);
+                  }
+                  redirect(`/customers/${id}?success=${encodeURIComponent(response.message ?? "Operation succeeded")}`);
+                }}>
+                  <button type="submit" className="text-sm text-primary hover:underline">Restore</button>
+                </form>
+                <form action={async () => {
+                  "use server";
+                  const response = await permanentlyDeleteCustomer(id);
+                  if ("error" in response) {
+                    redirect(`/customers/${id}?error=${encodeURIComponent(response.error ?? "Operation failed")}`);
+                  }
+                  redirect("/customers?success=Customer%20deleted%20permanently");
+                }}>
+                  <button type="submit" className="text-sm text-red-500 hover:text-red-700">Delete Permanently</button>
+                </form>
+              </>
+            ) : (
+              <form action={async () => {
+                "use server";
+                const response = await archiveCustomer(id);
+                if ("error" in response) {
+                    redirect(`/customers/${id}?error=${encodeURIComponent(response.error ?? "Operation failed")}`);
+                }
+                  redirect(`/customers/${id}?success=${encodeURIComponent(response.message ?? "Operation succeeded")}`);
+              }}>
+                <button type="submit" className="text-sm text-red-500 hover:text-red-700">Archive</button>
+              </form>
+            )}
+          </div>
         </div>
 
         <form action={async (formData) => {
           "use server";
-          await updateCustomer(id, formData);
-          redirect(`/customers/${id}`);
+          const response = await updateCustomer(id, formData);
+          if ("error" in response) {
+              redirect(`/customers/${id}?error=${encodeURIComponent(response.error ?? "Operation failed")}`);
+          }
+            redirect(`/customers/${id}?success=${encodeURIComponent(response.message ?? "Operation succeeded")}`);
         }} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>

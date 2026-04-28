@@ -10,6 +10,7 @@ import {
   resolveSidebarIcon,
   sidebarNavigationConfig,
   type NavigationAvailabilityStatus,
+  type NavigationPermissionKey,
   type SidebarMembershipRole,
   type SidebarNavigationGroup,
   type SidebarNavigationItem,
@@ -32,11 +33,7 @@ function isRouteActive(pathname: string, route: string) {
 }
 
 function isItemActive(item: SidebarNavigationItem, pathname: string): boolean {
-  if (isRouteActive(pathname, item.route)) {
-    return true;
-  }
-
-  return item.children?.some((child) => isItemActive(child, pathname)) ?? false;
+  return isRouteActive(pathname, item.route);
 }
 
 function isItemNavigable(status: NavigationAvailabilityStatus) {
@@ -59,13 +56,26 @@ interface SidebarProps {
   mobile?: boolean;
   onNavigate?: () => void;
   membershipRole?: SidebarMembershipRole | null;
+  membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
+  logoUrl?: string | null;
 }
 
-export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: SidebarProps) {
+export function Sidebar({
+  mobile = false,
+  onNavigate,
+  membershipRole = null,
+  membershipPermissionOverrides,
+  logoUrl,
+}: SidebarProps) {
   const pathname = usePathname() ?? "";
   const filteredNavigationConfig = useMemo(
-    () => filterSidebarNavigationByRole(sidebarNavigationConfig, membershipRole),
-    [membershipRole]
+    () =>
+      filterSidebarNavigationByRole(
+        sidebarNavigationConfig,
+        membershipRole,
+        membershipPermissionOverrides
+      ),
+    [membershipRole, membershipPermissionOverrides]
   );
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () =>
@@ -77,18 +87,7 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
         return acc;
       }, {})
   );
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
-    () =>
-      filteredNavigationConfig.reduce<Record<string, boolean>>((acc, group) => {
-        group.items.forEach((item) => {
-          if (item.children?.length) {
-            acc[item.id] = false;
-          }
-        });
-
-        return acc;
-      }, {})
-  );
+  
   const activeGroupIds = useMemo(
     () =>
       new Set(
@@ -99,20 +98,16 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
     [filteredNavigationConfig, pathname]
   );
 
-  function renderNavigationItem(item: SidebarNavigationItem, depth = 0) {
+  function renderNavigationItem(item: SidebarNavigationItem) {
     const Icon = resolveSidebarIcon(item.icon);
-    const hasChildren = Boolean(item.children?.length);
     const hasExactMatch = isRouteExact(pathname, item.route);
     const hasNestedMatch = isRouteNested(pathname, item.route);
-    const hasActiveChild = item.children?.some((child) => isItemActive(child, pathname)) ?? false;
-    const itemActive = hasExactMatch || hasNestedMatch || hasActiveChild;
-    const itemExpanded = itemActive || (expandedItems[item.id] ?? false);
+    const itemActive = hasExactMatch || hasNestedMatch;
     const navigable = isItemNavigable(item.status);
     const statusLabel = getStatusLabel(item.status);
-    const childrenPanelId = `${item.id}-children`;
 
     return (
-      <li key={item.id} className={cn(depth > 0 && "pl-6")}>
+      <li key={item.id}>
         <div className="flex items-center gap-1">
           {navigable ? (
             <Link
@@ -120,18 +115,18 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
               onClick={onNavigate}
               aria-current={hasExactMatch ? "page" : undefined}
               className={cn(
-                "flex min-w-0 flex-1 items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
+                "flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                 hasExactMatch
-                  ? "bg-sidebar-primary/10 text-sidebar-primary font-semibold"
-                  : hasActiveChild
-                    ? "bg-sidebar-accent/70 text-sidebar-accent-foreground font-medium"
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : itemActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                   : "text-sidebar-foreground font-normal hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
               <span className="truncate">{item.label}</span>
               {statusLabel ? (
-                <span className="ml-auto rounded border border-border/70 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <span className="ml-auto rounded border border-white/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/60">
                   {statusLabel}
                 </span>
               ) : null}
@@ -139,47 +134,18 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
           ) : (
             <span
               aria-disabled="true"
-              className="flex min-w-0 flex-1 cursor-not-allowed items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/50"
+              className="flex min-w-0 flex-1 cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/40"
             >
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
               <span className="truncate">{item.label}</span>
               {statusLabel ? (
-                <span className="ml-auto rounded border border-border/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-sidebar-foreground/60">
+                <span className="ml-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/30">
                   {statusLabel}
                 </span>
               ) : null}
             </span>
           )}
-
-          {hasChildren ? (
-              <button
-                type="button"
-                aria-label={`${itemExpanded ? "Collapse" : "Expand"} ${item.label}`}
-                aria-expanded={itemExpanded}
-                aria-controls={childrenPanelId}
-                onClick={() =>
-                  setExpandedItems((previous) => ({
-                    ...previous,
-                    [item.id]: !(previous[item.id] ?? false),
-                }))
-              }
-              className={cn(
-                "rounded-md p-1.5 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                itemActive && "text-sidebar-primary"
-              )}
-            >
-              <ChevronDown
-                className={cn("size-4 transition-transform", itemExpanded && "rotate-180")}
-              />
-            </button>
-          ) : null}
         </div>
-
-        {hasChildren && itemExpanded ? (
-          <ul id={childrenPanelId} className="mt-1 space-y-1">
-            {item.children?.map((child) => renderNavigationItem(child, depth + 1))}
-          </ul>
-        ) : null}
       </li>
     );
   }
@@ -193,11 +159,11 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
 
     return (
       <section key={group.id} className="space-y-1">
-        <div className="flex items-center justify-between px-2">
+        <div className="flex items-center justify-between px-3 mb-1">
           <p
             className={cn(
-              "text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/70",
-              groupActive && "text-sidebar-primary"
+              "text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/50",
+              groupActive && "text-primary/80"
             )}
           >
             {group.label}
@@ -215,12 +181,12 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
                 }))
               }
               className={cn(
-                "rounded-md p-1 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                groupActive && "text-sidebar-primary"
+                "rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                groupActive && "text-primary/60"
               )}
             >
               <ChevronDown
-                className={cn("size-4 transition-transform", groupExpanded && "rotate-180")}
+                className={cn("size-3 transition-transform", groupExpanded && "rotate-180")}
               />
             </button>
           ) : null}
@@ -237,19 +203,23 @@ export function Sidebar({ mobile = false, onNavigate, membershipRole = null }: S
   return (
     <aside
       className={cn(
-        "h-full flex-col bg-sidebar-background p-5",
+        "h-full flex-col bg-sidebar-background p-4",
         SIDEBAR_WIDTH_CLASS,
         mobile ? "flex" : "hidden lg:flex"
       )}
     >
-      <div className="flex h-12 items-center px-2">
-        <h1 className="text-lg font-bold">
-          <span className="text-primary">SA</span>
-          <span className="text-foreground"> SHOP</span>
-        </h1>
+      <div className="flex h-12 items-center px-2 mb-6 mt-2">
+        {logoUrl ? (
+          <img src={logoUrl} alt="Logo" className="max-h-10 max-w-[180px] object-contain" />
+        ) : (
+          <h1 className="text-2xl font-bold tracking-tight">
+            <span className="text-primary">e</span>
+            <span className="text-white">Shop</span>
+          </h1>
+        )}
       </div>
 
-      <nav aria-label="Primary navigation" className="flex-1 space-y-4 overflow-y-auto pt-2">
+      <nav aria-label="Primary navigation" className="flex-1 space-y-6 overflow-y-auto pt-2">
         {filteredNavigationConfig.map((group) => renderGroup(group))}
       </nav>
     </aside>

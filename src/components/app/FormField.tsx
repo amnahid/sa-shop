@@ -22,16 +22,19 @@ export function FormField({
   children,
 }: FormFieldProps) {
   return (
-    <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={htmlFor}>
+    <div className={cn("space-y-2", className)}>
+      <Label 
+        htmlFor={htmlFor}
+        className="ml-0.5 text-[11px] font-black uppercase tracking-widest text-gray-700"
+      >
         {label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
+        {required && <span className="ml-1 text-danger font-black">*</span>}
       </Label>
       {children}
       {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="ml-0.5 text-[10px] font-bold text-gray-400 uppercase tracking-tight">{hint}</p>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="ml-0.5 text-[10px] font-black text-danger uppercase tracking-tight">{error}</p>}
     </div>
   );
 }

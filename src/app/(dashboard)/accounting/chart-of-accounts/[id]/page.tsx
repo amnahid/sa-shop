@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
 import { updateChartAccount } from "@/lib/actions/accounting";
 import { AccountingEntry, ChartOfAccount } from "@/models";
 
@@ -12,7 +13,7 @@ export default async function AccountDetailPage({ params }: Props) {
   const { id } = await params;
 
   const membership = await getCurrentMembership();
-  if (!membership || membership.role !== "owner") redirect("/dashboard");
+  if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
 
   const account = await ChartOfAccount.findOne({ _id: id, tenantId: membership.tenantId });
   if (!account) return <div>Account not found</div>;

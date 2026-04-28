@@ -54,22 +54,22 @@ export default async function StockMovementsPage({ searchParams }: Props) {
       <form className="bg-card border rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" name="fromDate" defaultValue={params.fromDate || ""} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+          <input type="date" name="fromDate" defaultValue={params.fromDate || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" name="toDate" defaultValue={params.toDate || ""} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+          <input type="date" name="toDate" defaultValue={params.toDate || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Branch</label>
-          <select name="branchId" defaultValue={params.branchId || ""} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+          <select name="branchId" defaultValue={params.branchId || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm">
             <option value="">All Branches</option>
             {branches.map(b => <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Type</label>
-          <select name="type" defaultValue={params.type || ""} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+          <select name="type" defaultValue={params.type || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm">
             <option value="">All Types</option>
             {Object.entries(typeLabels).map(([k, v]) => (
               <option key={k} value={k}>{v}</option>
@@ -82,7 +82,7 @@ export default async function StockMovementsPage({ searchParams }: Props) {
           ...(params.toDate ? { toDate: params.toDate } : {}),
           ...(params.branchId ? { branchId: params.branchId } : {}),
           ...(params.type ? { moveType: params.type } : {}),
-        })}`} className="h-9 rounded-md border border-input bg-background px-4 text-sm font-medium flex items-center hover:bg-accent">
+        })}`} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-4 text-sm font-medium flex items-center hover:bg-accent">
           Export CSV
         </a>
       </form>

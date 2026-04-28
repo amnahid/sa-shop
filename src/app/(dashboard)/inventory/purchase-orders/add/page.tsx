@@ -78,7 +78,7 @@ export default async function AddPurchaseOrderPage({ searchParams }: Props) {
             </div>
             <div id="line-template" className="hidden">
               <div className="flex gap-2 items-center">
-                <select name="productId" className="flex-1 h-9 rounded-md border border-input bg-background px-2 text-sm line-product">
+                <select name="productId" className="flex-1 h-11 rounded-md border border-gray-200 bg-white bg-background px-2 text-sm line-product">
                   <option value="">Select product</option>
                   {products.map(p => (
                     <option key={p._id.toString()} value={p._id.toString()} data-name={p.name} data-sku={p.sku} data-cost={p.costPrice ? parseFloat(p.costPrice.toString()) : 0}>
@@ -86,8 +86,8 @@ export default async function AddPurchaseOrderPage({ searchParams }: Props) {
                     </option>
                   ))}
                 </select>
-                <input type="number" name="quantityOrdered" min="1" value="1" placeholder="Qty" className="w-20 h-9 rounded-md border border-input bg-background px-2 text-sm text-right line-qty" />
-                <input type="number" name="unitCost" min="0" step="0.01" placeholder="SAR" className="w-28 h-9 rounded-md border border-input bg-background px-2 text-sm text-right line-cost" />
+                <input type="number" name="quantityOrdered" min="1" value="1" placeholder="Qty" className="w-20 h-11 rounded-md border border-gray-200 bg-white bg-background px-2 text-sm text-right line-qty" />
+                <input type="number" name="unitCost" min="0" step="0.01" placeholder="SAR" className="w-28 h-11 rounded-md border border-gray-200 bg-white bg-background px-2 text-sm text-right line-cost" />
                 <span className="w-28 text-right text-sm line-total">SAR 0.00</span>
                 <button type="button" className="w-8 h-9 rounded border border-red-300 text-red-500 text-lg hover:bg-red-50">×</button>
               </div>

@@ -4,20 +4,25 @@ import { redirect } from "next/navigation";
 import { BookOpen, CreditCard, FileSpreadsheet, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
 import { AccountingEntry, ChartOfAccount, PaymentRecord } from "@/models";
 import { ensureTenantChartOfAccounts } from "@/lib/actions/accounting";
 
 export default async function AccountingPage() {
   const membership = await getCurrentMembership();
-  if (!membership || membership.role !== "owner") redirect("/dashboard");
+  if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
 
   await ensureTenantChartOfAccounts(membership.tenantId);
 
-  const [accountsCount, entriesCount, paymentsCount] = await Promise.all([
+  const [accountsCount, entriesCount, draftEntriesCount, postedEntriesCount, voidEntriesCount, paymentsCount] =
+    await Promise.all([
     ChartOfAccount.countDocuments({ tenantId: membership.tenantId, active: true }),
     AccountingEntry.countDocuments({ tenantId: membership.tenantId }),
+    AccountingEntry.countDocuments({ tenantId: membership.tenantId, status: "draft" }),
+    AccountingEntry.countDocuments({ tenantId: membership.tenantId, status: "posted" }),
+    AccountingEntry.countDocuments({ tenantId: membership.tenantId, status: "void" }),
     PaymentRecord.countDocuments({ tenantId: membership.tenantId }),
-  ]);
+    ]);
 
   return (
     <>
@@ -33,6 +38,11 @@ export default async function AccountingPage() {
         <StatCard label="Accounting Entries" value={entriesCount} />
         <StatCard label="Payment Records" value={paymentsCount} />
       </div>
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <StatCard label="Draft Entries" value={draftEntriesCount} />
+        <StatCard label="Posted Entries" value={postedEntriesCount} />
+        <StatCard label="Void Entries" value={voidEntriesCount} />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <FeatureCard
@@ -45,7 +55,7 @@ export default async function AccountingPage() {
           href="/accounting/entries"
           icon={Wallet}
           title="Revenue & Expenses"
-          description="Capture manual posted entries against your chart of accounts."
+          description="Capture draft and posted entries, then void invalid records when needed."
         />
         <FeatureCard
           href="/accounting/payments"

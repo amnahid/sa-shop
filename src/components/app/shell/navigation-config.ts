@@ -1,14 +1,23 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  canAccessPermission,
+  permissionRoleDefaults,
+  type AppPermissionKey,
+  type PermissionOverrides,
+} from "@/lib/utils/permissions";
+import {
   BarChart3,
   Bot,
   Boxes,
   Brain,
   Building2,
+  BellRing,
   ClipboardList,
   FileText,
   FolderOpen,
+  Image,
   LayoutDashboard,
+  Mail,
   Megaphone,
   Package,
   ReceiptText,
@@ -22,7 +31,7 @@ import {
 import type { MembershipRole } from "@/lib/utils/membership-roles";
 
 export type NavigationAvailabilityStatus = "ready" | "coming_soon" | "disabled";
-export type NavigationPermissionKey = string;
+export type NavigationPermissionKey = AppPermissionKey;
 export type SidebarMembershipRole = MembershipRole;
 
 export const sidebarIconMap = {
@@ -35,6 +44,8 @@ export const sidebarIconMap = {
   stock: FolderOpen,
   suppliers: Truck,
   purchaseOrders: ClipboardList,
+  proposals: FileText,
+  retainers: ClipboardList,
   reports: BarChart3,
   settings: Settings,
   branches: Building2,
@@ -45,6 +56,9 @@ export const sidebarIconMap = {
   integrations: Bot,
   ai: Brain,
   files: FileText,
+  media: Image,
+  emailTemplates: Mail,
+  notificationTemplates: BellRing,
 } as const;
 
 export type SidebarIconKey = keyof typeof sidebarIconMap;
@@ -57,7 +71,6 @@ export interface SidebarNavigationItem {
   icon?: SidebarIconValue;
   status: NavigationAvailabilityStatus;
   permissionKey?: NavigationPermissionKey;
-  children?: SidebarNavigationItem[];
 }
 
 export interface SidebarNavigationGroup {
@@ -70,41 +83,10 @@ export interface SidebarNavigationGroup {
   items: SidebarNavigationItem[];
 }
 
-const ALL_MEMBERSHIP_ROLES: SidebarMembershipRole[] = ["owner", "manager", "cashier"];
-const MANAGEMENT_MEMBERSHIP_ROLES: SidebarMembershipRole[] = ["owner", "manager"];
-const OWNER_MEMBERSHIP_ROLES: SidebarMembershipRole[] = ["owner"];
-
 export const sidebarPermissionDefinitions: Record<
   NavigationPermissionKey,
   readonly SidebarMembershipRole[]
-> = {
-  "dashboard:view": ALL_MEMBERSHIP_ROLES,
-  "pos:view": ALL_MEMBERSHIP_ROLES,
-  "pos.invoices:view": ALL_MEMBERSHIP_ROLES,
-  "customers:view": ALL_MEMBERSHIP_ROLES,
-  "inventory.products:view": ALL_MEMBERSHIP_ROLES,
-  "inventory.stock:view": ALL_MEMBERSHIP_ROLES,
-  "inventory.stock.adjust": ALL_MEMBERSHIP_ROLES,
-  "inventory.stock.transfer": ALL_MEMBERSHIP_ROLES,
-  "inventory.categories:view": ALL_MEMBERSHIP_ROLES,
-  "inventory.suppliers:view": ALL_MEMBERSHIP_ROLES,
-  "inventory.purchaseOrders:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "inventory.branches:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "reports:view": ALL_MEMBERSHIP_ROLES,
-  "reports.sales:view": ALL_MEMBERSHIP_ROLES,
-  "reports.profit:view": ALL_MEMBERSHIP_ROLES,
-  "reports.lowStock:view": ALL_MEMBERSHIP_ROLES,
-  "reports.stockMovements:view": ALL_MEMBERSHIP_ROLES,
-  "settings:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "settings.profile:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "settings.team:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "settings.branches:view": MANAGEMENT_MEMBERSHIP_ROLES,
-  "accounting:view": OWNER_MEMBERSHIP_ROLES,
-  "hr:view": OWNER_MEMBERSHIP_ROLES,
-  "promotions:view": OWNER_MEMBERSHIP_ROLES,
-  "integrations:view": OWNER_MEMBERSHIP_ROLES,
-  "ai:view": OWNER_MEMBERSHIP_ROLES,
-};
+> = permissionRoleDefaults;
 
 export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
   {
@@ -135,16 +117,30 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         icon: "pos",
         status: "ready",
         permissionKey: "pos:view",
-        children: [
-          {
-            id: "pos-invoices",
-            label: "Invoices",
-            route: "/pos/invoices",
-            icon: "invoices",
-            status: "ready",
-            permissionKey: "pos.invoices:view",
-          },
-        ],
+      },
+      {
+        id: "pos-invoices",
+        label: "Invoices",
+        route: "/pos/invoices",
+        icon: "invoices",
+        status: "ready",
+        permissionKey: "pos.invoices:view",
+      },
+      {
+        id: "sales-proposals",
+        label: "Proposals",
+        route: "/proposals",
+        icon: "proposals",
+        status: "ready",
+        permissionKey: "sales.proposals:view",
+      },
+      {
+        id: "sales-retainers",
+        label: "Retainers",
+        route: "/retainers",
+        icon: "retainers",
+        status: "ready",
+        permissionKey: "sales.retainers:view",
       },
       {
         id: "customers",
@@ -177,22 +173,20 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         icon: "stock",
         status: "ready",
         permissionKey: "inventory.stock:view",
-        children: [
-          {
-            id: "stock-adjust",
-            label: "Adjustments",
-            route: "/inventory/stock/adjust",
-            status: "ready",
-            permissionKey: "inventory.stock.adjust",
-          },
-          {
-            id: "stock-transfer",
-            label: "Transfers",
-            route: "/inventory/stock/transfer",
-            status: "ready",
-            permissionKey: "inventory.stock.transfer",
-          },
-        ],
+      },
+      {
+        id: "stock-adjust",
+        label: "Adjustments",
+        route: "/inventory/stock/adjust",
+        status: "ready",
+        permissionKey: "inventory.stock.adjust",
+      },
+      {
+        id: "stock-transfer",
+        label: "Transfers",
+        route: "/inventory/stock/transfer",
+        status: "ready",
+        permissionKey: "inventory.stock.transfer",
       },
       {
         id: "categories",
@@ -241,36 +235,34 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         icon: "reports",
         status: "ready",
         permissionKey: "reports:view",
-        children: [
-          {
-            id: "reports-sales",
-            label: "Sales",
-            route: "/reports/sales",
-            status: "ready",
-            permissionKey: "reports.sales:view",
-          },
-          {
-            id: "reports-profit",
-            label: "Profit",
-            route: "/reports/profit",
-            status: "ready",
-            permissionKey: "reports.profit:view",
-          },
-          {
-            id: "reports-low-stock",
-            label: "Low Stock",
-            route: "/reports/low-stock",
-            status: "ready",
-            permissionKey: "reports.lowStock:view",
-          },
-          {
-            id: "reports-stock-movements",
-            label: "Stock Movements",
-            route: "/reports/stock-movements",
-            status: "ready",
-            permissionKey: "reports.stockMovements:view",
-          },
-        ],
+      },
+      {
+        id: "reports-sales",
+        label: "Sales Reports",
+        route: "/reports/sales",
+        status: "ready",
+        permissionKey: "reports.sales:view",
+      },
+      {
+        id: "reports-profit",
+        label: "Profit Reports",
+        route: "/reports/profit",
+        status: "ready",
+        permissionKey: "reports.profit:view",
+      },
+      {
+        id: "reports-low-stock",
+        label: "Low Stock Reports",
+        route: "/reports/low-stock",
+        status: "ready",
+        permissionKey: "reports.lowStock:view",
+      },
+      {
+        id: "reports-stock-movements",
+        label: "Stock Movements",
+        route: "/reports/stock-movements",
+        status: "ready",
+        permissionKey: "reports.stockMovements:view",
       },
     ],
   },
@@ -287,31 +279,61 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         icon: "settings",
         status: "ready",
         permissionKey: "settings:view",
-        children: [
-          {
-            id: "settings-profile",
-            label: "Profile",
-            route: "/settings/profile",
-            status: "ready",
-            permissionKey: "settings.profile:view",
-          },
-          {
-            id: "settings-team",
-            label: "Team",
-            route: "/settings/team",
-            icon: "team",
-            status: "ready",
-            permissionKey: "settings.team:view",
-          },
-          {
-            id: "settings-branches",
-            label: "Branches",
-            route: "/settings/branches",
-            icon: "branches",
-            status: "ready",
-            permissionKey: "settings.branches:view",
-          },
-        ],
+      },
+      {
+        id: "settings-profile",
+        label: "Profile",
+        route: "/settings/profile",
+        status: "ready",
+        permissionKey: "settings.profile:view",
+      },
+      {
+        id: "settings-team",
+        label: "Team",
+        route: "/settings/team",
+        icon: "team",
+        status: "ready",
+        permissionKey: "settings.team:view",
+      },
+      {
+        id: "settings-branches",
+        label: "Branches",
+        route: "/settings/branches",
+        icon: "branches",
+        status: "ready",
+        permissionKey: "settings.branches:view",
+      },
+      {
+        id: "settings-admin",
+        label: "Admin",
+        route: "/settings/admin",
+        icon: "team",
+        status: "ready",
+        permissionKey: "settings.admin:view",
+      },
+      {
+        id: "settings-media-library",
+        label: "Media Library",
+        route: "/settings/media-library",
+        icon: "media",
+        status: "ready",
+        permissionKey: "settings.media:view",
+      },
+      {
+        id: "settings-email-templates",
+        label: "Email Templates",
+        route: "/settings/email-templates",
+        icon: "emailTemplates",
+        status: "ready",
+        permissionKey: "settings.templates.email:view",
+      },
+      {
+        id: "settings-notification-templates",
+        label: "Notification Templates",
+        route: "/settings/notification-templates",
+        icon: "notificationTemplates",
+        status: "ready",
+        permissionKey: "settings.templates.notification:view",
       },
     ],
   },
@@ -328,36 +350,34 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         icon: "accounting",
         status: "ready",
         permissionKey: "accounting:view",
-        children: [
-          {
-            id: "accounting-chart-of-accounts",
-            label: "Chart of Accounts",
-            route: "/accounting/chart-of-accounts",
-            status: "ready",
-            permissionKey: "accounting:view",
-          },
-          {
-            id: "accounting-entries",
-            label: "Revenue & Expenses",
-            route: "/accounting/entries",
-            status: "ready",
-            permissionKey: "accounting:view",
-          },
-          {
-            id: "accounting-payments",
-            label: "Payments",
-            route: "/accounting/payments",
-            status: "ready",
-            permissionKey: "accounting:view",
-          },
-          {
-            id: "accounting-reports",
-            label: "Reports",
-            route: "/accounting/reports",
-            status: "ready",
-            permissionKey: "accounting:view",
-          },
-        ],
+      },
+      {
+        id: "accounting-chart-of-accounts",
+        label: "Chart of Accounts",
+        route: "/accounting/chart-of-accounts",
+        status: "ready",
+        permissionKey: "accounting:view",
+      },
+      {
+        id: "accounting-entries",
+        label: "Revenue & Expenses",
+        route: "/accounting/entries",
+        status: "ready",
+        permissionKey: "accounting:view",
+      },
+      {
+        id: "accounting-payments",
+        label: "Payments",
+        route: "/accounting/payments",
+        status: "ready",
+        permissionKey: "accounting:view",
+      },
+      {
+        id: "accounting-reports",
+        label: "Accounting Reports",
+        route: "/accounting/reports",
+        status: "ready",
+        permissionKey: "accounting:view",
       },
     ],
   },
@@ -413,52 +433,35 @@ export function resolveSidebarIcon(icon?: SidebarIconValue): LucideIcon | undefi
 
 export function canAccessSidebarPermission(
   permissionKey: NavigationPermissionKey | undefined,
-  role: SidebarMembershipRole | null | undefined
+  role: SidebarMembershipRole | null | undefined,
+  permissionOverrides?: PermissionOverrides
 ) {
-  if (!permissionKey) {
-    return true;
-  }
-
-  if (!role) {
-    return false;
-  }
-
-  const allowedRoles = sidebarPermissionDefinitions[permissionKey];
-  if (!allowedRoles) {
-    return false;
-  }
-
-  return allowedRoles.includes(role);
+  return canAccessPermission(permissionKey, role, permissionOverrides);
 }
 
 function filterSidebarNavigationItem(
   item: SidebarNavigationItem,
-  role: SidebarMembershipRole | null | undefined
+  role: SidebarMembershipRole | null | undefined,
+  permissionOverrides?: PermissionOverrides
 ): SidebarNavigationItem | null {
-  if (!canAccessSidebarPermission(item.permissionKey, role)) {
+  if (!canAccessSidebarPermission(item.permissionKey, role, permissionOverrides)) {
     return null;
   }
 
-  const filteredChildren = item.children
-    ?.map((child) => filterSidebarNavigationItem(child, role))
-    .filter((child): child is SidebarNavigationItem => child !== null);
-
-  return {
-    ...item,
-    children: filteredChildren?.length ? filteredChildren : undefined,
-  };
+  return item;
 }
 
 export function filterSidebarNavigationByRole(
   groups: SidebarNavigationGroup[],
-  role: SidebarMembershipRole | null | undefined
+  role: SidebarMembershipRole | null | undefined,
+  permissionOverrides?: PermissionOverrides
 ): SidebarNavigationGroup[] {
   return groups
-    .filter((group) => canAccessSidebarPermission(group.permissionKey, role))
+    .filter((group) => canAccessSidebarPermission(group.permissionKey, role, permissionOverrides))
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterSidebarNavigationItem(item, role))
+        .map((item) => filterSidebarNavigationItem(item, role, permissionOverrides))
         .filter((item): item is SidebarNavigationItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);

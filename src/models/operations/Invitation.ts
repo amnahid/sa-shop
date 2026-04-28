@@ -7,9 +7,11 @@ export interface IInvitation extends Document {
   role: 'owner' | 'manager' | 'cashier';
   branchIds: mongoose.Types.ObjectId[];
   invitedBy: mongoose.Types.ObjectId;
+  revokedBy?: mongoose.Types.ObjectId;
   token?: string;
   expiresAt: Date;
   acceptedAt?: Date;
+  revokedAt?: Date;
   createdAt: Date;
 }
 
@@ -41,6 +43,10 @@ const invitationSchema = new Schema<IInvitation>(
       ref: 'User',
       required: true,
     },
+    revokedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     token: {
       type: String,
       unique: true,
@@ -52,6 +58,7 @@ const invitationSchema = new Schema<IInvitation>(
       expires: 604800,
     },
     acceptedAt: Date,
+    revokedAt: Date,
   },
   {
     timestamps: true,

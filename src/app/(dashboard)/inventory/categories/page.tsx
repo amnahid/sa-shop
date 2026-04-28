@@ -1,79 +1,266 @@
-
-
-import mongoose from "mongoose";
-import { Category } from "@/models";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/app/PageHeader";
+import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/app/FormField";
+import { Plus } from "lucide-react";
+import {
+  archiveCategory,
+  bulkArchiveCategories,
+  bulkDeleteCategories,
+  bulkRestoreCategories,
+  createCategory,
+  permanentlyDeleteCategory,
+  restoreCategory,
+} from "@/lib/actions/categories";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { Category } from "@/models";
+import { FormFeedback } from "@/components/app/FormFeedback";
 
-export default async function CategoriesPage() {
+interface CategoryRow {
+  id: string;
+  name: string;
+  nameAr?: string;
+  parentName: string;
+  archived: boolean;
+}
+
+interface CategoriesPageProps {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}
+
+export default async function CategoriesPage({ searchParams }: CategoriesPageProps) {
   const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
   }
+  const { error, success } = await searchParams;
 
   const tenantId = membership.tenantId;
+  const categories = await Category.find({ tenantId }).sort({ name: 1 });
+  const parentMap = new Map(categories.map((category) => [category._id.toString(), category.name]));
+  const rows: CategoryRow[] = categories.map((category) => ({
+    id: category._id.toString(),
+    name: category.name,
+    nameAr: category.nameAr || undefined,
+    parentName: category.parentId ? parentMap.get(category.parentId.toString()) ?? "—" : "Root",
+    archived: category.deletedAt !== null,
+  }));
 
-  const categories = await Category.find({ tenantId, deletedAt: null, active: true }).sort({ name: 1 });
-
-  const addCategory = async (formData: FormData) => {
-    "use server";
-    const membership = await getCurrentMembership();
-    if (!membership) return;
-
-    const name = formData.get("name") as string;
-    if (!name) return;
-
-    const nameAr = formData.get("nameAr") as string;
-    const parentId = formData.get("parentId") as string;
-
-    await Category.create({
-      tenantId: membership.tenantId,
-      name,
-      nameAr: nameAr || undefined,
-      parentId: parentId ? new mongoose.Types.ObjectId(parentId) : undefined,
-      active: true,
-    });
-  };
+  const columns: DataTableColumn<CategoryRow>[] = [
+    {
+      key: "name",
+      header: "Category",
+      render: (row) => (
+        <div>
+          <div className="font-bold text-gray-900">{row.name}</div>
+          {row.nameAr ? (
+            <div className="text-xs text-muted-foreground font-medium" dir="rtl">
+              {row.nameAr}
+            </div>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      key: "parentName",
+      header: "Parent",
+      render: (row) => <span className="font-medium text-gray-600">{row.parentName}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (row) => (
+        <span className={row.archived ? "text-amber-700 font-semibold" : "text-emerald-700 font-semibold"}>
+          {row.archived ? "Archived" : "Active"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (row) => (
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" size="xs" className="font-bold uppercase text-[10px] tracking-widest px-4" asChild>
+            <Link href={`/inventory/categories/${row.id}`}>Edit</Link>
+          </Button>
+          {row.archived ? (
+            <>
+              <Button
+                type="submit"
+                formAction={async () => {
+                  "use server";
+                  const result = await restoreCategory(row.id);
+                  if ("error" in result) {
+                    redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                  }
+                  redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+                }}
+                variant="outline"
+                size="xs"
+                className="font-bold uppercase text-[10px] tracking-widest px-4"
+              >
+                Restore
+              </Button>
+              <Button
+                type="submit"
+                formAction={async () => {
+                  "use server";
+                  const result = await permanentlyDeleteCategory(row.id);
+                  if ("error" in result) {
+                    redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                  }
+                  redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+                }}
+                variant="destructive"
+                size="xs"
+                className="font-bold uppercase text-[10px] tracking-widest px-4"
+              >
+                Delete
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="submit"
+              formAction={async () => {
+                "use server";
+                const result = await archiveCategory(row.id);
+                if ("error" in result) {
+                  redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                }
+                redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+              }}
+              variant="destructive"
+              size="xs"
+              className="font-bold uppercase text-[10px] tracking-widest px-4"
+            >
+              Archive
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Categories</h1>
-      </div>
+    <>
+      <PageHeader
+        title="Product Categories"
+        section="Inventory"
+        breadcrumbs={[{ label: "Categories" }]}
+        description={`Organize your catalog into ${categories.length} searchable product groups and hierarchies.`}
+      />
+      <FormFeedback status="error" message={error} />
+      <FormFeedback status="success" message={success} />
 
-      <form action={addCategory} className="mb-6 p-4 bg-card border rounded-lg">
-        <h2 className="text-sm font-medium mb-3">Add Category</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <input name="name" type="text" placeholder="Name" required className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <input name="nameAr" type="text" dir="rtl" placeholder="الاسم" className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          <select name="parentId" className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-            <option value="">Root (no parent)</option>
-            {categories.map((cat) => (
-              <option key={cat._id.toString()} value={cat._id.toString()}>{cat.name}</option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="mt-3 inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-9 px-3 text-sm font-medium">
-          Add Category
-        </button>
-      </form>
-
-      <div className="bg-card border rounded-lg overflow-hidden">
-        {categories.length === 0 ? (
-          <p className="p-6 text-center text-muted-foreground">No categories yet</p>
-        ) : (
-          <div className="divide-y">
-            {categories.map((cat) => (
-              <div key={cat._id.toString()} className="flex items-center justify-between p-3">
-                <div>
-                  <span className="font-medium">{cat.name}</span>
-                  {cat.nameAr && <span className="ml-2 text-muted-foreground" dir="rtl">{cat.nameAr}</span>}
-                </div>
-                {cat.parentId && <span className="text-xs text-muted-foreground">Subcategory</span>}
-              </div>
-            ))}
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center gap-2 py-3 border-b border-gray-50">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-soft-primary text-primary">
+            <Plus className="size-4" />
           </div>
-        )}
-      </div>
-    </div>
+          <CardTitle className="text-sm font-bold uppercase tracking-tight">Create New Category</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form
+            action={async (formData) => {
+              "use server";
+              const result = await createCategory(formData);
+              if ("error" in result) {
+                redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+              }
+              redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+            }}
+            className="space-y-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormField label="Category Name" htmlFor="name" required>
+                <Input name="name" id="name" type="text" placeholder="e.g. Beverages" required />
+              </FormField>
+              <FormField label="Arabic Name (الاسم)" htmlFor="nameAr" className="text-right">
+                <Input name="nameAr" id="nameAr" type="text" dir="rtl" placeholder="اسم الفئة" />
+              </FormField>
+              <FormField label="Parent Category" htmlFor="parentId">
+                <select
+                  name="parentId"
+                  id="parentId"
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Root (no parent)</option>
+                  {categories
+                    .filter((category) => category.deletedAt === null)
+                    .map((cat) => (
+                      <option key={cat._id.toString()} value={cat._id.toString()}>
+                        {cat.name}
+                      </option>
+                    ))}
+                </select>
+              </FormField>
+            </div>
+            <div className="flex justify-end pt-2 border-t border-gray-50">
+              <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-10 h-11">
+                Save Category
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        bulk={{
+          getRowLabel: (row) => row.name,
+          actions: [
+            {
+              key: "archive",
+              label: "Archive selected",
+              action: async (formData) => {
+                "use server";
+                const result = await bulkArchiveCategories(formData);
+                if (result.error) {
+                  redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                }
+                redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+              },
+              variant: "destructive",
+            },
+            {
+              key: "restore",
+              label: "Restore selected",
+              action: async (formData) => {
+                "use server";
+                const result = await bulkRestoreCategories(formData);
+                if (result.error) {
+                  redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                }
+                redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+              },
+            },
+            {
+              key: "delete",
+              label: "Delete selected",
+              action: async (formData) => {
+                "use server";
+                const result = await bulkDeleteCategories(formData);
+                if (result.error) {
+                  redirect(`/inventory/categories?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                }
+                redirect(`/inventory/categories?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+              },
+              variant: "destructive",
+            },
+          ],
+        }}
+        empty={{
+          title: "No categories yet",
+          description: "Create your first category above.",
+        }}
+      />
+    </>
   );
 }

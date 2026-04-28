@@ -1,8 +1,21 @@
-
 import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { loadInvoices } from "@/lib/actions/invoices";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
+import { StatusBadge } from "@/components/app/StatusBadge";
+import { Button } from "@/components/ui/button";
+
+interface InvoiceRow {
+  id: string;
+  number: string;
+  date: Date;
+  branch: string;
+  cashier: string;
+  items: number;
+  total: number;
+  status: string;
+}
 
 export default async function InvoicesPage() {
   const membership = await getCurrentMembership();
@@ -11,15 +24,81 @@ export default async function InvoicesPage() {
   }
 
   const tenantId = membership.tenantId;
-
   const invoices = await loadInvoices(tenantId.toString(), { tenantId });
 
-  const statusColors: Record<string, string> = {
-    completed: "bg-green-100 text-green-800",
-    voided: "bg-gray-100 text-gray-800",
-    refunded: "bg-blue-100 text-blue-800",
-    draft: "bg-yellow-100 text-yellow-800",
-  };
+  const rows: InvoiceRow[] = invoices.map(inv => ({
+    id: inv._id.toString(),
+    number: inv.invoiceNumber,
+    date: inv.issuedAt,
+    branch: inv.branch?.name || "-",
+    cashier: inv.cashier?.name || "-",
+    items: inv.itemCount,
+    total: parseFloat(inv.grandTotal.toString()),
+    status: inv.status,
+  }));
+
+  const columns: DataTableColumn<InvoiceRow>[] = [
+    {
+      key: "number",
+      header: "Invoice #",
+      render: (r) => <span className="font-bold text-gray-900">{r.number}</span>,
+    },
+    {
+      key: "date",
+      header: "Date",
+      render: (r) => (
+        <span className="text-gray-500 font-medium">
+          {r.date.toLocaleDateString("en-SA", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </span>
+      ),
+    },
+    {
+      key: "branch",
+      header: "Branch",
+      render: (r) => <span className="font-medium text-gray-700">{r.branch}</span>,
+    },
+    {
+      key: "cashier",
+      header: "Cashier",
+      render: (r) => <span className="text-gray-500">{r.cashier}</span>,
+    },
+    {
+      key: "items",
+      header: "Items",
+      align: "right",
+      render: (r) => <span className="font-bold text-gray-600">{r.items}</span>,
+    },
+    {
+      key: "total",
+      header: "Total",
+      align: "right",
+      render: (r) => <span className="font-black text-primary">SAR {r.total.toFixed(2)}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      render: (r) => <StatusBadge status={r.status} />,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      align: "right",
+      render: (r) => (
+        <Button variant="secondary" size="xs" className="font-bold uppercase text-[10px] tracking-widest px-4" asChild>
+          <Link href={`/pos/invoices/${r.id}`}>
+            View
+          </Link>
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -31,72 +110,27 @@ export default async function InvoicesPage() {
           { label: "Invoices" },
         ]}
         actions={
-          <Link href="/pos" className="text-sm text-primary hover:underline">
-            Back to POS
-          </Link>
+          <Button variant="outline" size="sm" className="font-bold uppercase tracking-wider text-[11px]" asChild>
+            <Link href="/pos">Back to POS</Link>
+          </Button>
         }
+        description={`Displaying ${invoices.length} recent sales transactions.`}
       />
 
-      <div className="bg-card border rounded-lg overflow-hidden">
-        {invoices.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">
-            <p>No invoices yet</p>
-            <Link href="/pos" className="text-primary hover:underline mt-2 inline-block">
-              Start a new sale
-            </Link>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-3 font-medium">Invoice #</th>
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-left p-3 font-medium">Branch</th>
-                <th className="text-left p-3 font-medium">Cashier</th>
-                <th className="text-right p-3 font-medium">Items</th>
-                <th className="text-right p-3 font-medium">Total</th>
-                <th className="text-center p-3 font-medium">Status</th>
-                <th className="text-center p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map(inv => (
-                <tr key={inv._id.toString()} className="border-t">
-                  <td className="p-3 font-medium">{inv.invoiceNumber}</td>
-                  <td className="p-3 text-muted-foreground">
-                    {inv.issuedAt.toLocaleDateString("en-SA", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="p-3">{inv.branch?.name || "-"}</td>
-                  <td className="p-3 text-muted-foreground">{inv.cashier?.name || "-"}</td>
-                  <td className="p-3 text-right">{inv.itemCount}</td>
-                  <td className="p-3 text-right font-medium">
-                    SAR {parseFloat(inv.grandTotal.toString()).toFixed(2)}
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-1 rounded ${statusColors[inv.status] || ""}`}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <Link
-                      href={`/pos/invoices/${inv._id}`}
-                      className="text-primary hover:underline text-sm"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        empty={{
+          title: "No invoices yet",
+          description: "Start your first sale at the POS to generate invoices.",
+          action: (
+            <Button asChild>
+              <Link href="/pos">Go to POS</Link>
+            </Button>
+          ),
+        }}
+      />
     </div>
   );
 }

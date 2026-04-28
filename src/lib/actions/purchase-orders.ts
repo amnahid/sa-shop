@@ -1,8 +1,8 @@
 "use server";
 
-import { getSession } from "@/lib/auth-utils";
-import { PurchaseOrder, Product, StockLevel, StockBatch, StockMovement, Branch, Supplier, Membership } from "@/models";
+import { PurchaseOrder, Product, StockLevel, StockBatch, StockMovement, Branch, Supplier } from "@/models";
 import mongoose from "mongoose";
+import { getAuthorizedSessionMembership } from "@/lib/utils/server-authorization";
 
 async function getNextPoNumber(tenantId: mongoose.Types.ObjectId) {
   const count = await PurchaseOrder.countDocuments({ tenantId });
@@ -14,13 +14,9 @@ function round2(n: number) {
 }
 
 export async function createPurchaseOrder(formData: FormData) {
-  const session = await getSession();
-  if (!session?.user?.id) return { error: "Unauthorized" };
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership) return { error: "No active membership" };
-
-  if (membership.role === "cashier") return { error: "Insufficient permissions" };
+  const auth = await getAuthorizedSessionMembership("inventory.purchaseOrders:view");
+  if ("error" in auth) return { error: auth.error };
+  const { membership, sessionUserId } = auth;
 
   const linesRaw = formData.get("lines") as string;
   if (!linesRaw) return { error: "No items" };
@@ -59,7 +55,7 @@ export async function createPurchaseOrder(formData: FormData) {
     tenantId: membership.tenantId,
     supplierId: new mongoose.Types.ObjectId(supplierId),
     branchId: new mongoose.Types.ObjectId(branchId),
-    createdById: new mongoose.Types.ObjectId(session.user.id),
+    createdById: new mongoose.Types.ObjectId(sessionUserId),
     poNumber: await getNextPoNumber(membership.tenantId),
     status: "draft",
     notes: formData.get("notes") as string || undefined,
@@ -74,11 +70,9 @@ export async function createPurchaseOrder(formData: FormData) {
 }
 
 export async function submitPurchaseOrder(poId: string) {
-  const session = await getSession();
-  if (!session?.user?.id) return { error: "Unauthorized" };
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership || membership.role === "cashier") return { error: "Insufficient permissions" };
+  const auth = await getAuthorizedSessionMembership("inventory.purchaseOrders:view");
+  if ("error" in auth) return { error: auth.error };
+  const { membership } = auth;
 
   const po = await PurchaseOrder.findOne({ _id: poId, tenantId: membership.tenantId });
   if (!po) return { error: "Purchase order not found" };
@@ -89,11 +83,9 @@ export async function submitPurchaseOrder(poId: string) {
 }
 
 export async function cancelPurchaseOrder(poId: string) {
-  const session = await getSession();
-  if (!session?.user?.id) return { error: "Unauthorized" };
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership || membership.role === "cashier") return { error: "Insufficient permissions" };
+  const auth = await getAuthorizedSessionMembership("inventory.purchaseOrders:view");
+  if ("error" in auth) return { error: auth.error };
+  const { membership } = auth;
 
   const po = await PurchaseOrder.findOne({ _id: poId, tenantId: membership.tenantId });
   if (!po) return { error: "Purchase order not found" };
@@ -112,11 +104,9 @@ export async function receivePurchaseOrderLine(
   batchNumber: string,
   expiryDate?: string
 ) {
-  const session = await getSession();
-  if (!session?.user?.id) return { error: "Unauthorized" };
-
-  const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
-  if (!membership || membership.role === "cashier") return { error: "Insufficient permissions" };
+  const auth = await getAuthorizedSessionMembership("inventory.purchaseOrders:view");
+  if ("error" in auth) return { error: auth.error };
+  const { membership, sessionUserId } = auth;
 
   if (receivedQty <= 0) return { error: "Quantity must be positive" };
 
@@ -183,7 +173,7 @@ export async function receivePurchaseOrderLine(
     quantityDelta: receivedQty.toString(),
     quantityAfter: stockLevel ? parseFloat(stockLevel.quantity.toString()) + receivedQty : receivedQty,
     reason: `PO #${po.poNumber}`,
-    userId: new mongoose.Types.ObjectId(session.user.id),
+    userId: new mongoose.Types.ObjectId(sessionUserId),
   });
 
   po.lines[lineIndex].quantityReceived = newReceived;

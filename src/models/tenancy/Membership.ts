@@ -9,6 +9,7 @@ export interface IMembership extends Document {
   invitedAt?: Date;
   acceptedAt?: Date;
   status: 'invited' | 'active' | 'suspended';
+  permissionOverrides?: Map<string, boolean>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,10 @@ const membershipSchema = new Schema<IMembership>(
       type: String,
       enum: ['invited', 'active', 'suspended'],
       default: 'active',
+    },
+    permissionOverrides: {
+      type: Map,
+      of: Boolean,
     },
   },
   {

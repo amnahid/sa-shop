@@ -3,48 +3,49 @@ import { cn } from "@/lib/utils";
 export type StatusVariant = "success" | "neutral" | "info" | "danger" | "warning";
 
 const VARIANT_CLASSES: Record<StatusVariant, string> = {
-  success: "bg-green-100 text-green-700",
-  neutral: "bg-gray-100 text-gray-700",
-  info: "bg-blue-100 text-blue-700",
-  danger: "bg-red-100 text-red-700",
-  warning: "bg-amber-100 text-amber-700",
+  success: "bg-soft-success/80 text-success border-success/20",
+  neutral: "bg-soft-secondary text-secondary border-secondary/20",
+  info: "bg-soft-info/80 text-info border-info/20",
+  danger: "bg-soft-danger/80 text-danger border-danger/20",
+  warning: "bg-soft-warning/80 text-warning border-warning/20",
 };
 
 const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   completed: "success",
   active: "success",
+  ready: "success",
   paid: "success",
-  accepted: "success",
-  pending: "neutral",
+  posted: "success",
   draft: "neutral",
-  sent: "info",
-  refunded: "info",
-  voided: "danger",
-  cancelled: "danger",
-  rejected: "danger",
+  pending: "warning",
+  void: "danger",
+  deleted: "danger",
+  inactive: "neutral",
+  suspended: "danger",
+  low_stock: "warning",
+  out_of_stock: "danger",
   failed: "danger",
-  "low-stock": "warning",
-  warning: "warning",
+  critical: "danger",
 };
 
 interface StatusBadgeProps {
   status: string;
-  variant?: StatusVariant;
   className?: string;
+  variant?: StatusVariant;
 }
 
-export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
-  const resolved =
-    variant ?? STATUS_TO_VARIANT[status.toLowerCase()] ?? "neutral";
+export function StatusBadge({ status, className, variant }: StatusBadgeProps) {
+  const resolved = variant || STATUS_TO_VARIANT[status.toLowerCase()] || "neutral";
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium capitalize",
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
         VARIANT_CLASSES[resolved],
         className
       )}
     >
-      {status}
+      {status.replace("_", " ")}
     </span>
   );
 }

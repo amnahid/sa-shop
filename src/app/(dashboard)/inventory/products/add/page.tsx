@@ -1,12 +1,15 @@
-
-
 import { redirect } from "next/navigation";
-import mongoose from "mongoose";
+import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
-import { Product, Category, Branch, StockLevel } from "@/models";
-import { generateSKU } from "@/lib/utils/csv";
+import { Category } from "@/models";
+import { createProduct } from "@/lib/actions/products";
+import { FormFeedback } from "@/components/app/FormFeedback";
 
-export default async function AddProductPage() {
+interface AddProductPageProps {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}
+
+export default async function AddProductPage({ searchParams }: AddProductPageProps) {
   const membership = await getCurrentMembership();
   if (!membership) {
     return <div>No active membership</div>;
@@ -15,58 +18,25 @@ export default async function AddProductPage() {
   const tenantId = membership.tenantId;
 
   const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 });
-  const branches = await Branch.find({ tenantId, active: true });
-
-  const createProductAction = async (formData: FormData) => {
-    "use server";
-    const membership = await getCurrentMembership();
-    if (!membership) return;
-
-    const tenantId = membership.tenantId;
-    const userId = membership.userId;
-
-    const sku = formData.get("sku") as string || generateSKU();
-    const name = formData.get("name") as string;
-    if (!name) return;
-
-    const categoryIdStr = formData.get("categoryId") as string;
-    const categoryId = categoryIdStr ? new mongoose.Types.ObjectId(categoryIdStr) : undefined;
-
-    const product = await Product.create({
-      tenantId,
-      sku,
-      barcode: formData.get("barcode") as string || undefined,
-      name,
-      nameAr: formData.get("nameAr") as string || undefined,
-      categoryId,
-      unit: formData.get("unit") as string || "piece",
-      sellingPrice: formData.get("sellingPrice") as string || "0",
-      vatRate: parseFloat(formData.get("vatRate") as string || "0.15"),
-      vatInclusivePrice: true,
-      trackStock: formData.get("trackStock") === "on",
-      lowStockThreshold: parseInt(formData.get("lowStockThreshold") as string || "10"),
-      expiryTracking: formData.get("expiryTracking") === "on",
-      active: true,
-    });
-
-    for (const branch of branches) {
-      await StockLevel.create({
-        tenantId,
-        productId: product._id,
-        branchId: branch._id,
-        quantity: "0",
-        reservedQuantity: "0",
-      });
-    }
-
-    redirect("/inventory/products");
-  };
+  const { error, success } = await searchParams;
 
   return (
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-foreground mb-6">Add Product</h1>
+      <FormFeedback status="error" message={error} />
+      <FormFeedback status="success" message={success} />
 
-      <form action={createProductAction} className="space-y-4">
+      <form
+        action={async (formData) => {
+          "use server";
+          const result = await createProduct(formData);
+          if ("error" in result) {
+            redirect(`/inventory/products/add?error=${encodeURIComponent(result.error ?? "Unable to create product")}`);
+          }
+          redirect("/inventory/products?success=Product%20created%20successfully");
+        }}
+        className="space-y-4"
+      >
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="sku" className="block text-sm font-medium text-foreground mb-1">SKU</label>
@@ -143,7 +113,7 @@ export default async function AddProductPage() {
         </div>
 
         <div className="flex justify-between gap-2 pt-4">
-          <a href="/inventory/products" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</a>
+          <Link href="/inventory/products" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</Link>
           <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium">Add Product</button>
         </div>
       </form>

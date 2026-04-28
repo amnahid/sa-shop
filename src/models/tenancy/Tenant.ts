@@ -11,6 +11,7 @@ export interface ITenant extends Document {
   phone?: string;
   email?: string;
   logoUrl?: string;
+  primaryColor?: string;
   baseCurrency: string;
   timezone: string;
   defaultLanguage: 'ar' | 'en';
@@ -57,6 +58,10 @@ const tenantSchema = new Schema<ITenant>(
     phone: String,
     email: String,
     logoUrl: String,
+    primaryColor: {
+      type: String,
+      default: '#377dff',
+    },
     baseCurrency: {
       type: String,
       default: 'SAR',

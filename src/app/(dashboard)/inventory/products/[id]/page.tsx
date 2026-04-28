@@ -1,16 +1,22 @@
-
-
 import { redirect } from "next/navigation";
-import mongoose from "mongoose";
+import Link from "next/link";
 import { Product, Category } from "@/models";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import {
+  archiveProduct,
+  permanentlyDeleteProduct,
+  restoreProduct,
+  updateProduct,
+} from "@/lib/actions/products";
+import { FormFeedback } from "@/components/app/FormFeedback";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; success?: string }>;
 }
 
-export default async function EditProductPage({ params }: Props) {
+export default async function EditProductPage({ params, searchParams }: Props) {
   const { id } = await params;
   
   const membership = await getCurrentMembership();
@@ -26,41 +32,73 @@ export default async function EditProductPage({ params }: Props) {
   }
 
   const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 });
-
-  const updateProductAction = async (formData: FormData) => {
-    "use server";
-    const membership = await getCurrentMembership();
-    if (!membership) return;
-
-    const categoryIdStr = formData.get("categoryId") as string;
-    const categoryId = categoryIdStr ? new mongoose.Types.ObjectId(categoryIdStr) : undefined;
-
-    await Product.findOneAndUpdate(
-      { _id: id, tenantId: membership.tenantId },
-      {
-        sku: formData.get("sku") as string,
-        barcode: formData.get("barcode") as string || undefined,
-        name: formData.get("name") as string,
-        nameAr: formData.get("nameAr") as string || undefined,
-        categoryId,
-        unit: formData.get("unit") as string,
-        sellingPrice: formData.get("sellingPrice") as string,
-        vatRate: parseFloat(formData.get("vatRate") as string),
-        trackStock: formData.get("trackStock") === "on",
-        lowStockThreshold: parseInt(formData.get("lowStockThreshold") as string || "10"),
-        expiryTracking: formData.get("expiryTracking") === "on",
-      }
-    );
-
-    redirect("/inventory/products");
-  };
+  const { error, success } = await searchParams;
+  const isArchived = product.deletedAt !== null;
 
   return (
     <div className="p-6 max-w-2xl">
       <Breadcrumb items={[{ label: "Products", href: "/inventory/products" }, { label: product.name }]} />
-      <h1 className="text-2xl font-bold text-foreground mt-4 mb-6">Edit Product</h1>
+      <div className="mt-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Edit Product</h1>
+        <div className="flex gap-2">
+          {isArchived ? (
+            <>
+              <form
+                action={async () => {
+                  "use server";
+                  const result = await restoreProduct(id);
+                  if ("error" in result) {
+                    redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                  }
+                  redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+                }}
+              >
+                <button type="submit" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-9 px-3 text-xs font-medium">Restore</button>
+              </form>
+              <form
+                action={async () => {
+                  "use server";
+                  const result = await permanentlyDeleteProduct(id);
+                  if ("error" in result) {
+                    redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                  }
+                  redirect("/inventory/products?success=Product%20deleted%20permanently");
+                }}
+              >
+                <button type="submit" className="inline-flex items-center justify-center rounded-md bg-red-600 text-white h-9 px-3 text-xs font-medium">Delete Permanently</button>
+              </form>
+            </>
+          ) : (
+            <form
+              action={async () => {
+                "use server";
+                const result = await archiveProduct(id);
+                if ("error" in result) {
+                  redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+                }
+                redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+              }}
+            >
+              <button type="submit" className="inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 h-9 px-3 text-xs font-medium">Archive</button>
+            </form>
+          )}
+        </div>
+      </div>
 
-      <form action={updateProductAction} className="space-y-4">
+      <FormFeedback status="error" message={error} />
+      <FormFeedback status="success" message={success} />
+
+      <form
+        action={async (formData) => {
+          "use server";
+          const result = await updateProduct(id, formData);
+          if ("error" in result) {
+            redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
+          }
+          redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+        }}
+        className="space-y-4"
+      >
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="sku" className="block text-sm font-medium text-foreground mb-1">SKU</label>
@@ -137,7 +175,7 @@ export default async function EditProductPage({ params }: Props) {
         </div>
 
         <div className="flex justify-between gap-2 pt-4">
-          <a href="/inventory/products" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</a>
+          <Link href="/inventory/products" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</Link>
           <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium">Save Changes</button>
         </div>
       </form>

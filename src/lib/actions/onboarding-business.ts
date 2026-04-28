@@ -1,44 +1,102 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
-import { Tenant, Membership } from "@/models";
+import { Membership, Tenant } from "@/models";
 
-export async function businessAction(formData: FormData) {
-  const name = formData.get("name") as string;
-  const nameAr = formData.get("nameAr") as string;
-  const vatNumber = formData.get("vatNumber") as string;
-  const crNumber = formData.get("crNumber") as string;
-  const address = formData.get("address") as string;
-  const addressAr = formData.get("addressAr") as string;
-  const phone = formData.get("phone") as string;
-  const email = formData.get("email") as string;
+const businessSchema = z.object({
+  name: z.string().trim().min(1, "Business name is required"),
+  nameAr: z.string().trim().optional(),
+  vatNumber: z.string().trim().optional(),
+  crNumber: z.string().trim().optional(),
+  address: z.string().trim().optional(),
+  addressAr: z.string().trim().optional(),
+  phone: z.string().trim().optional(),
+  email: z.string().trim().email("Enter a valid email").or(z.literal("")),
+});
 
-  if (!name) {
-    return;
+type BusinessFields = "name" | "email";
+
+export type BusinessActionState =
+  | { status: "idle" }
+  | {
+      status: "error";
+      code: "VALIDATION_ERROR" | "AUTH_REQUIRED" | "SETUP_CONTEXT_MISSING" | "SERVER_ERROR";
+      message: string;
+      fieldErrors?: Partial<Record<BusinessFields, string>>;
+    };
+
+export const initialBusinessActionState: BusinessActionState = { status: "idle" };
+
+export async function businessAction(
+  _prevState: BusinessActionState,
+  formData: FormData
+): Promise<BusinessActionState> {
+  const parsed = businessSchema.safeParse({
+    name: formData.get("name"),
+    nameAr: formData.get("nameAr") || "",
+    vatNumber: formData.get("vatNumber") || "",
+    crNumber: formData.get("crNumber") || "",
+    address: formData.get("address") || "",
+    addressAr: formData.get("addressAr") || "",
+    phone: formData.get("phone") || "",
+    email: (formData.get("email") as string | null)?.trim() || "",
+  });
+
+  if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+    return {
+      status: "error",
+      code: "VALIDATION_ERROR",
+      message: "Please correct the highlighted fields.",
+      fieldErrors: {
+        name: errors.name?.[0],
+        email: errors.email?.[0],
+      },
+    };
   }
 
   const session = await getSession();
   if (!session?.user?.id) {
-    return;
+    return {
+      status: "error",
+      code: "AUTH_REQUIRED",
+      message: "Your session has expired. Please sign in again.",
+    };
   }
 
   const membership = await Membership.findOne({ userId: session.user.id, status: "active" });
   if (!membership) {
-    return;
+    return {
+      status: "error",
+      code: "SETUP_CONTEXT_MISSING",
+      message: "Unable to continue setup for this account. Please contact support.",
+    };
   }
 
-  await Tenant.findByIdAndUpdate(membership.tenantId, {
-    name: name || nameAr + "'s Shop",
-    nameAr: nameAr || "",
-    vatNumber: vatNumber || undefined,
-    crNumber: crNumber || undefined,
-    address: address || undefined,
-    addressAr: addressAr || undefined,
-    phone: phone || undefined,
-    email: email || undefined,
-    vatRegistered: !!vatNumber,
-  });
+  const payload = parsed.data;
+
+  try {
+    await Tenant.findByIdAndUpdate(membership.tenantId, {
+      name: payload.name || `${payload.nameAr}'s Shop`,
+      nameAr: payload.nameAr || "",
+      vatNumber: payload.vatNumber || undefined,
+      crNumber: payload.crNumber || undefined,
+      address: payload.address || undefined,
+      addressAr: payload.addressAr || undefined,
+      phone: payload.phone || undefined,
+      email: payload.email || undefined,
+      vatRegistered: !!payload.vatNumber,
+    });
+  } catch (error) {
+    console.error("Business onboarding error:", error);
+    return {
+      status: "error",
+      code: "SERVER_ERROR",
+      message: "We could not save your business details right now. Please try again.",
+    };
+  }
 
   redirect("/onboarding/branch");
 }

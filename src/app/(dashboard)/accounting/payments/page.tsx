@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createPaymentRecord, getCounterpartyOptions } from "@/lib/actions/accounting";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
 import { PaymentRecord } from "@/models";
 
 interface PaymentRow {
@@ -19,9 +20,14 @@ interface PaymentRow {
   amount: number;
 }
 
-export default async function AccountingPaymentsPage() {
+interface Props {
+  searchParams: Promise<{ error?: string; success?: string }>;
+}
+
+export default async function AccountingPaymentsPage({ searchParams }: Props) {
+  const { error, success } = await searchParams;
   const membership = await getCurrentMembership();
-  if (!membership || membership.role !== "owner") redirect("/dashboard");
+  if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
 
   const [payments, counterparties] = await Promise.all([
     PaymentRecord.find({ tenantId: membership.tenantId }).sort({ paymentDate: -1 }).limit(100),
@@ -88,10 +94,21 @@ export default async function AccountingPaymentsPage() {
         description="Track incoming customer collections and outgoing vendor payments."
       />
 
+      {error ? (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+      ) : null}
+      {success ? (
+        <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{success}</div>
+      ) : null}
+
       <form
         action={async (formData) => {
           "use server";
-          await createPaymentRecord(formData);
+          const result = await createPaymentRecord(formData);
+          if (result.error) {
+            redirect(`/accounting/payments?error=${encodeURIComponent(result.error ?? "Unable to save payment")}`);
+          }
+          redirect("/accounting/payments?success=Payment%20saved%20successfully");
         }}
         className="mb-6 rounded-lg border bg-card p-4"
       >

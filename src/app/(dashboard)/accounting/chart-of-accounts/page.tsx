@@ -4,10 +4,15 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormField } from "@/components/app/FormField";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
 import { createChartAccount, ensureTenantChartOfAccounts } from "@/lib/actions/accounting";
 import { ChartOfAccount } from "@/models";
+import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AccountRow {
   id: string;
@@ -20,7 +25,7 @@ interface AccountRow {
 
 export default async function ChartOfAccountsPage() {
   const membership = await getCurrentMembership();
-  if (!membership || membership.role !== "owner") redirect("/dashboard");
+  if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
 
   await ensureTenantChartOfAccounts(membership.tenantId);
 
@@ -39,25 +44,32 @@ export default async function ChartOfAccountsPage() {
     {
       key: "code",
       header: "Code",
-      render: (row) => <span className="font-medium">{row.code}</span>,
+      render: (row) => <span className="font-bold text-gray-900">{row.code}</span>,
     },
     {
       key: "name",
-      header: "Name",
-      render: (row) => <span>{row.name}</span>,
+      header: "Account Name",
+      render: (row) => <span className="font-medium text-gray-700">{row.name}</span>,
     },
     {
       key: "type",
-      header: "Type",
-      render: (row) => <span className="capitalize text-muted-foreground">{row.type}</span>,
+      header: "Classification",
+      render: (row) => (
+        <span className="text-[10px] font-black uppercase tracking-widest bg-gray-50 text-gray-400 px-2 py-1 rounded border border-gray-100">
+           {row.type}
+        </span>
+      ),
     },
     {
-      key: "allowPosting",
+      key: "posting",
       header: "Posting",
       align: "center",
       render: (row) => (
-        <span className={row.allowPosting ? "text-green-600" : "text-muted-foreground"}>
-          {row.allowPosting ? "Allowed" : "No"}
+        <span className={cn(
+          "text-[10px] font-black uppercase tracking-widest",
+          row.allowPosting ? "text-success" : "text-gray-300"
+        )}>
+          {row.allowPosting ? "Enabled" : "Disabled"}
         </span>
       ),
     },
@@ -66,7 +78,10 @@ export default async function ChartOfAccountsPage() {
       header: "Status",
       align: "center",
       render: (row) => (
-        <span className={row.active ? "text-green-600" : "text-muted-foreground"}>
+        <span className={cn(
+          "text-[10px] font-black uppercase tracking-widest",
+          row.active ? "text-success" : "text-danger"
+        )}>
           {row.active ? "Active" : "Inactive"}
         </span>
       ),
@@ -76,9 +91,11 @@ export default async function ChartOfAccountsPage() {
       header: "Actions",
       align: "right",
       render: (row) => (
-        <Link href={`/accounting/chart-of-accounts/${row.id}`} className="text-primary hover:underline">
-          View
-        </Link>
+        <Button variant="secondary" size="xs" className="font-bold uppercase text-[10px] tracking-widest px-4" asChild>
+          <Link href={`/accounting/chart-of-accounts/${row.id}`}>
+            View
+          </Link>
+        </Button>
       ),
     },
   ];
@@ -89,53 +106,64 @@ export default async function ChartOfAccountsPage() {
         title="Chart of Accounts"
         section="Accounting"
         breadcrumbs={[{ label: "Accounting", href: "/accounting" }, { label: "Chart of Accounts" }]}
-        description="Tenant-specific account list used by accounting entries and reporting."
+        description="Business-specific account hierarchy used for ledger entries and financial reporting."
       />
 
-      <form
-        action={async (formData) => {
-          "use server";
-          await createChartAccount(formData);
-        }}
-        className="mb-6 rounded-lg border bg-card p-4"
-      >
-        <h2 className="mb-3 text-sm font-medium">Add Account</h2>
-        <div className="grid gap-3 md:grid-cols-5">
-          <FormField label="Code" htmlFor="code" required>
-            <Input id="code" name="code" placeholder="4101" required />
-          </FormField>
-          <FormField label="Name" htmlFor="name" required>
-            <Input id="name" name="name" placeholder="Online Sales" required />
-          </FormField>
-          <FormField label="Type" htmlFor="type" required>
-            <select
-              id="type"
-              name="type"
-              required
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="revenue">Revenue</option>
-              <option value="expense">Expense</option>
-              <option value="asset">Asset</option>
-              <option value="liability">Liability</option>
-              <option value="equity">Equity</option>
-            </select>
-          </FormField>
-          <FormField label="Arabic Name" htmlFor="nameAr">
-            <Input id="nameAr" name="nameAr" dir="rtl" placeholder="اسم الحساب" />
-          </FormField>
-          <FormField label="Description" htmlFor="description">
-            <Input id="description" name="description" placeholder="Optional" />
-          </FormField>
-        </div>
-        <div className="mt-3 flex items-center justify-between">
-          <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <input type="checkbox" name="allowPosting" defaultChecked className="size-4 rounded border-input" />
-            Allow posting entries
-          </label>
-          <Button type="submit">Add Account</Button>
-        </div>
-      </form>
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center gap-2 py-3 border-b border-gray-50">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-soft-primary text-primary">
+            <Plus className="size-4" />
+          </div>
+          <CardTitle className="text-sm font-bold uppercase tracking-tight">Add Ledger Account</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form
+            action={async (formData) => {
+              "use server";
+              await createChartAccount(formData);
+            }}
+            className="space-y-6"
+          >
+            <div className="grid gap-6 md:grid-cols-5">
+              <FormField label="Account Code" htmlFor="code" required>
+                <Input id="code" name="code" placeholder="e.g. 4101" required />
+              </FormField>
+              <FormField label="Account Name" htmlFor="name" required>
+                <Input id="name" name="name" placeholder="e.g. Online Sales" required />
+              </FormField>
+              <FormField label="Account Type" htmlFor="type" required>
+                <Select name="type" required defaultValue="revenue">
+                  <SelectTrigger id="type">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="revenue">Revenue</SelectItem>
+                    <SelectItem value="expense">Expense</SelectItem>
+                    <SelectItem value="asset">Asset</SelectItem>
+                    <SelectItem value="liability">Liability</SelectItem>
+                    <SelectItem value="equity">Equity</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              <FormField label="الاسم (Arabic)" htmlFor="nameAr">
+                <Input id="nameAr" name="nameAr" dir="rtl" placeholder="اسم الحساب" />
+              </FormField>
+              <FormField label="Description" htmlFor="description">
+                <Input id="description" name="description" placeholder="Optional notes" />
+              </FormField>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+              <label className="inline-flex items-center gap-3 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer">
+                <input type="checkbox" name="allowPosting" defaultChecked className="size-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                Allow transaction posting
+              </label>
+              <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-10 h-11">
+                Create Account
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <DataTable
         columns={columns}
@@ -143,7 +171,7 @@ export default async function ChartOfAccountsPage() {
         rowKey={(row) => row.id}
         empty={{
           title: "No accounts yet",
-          description: "Add your first account above.",
+          description: "Define your business chart of accounts to begin ledger entries.",
         }}
       />
     </>

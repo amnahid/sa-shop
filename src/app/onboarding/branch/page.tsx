@@ -1,8 +1,31 @@
-import { branchAction } from "@/lib/actions/onboarding-branch";
+"use client";
+
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { FormFeedback } from "@/components/app/FormFeedback";
+import { branchAction, initialBranchActionState } from "@/lib/actions/onboarding-branch";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+    >
+      {pending ? "Saving..." : "Continue"}
+    </button>
+  );
+}
 
 export default function BranchPage() {
+  const [state, formAction] = useActionState(branchAction, initialBranchActionState);
+
   return (
-    <form action={branchAction} className="space-y-4">
+    <form action={formAction} className="space-y-4">
+      {state.status === "error" && <FormFeedback status="error" message={state.message} />}
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
           Branch Name
@@ -15,6 +38,9 @@ export default function BranchPage() {
           required
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
+        {state.status === "error" && state.fieldErrors?.name && (
+          <p className="mt-1 text-xs text-red-700">{state.fieldErrors.name}</p>
+        )}
       </div>
 
       <div>
@@ -114,12 +140,7 @@ export default function BranchPage() {
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium hover:bg-primary/90"
-        >
-          Continue
-        </button>
+        <SubmitButton />
       </div>
     </form>
   );
