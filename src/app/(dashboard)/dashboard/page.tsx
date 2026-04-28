@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DollarSign, Package, Users, AlertTriangle } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -58,6 +57,8 @@ export default async function DashboardPage() {
     <>
       <PageHeader
         title="Dashboard"
+        section="Overview"
+        breadcrumbs={[{ label: "Dashboard" }]}
         description={`Welcome back${session?.user?.name ? `, ${session.user.name}` : ""}`}
       />
 

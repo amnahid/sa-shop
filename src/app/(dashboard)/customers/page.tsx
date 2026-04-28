@@ -103,6 +103,8 @@ export default async function CustomersPage() {
     <>
       <PageHeader
         title="Customers"
+        section="Sales"
+        breadcrumbs={[{ label: "Customers" }]}
         description={`${customers.length} customers`}
       />
 

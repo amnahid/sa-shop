@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Branch } from "@/models";
 import { getSalesReport } from "@/lib/actions/reports";
+import { PageHeader } from "@/components/app/PageHeader";
 
 interface Props {
   searchParams: Promise<{
@@ -32,18 +33,22 @@ export default async function SalesReportPage({ searchParams }: Props) {
   });
 
   const maxHourly = Math.max(...report.hourly.map(h => h.total), 1);
-  const statusColors: Record<string, string> = {
-    completed: "bg-green-100 text-green-800",
-    voided: "bg-gray-100 text-gray-800",
-    refunded: "bg-blue-100 text-blue-800",
-  };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Sales Report</h1>
-        <Link href="/reports" className="text-primary hover:underline">← Back to Reports</Link>
-      </div>
+    <div>
+      <PageHeader
+        title="Sales Report"
+        section="Insights"
+        breadcrumbs={[
+          { label: "Reports", href: "/reports" },
+          { label: "Sales" },
+        ]}
+        actions={
+          <Link href="/reports" className="text-sm text-primary hover:underline">
+            Back to Reports
+          </Link>
+        }
+      />
 
       <form className="bg-card border rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { FileText, Package, ArrowRightLeft, TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/app/PageHeader";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -12,8 +13,13 @@ export default async function ReportsPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Reports</h1>
+    <>
+      <PageHeader
+        title="Reports"
+        section="Insights"
+        breadcrumbs={[{ label: "Reports" }]}
+        description="Explore sales, stock, and profitability analytics."
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <ReportCard
@@ -41,7 +47,7 @@ export default async function ReportsPage() {
           description="Revenue, COGS, and gross profit by category or branch"
         />
       </div>
-    </div>
+    </>
   );
 }
 

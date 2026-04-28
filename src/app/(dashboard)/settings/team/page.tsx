@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Membership } from "@/models";
 import { updateMemberRole, suspendMember, reactivateMember } from "@/lib/actions/team";
+import { PageHeader } from "@/components/app/PageHeader";
 
 export default async function TeamPage() {
   const membership = await getCurrentMembership();
@@ -31,8 +32,15 @@ export default async function TeamPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Team</h1>
+    <div>
+      <PageHeader
+        title="Team"
+        section="Administration"
+        breadcrumbs={[
+          { label: "Settings", href: "/settings" },
+          { label: "Team" },
+        ]}
+      />
 
       <div className="bg-card border rounded-lg overflow-hidden">
         <table className="w-full text-sm">

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { loadInvoices } from "@/lib/actions/invoices";
-import { Branch } from "@/models";
+import { PageHeader } from "@/components/app/PageHeader";
 
 export default async function InvoicesPage() {
   const membership = await getCurrentMembership();
@@ -11,7 +11,6 @@ export default async function InvoicesPage() {
   }
 
   const tenantId = membership.tenantId;
-  const branches = await Branch.find({ tenantId, active: true }).sort({ name: 1 });
 
   const invoices = await loadInvoices(tenantId.toString(), { tenantId });
 
@@ -23,13 +22,20 @@ export default async function InvoicesPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Invoice History</h1>
-        <Link href="/pos" className="text-primary hover:underline">
-          ← Back to POS
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        title="Invoice History"
+        section="Sales"
+        breadcrumbs={[
+          { label: "Point of Sale", href: "/pos" },
+          { label: "Invoices" },
+        ]}
+        actions={
+          <Link href="/pos" className="text-sm text-primary hover:underline">
+            Back to POS
+          </Link>
+        }
+      />
 
       <div className="bg-card border rounded-lg overflow-hidden">
         {invoices.length === 0 ? (

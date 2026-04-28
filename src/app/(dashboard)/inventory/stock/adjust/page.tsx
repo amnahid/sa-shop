@@ -1,9 +1,11 @@
 
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import mongoose from "mongoose";
 import { Product, StockLevel, Branch, StockMovement } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
+import { PageHeader } from "@/components/app/PageHeader";
 
 export default async function AdjustStockPage() {
   const membership = await getCurrentMembership();
@@ -15,8 +17,15 @@ export default async function AdjustStockPage() {
   const branches = await Branch.find({ tenantId, active: true }).sort({ name: 1 });
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Adjust Stock</h1>
+    <div className="max-w-2xl">
+      <PageHeader
+        title="Adjust Stock"
+        section="Inventory"
+        breadcrumbs={[
+          { label: "Stock", href: "/inventory/stock" },
+          { label: "Adjustments" },
+        ]}
+      />
 
       <form action={async (formData) => {
         "use server";
@@ -33,7 +42,7 @@ export default async function AdjustStockPage() {
 
         if (!productId || !branchId || isNaN(adjustment)) return;
 
-        let stockLevel = await StockLevel.findOne({
+        const stockLevel = await StockLevel.findOne({
           tenantId,
           productId: new mongoose.Types.ObjectId(productId),
           branchId: new mongoose.Types.ObjectId(branchId),
@@ -107,7 +116,7 @@ export default async function AdjustStockPage() {
         </div>
 
         <div className="flex justify-between gap-2 pt-4">
-          <a href="/inventory/stock" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</a>
+          <Link href="/inventory/stock" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</Link>
           <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium">Adjust Stock</button>
         </div>
       </form>

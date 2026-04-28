@@ -22,6 +22,9 @@ export { Customer } from './sales/Customer';
 
 export { Supplier } from './suppliers/Supplier';
 export { PurchaseOrder } from './suppliers/PurchaseOrder';
+export { ChartOfAccount } from './accounting/ChartOfAccount';
+export { AccountingEntry } from './accounting/AccountingEntry';
+export { PaymentRecord } from './accounting/PaymentRecord';
 
 export { ParkedSale } from './operations/ParkedSale';
 export { CashDrawer } from './operations/CashDrawer';

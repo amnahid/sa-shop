@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Product, StockLevel, Branch, Category } from "@/models";
+import { PageHeader } from "@/components/app/PageHeader";
 import { POSClient } from "@/components/pos/POSClient";
 
 export default async function POSPage() {
@@ -51,12 +52,22 @@ export default async function POSPage() {
   });
 
   return (
-    <POSClient
-      products={productsWithStock}
-      branches={branches.map(b => ({ _id: b._id.toString(), name: b.name, isHeadOffice: b.isHeadOffice }))}
-      categories={categories.map(c => ({ _id: c._id.toString(), name: c.name }))}
-      userId={session.user.id}
-      tenantId={tenantId.toString()}
-    />
+    <div className="flex h-full min-h-0 flex-col">
+      <PageHeader
+        title="Point of Sale"
+        section="Sales"
+        breadcrumbs={[{ label: "Point of Sale" }]}
+        description="Create and complete sales transactions."
+      />
+      <div className="min-h-0 flex-1">
+        <POSClient
+          products={productsWithStock}
+          branches={branches.map(b => ({ _id: b._id.toString(), name: b.name, isHeadOffice: b.isHeadOffice }))}
+          categories={categories.map(c => ({ _id: c._id.toString(), name: c.name }))}
+          userId={session.user.id}
+          tenantId={tenantId.toString()}
+        />
+      </div>
+    </div>
   );
 }

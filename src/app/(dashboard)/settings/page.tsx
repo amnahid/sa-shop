@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Tenant } from "@/models";
 import { updateTenantSettings } from "@/lib/actions/team";
+import { PageHeader } from "@/components/app/PageHeader";
 
 export default async function SettingsPage() {
   const membership = await getCurrentMembership();
@@ -20,8 +21,13 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
+    <div className="max-w-2xl">
+      <PageHeader
+        title="Settings"
+        section="Administration"
+        breadcrumbs={[{ label: "Settings" }]}
+        description="Manage business profile and compliance settings."
+      />
 
       <div className="space-y-6">
         <form action={async (formData) => {

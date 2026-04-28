@@ -3,41 +3,41 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Sidebar } from "./Sidebar";
+import type { SidebarMembershipRole } from "./navigation-config";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export function SidebarToggle() {
+interface SidebarToggleProps {
+  membershipRole?: SidebarMembershipRole | null;
+}
+
+export function SidebarToggle({ membershipRole = null }: SidebarToggleProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open menu"
-        className="rounded-md p-2 lg:hidden hover:bg-accent"
-      >
-        <Menu className="size-5" />
-      </button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button aria-label="Open menu" className="rounded-md p-2 hover:bg-accent lg:hidden">
+          <Menu className="size-5" />
+        </button>
+      </DialogTrigger>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-60 transform bg-sidebar-background transition-transform duration-200 lg:hidden ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+      <DialogContent
+        showCloseButton={false}
+        className="left-0 top-0 z-50 h-dvh w-60 max-w-[85vw] -translate-x-0 -translate-y-0 rounded-none border-r bg-sidebar-background p-0"
       >
+        <DialogTitle className="sr-only">Navigation menu</DialogTitle>
+        <DialogDescription className="sr-only">
+          Use the sidebar links to navigate dashboard sections.
+        </DialogDescription>
         <button
           onClick={() => setOpen(false)}
           aria-label="Close menu"
-          className="absolute top-2 right-2 rounded-md p-2 hover:bg-sidebar-accent"
+          className="absolute right-2 top-2 z-10 rounded-md p-2 hover:bg-sidebar-accent"
         >
           <X className="size-5" />
         </button>
-        <Sidebar />
-      </div>
-    </>
+        <Sidebar mobile onNavigate={() => setOpen(false)} membershipRole={membershipRole} />
+      </DialogContent>
+    </Dialog>
   );
 }

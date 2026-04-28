@@ -117,6 +117,8 @@ export default async function ProductsPage() {
     <>
       <PageHeader
         title="Products"
+        section="Inventory"
+        breadcrumbs={[{ label: "Products" }]}
         actions={
           <>
             <Button asChild variant="outline">

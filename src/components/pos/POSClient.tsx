@@ -199,8 +199,8 @@ export function POSClient({ products: initialProducts, branches, categories, use
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0">
         <div className="p-4 border-b bg-background flex items-center gap-4 flex-wrap">
           <select
             value={selectedBranch}
@@ -266,7 +266,7 @@ export function POSClient({ products: initialProducts, branches, categories, use
         </div>
       </div>
 
-      <div className="w-96 border-l bg-card flex flex-col">
+      <div className="w-96 border-l bg-card flex flex-col min-h-0">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-1">
             <h2 className="font-semibold">Current Sale</h2>
@@ -315,7 +315,7 @@ export function POSClient({ products: initialProducts, branches, categories, use
           {cart.length === 0 && <p className="text-sm text-muted-foreground mt-1">No items</p>}
         </div>
 
-        <div className="flex-1 overflow-auto p-4 space-y-2">
+        <div className="flex-1 min-h-0 overflow-auto p-4 space-y-2">
           {cart.map(item => (
             <div key={item.productId} className="flex items-center justify-between p-2 bg-background rounded-md">
               <div className="flex-1 min-w-0">
@@ -350,7 +350,7 @@ export function POSClient({ products: initialProducts, branches, categories, use
           ))}
         </div>
 
-        <div className="border-t p-4 space-y-2">
+        <div className="border-t p-4 space-y-2 shrink-0">
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
             <span>SAR {subtotal.toFixed(2)}</span>
