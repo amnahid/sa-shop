@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Branch, Category, Membership, Product, StockLevel, StockMovement } from "@/models";
 import mongoose from "mongoose";
+import { type ProductsActionState } from "./onboarding.types";
 
 const productsSchema = z.object({
   csv: z.string().trim().min(1, "CSV data is required"),
@@ -65,24 +66,6 @@ function parseCSV(csvText: string): ParsedProduct[] {
 
   return products;
 }
-
-export type ProductsActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code:
-        | "VALIDATION_ERROR"
-        | "EMPTY_CSV"
-        | "AUTH_REQUIRED"
-        | "SETUP_CONTEXT_MISSING"
-        | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: {
-        csv?: string;
-      };
-    };
-
-export const initialProductsActionState: ProductsActionState = { status: "idle" };
 
 export async function importProductsAction(
   _prevState: ProductsActionState,

@@ -59,6 +59,7 @@ export const sidebarIconMap = {
   media: Image,
   emailTemplates: Mail,
   notificationTemplates: BellRing,
+  notifications: BellRing,
 } as const;
 
 export type SidebarIconKey = keyof typeof sidebarIconMap;
@@ -256,6 +257,14 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         route: "/reports/low-stock",
         status: "ready",
         permissionKey: "reports.lowStock:view",
+      },
+      {
+        id: "notifications",
+        label: "Notifications",
+        route: "/notifications",
+        icon: "notifications",
+        status: "ready",
+        permissionKey: "notifications:view",
       },
       {
         id: "reports-stock-movements",

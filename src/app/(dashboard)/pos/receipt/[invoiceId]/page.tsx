@@ -47,7 +47,7 @@ export default async function ReceiptPage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="receipt-page-shell flex min-h-0 h-full bg-background items-start justify-center p-4">
       <div className="bg-white text-black w-full max-w-sm rounded-lg border shadow-sm overflow-hidden">
         <div className="p-6 text-center border-b">
           {tenant?.logoUrl && (

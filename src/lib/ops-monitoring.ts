@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { sendEmail } from "@/lib/email";
 import { assertTenantSendAuthorized } from "@/lib/template-delivery";
+import { sendInAppNotification } from "@/lib/in-app-notifications";
 
 type TenantIdentifier = string | mongoose.Types.ObjectId;
 
@@ -79,6 +80,16 @@ function buildFailureId(now: Date, randomId?: () => string) {
   return `ops-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getInAppRecipientIds(metadata?: MonitoringMetadata) {
+  const candidate = metadata?.recipientUserIds;
+  if (!Array.isArray(candidate)) return [];
+  return candidate
+    .filter((value): value is string | mongoose.Types.ObjectId =>
+      typeof value === "string" || value instanceof mongoose.Types.ObjectId
+    )
+    .map((value) => value.toString());
+}
+
 export async function reportCriticalFailure(
   input: CriticalFailureInput,
   dependencies: MonitoringDependencies = {}
@@ -112,6 +123,40 @@ export async function reportCriticalFailure(
 
   const logError = dependencies.logError ?? ((message: string, structuredPayload: string) => console.error(message, structuredPayload));
   logError("[OPS_MONITOR]", JSON.stringify(payload));
+
+  if (tenantId && tenantAuthorization.success) {
+    const recipients = getInAppRecipientIds(input.metadata);
+    if (recipients.length > 0) {
+      const inAppResult = await sendInAppNotification({
+        tenantId,
+        actorTenantId: actorTenantId || tenantId,
+        recipientUserIds: recipients,
+        type: "ops.critical_failure",
+        title: `Critical failure: ${input.domain}`,
+        message: `${input.operation} failed (${failureId}).`,
+        linkUrl: "/dashboard",
+        metadata: {
+          failureId,
+          domain: input.domain,
+          operation: input.operation,
+          route: input.route,
+          jobName: input.jobName,
+        },
+      });
+      if (!inAppResult.success) {
+        logError(
+          "[OPS_MONITOR_IN_APP_ALERT_FAILED]",
+          JSON.stringify({
+            failureId,
+            domain: input.domain,
+            operation: input.operation,
+            tenantId,
+            error: inAppResult.error,
+          })
+        );
+      }
+    }
+  }
 
   const alertEmail =
     input.alertEmail ||

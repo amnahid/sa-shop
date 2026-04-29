@@ -36,6 +36,7 @@ export { Invitation } from './operations/Invitation';
 export { PasswordResetToken } from './operations/PasswordResetToken';
 export { MediaAsset, type IMediaAsset, type MediaAssetStatus } from "./operations/MediaAsset";
 export { EmailTemplate, type IEmailTemplate } from "./operations/EmailTemplate";
+export { InboxEntry, type IInboxEntry, type InboxEntryStatus } from "./operations/InboxEntry";
 export {
   NotificationTemplate,
   type INotificationTemplate,

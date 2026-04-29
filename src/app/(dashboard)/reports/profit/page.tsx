@@ -41,15 +41,15 @@ export default async function ProfitPage({ searchParams }: Props) {
       <form className="bg-card border rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div>
           <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" name="fromDate" defaultValue={fromDate || today.toISOString().split("T")[0]} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm" />
+          <input type="date" name="fromDate" defaultValue={fromDate || today.toISOString().split("T")[0]} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" name="toDate" defaultValue={toDate || new Date().toISOString().split("T")[0]} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm" />
+          <input type="date" name="toDate" defaultValue={toDate || new Date().toISOString().split("T")[0]} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Branch</label>
-          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm">
+          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm">
             <option value="">All Branches</option>
             {branches.map(b => <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>)}
           </select>

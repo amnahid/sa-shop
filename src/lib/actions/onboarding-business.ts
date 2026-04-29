@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Membership, Tenant } from "@/models";
+import { type BusinessFields, type BusinessActionState } from "./onboarding.types";
 
 const businessSchema = z.object({
   name: z.string().trim().min(1, "Business name is required"),
@@ -15,19 +16,6 @@ const businessSchema = z.object({
   phone: z.string().trim().optional(),
   email: z.string().trim().email("Enter a valid email").or(z.literal("")),
 });
-
-type BusinessFields = "name" | "email";
-
-export type BusinessActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code: "VALIDATION_ERROR" | "AUTH_REQUIRED" | "SETUP_CONTEXT_MISSING" | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<BusinessFields, string>>;
-    };
-
-export const initialBusinessActionState: BusinessActionState = { status: "idle" };
 
 export async function businessAction(
   _prevState: BusinessActionState,

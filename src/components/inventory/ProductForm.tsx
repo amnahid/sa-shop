@@ -83,7 +83,7 @@ export function ProductForm({ initialData, categories, isEdit = false }: Product
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="none">No Category</SelectItem>
                       {categories.map((cat) => (
                         <SelectItem key={cat._id.toString()} value={cat._id.toString()}>
                           {cat.name}
@@ -139,11 +139,11 @@ export function ProductForm({ initialData, categories, isEdit = false }: Product
                 </FormField>
                 <div className="flex flex-col justify-center space-y-3">
                    <label className="inline-flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" name="trackStock" defaultChecked={initialData?.trackStock ?? true} className="size-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <input type="checkbox" name="trackStock" defaultChecked={initialData?.trackStock ?? true} className="size-4 rounded border-input text-primary focus:ring-primary" />
                       <span className="text-[11px] font-black uppercase tracking-widest text-gray-700">Track Inventory</span>
                    </label>
                    <label className="inline-flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" name="expiryTracking" defaultChecked={initialData?.expiryTracking ?? false} className="size-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                      <input type="checkbox" name="expiryTracking" defaultChecked={initialData?.expiryTracking ?? false} className="size-4 rounded border-input text-primary focus:ring-primary" />
                       <span className="text-[11px] font-black uppercase tracking-widest text-gray-700">Expiry Tracking</span>
                    </label>
                 </div>

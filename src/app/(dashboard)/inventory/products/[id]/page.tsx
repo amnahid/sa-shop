@@ -26,14 +26,14 @@ export default async function EditProductPage({ params, searchParams }: Props) {
 
   const tenantId = membership.tenantId;
 
-  const product = await Product.findOne({ _id: id, tenantId });
+  const product = await Product.findOne({ _id: id, tenantId }).lean();
   if (!product) {
     return <div>Product not found</div>;
   }
 
-  const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 });
+  const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 }).lean();
   const { error, success } = await searchParams;
-  const isArchived = product.deletedAt !== null;
+  const isArchived = (product as any).deletedAt !== null;
 
   return (
     <div className="space-y-6">
@@ -103,7 +103,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
       ) : null}
 
       <ProductForm 
-        categories={categories} 
+        categories={JSON.parse(JSON.stringify(categories))} 
         isEdit 
         initialData={{
           id: product._id.toString(),
@@ -111,7 +111,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
           barcode: product.barcode,
           name: product.name,
           nameAr: product.nameAr,
-          categoryId: product.categoryId,
+          categoryId: product.categoryId?.toString() || "none",
           unit: product.unit,
           price: parseFloat(product.sellingPrice.toString()),
           vatRate: product.vatRate,

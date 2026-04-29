@@ -81,7 +81,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
               <select
                 name="branchId"
                 defaultValue={branchId || ""}
-                className="flex h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm outline-none focus:border-primary"
+                className="flex h-11 w-full rounded-md border border-input bg-white px-3 text-sm outline-none focus:border-primary"
               >
                 <option value="">All Branches</option>
                 {branches.map(b => (

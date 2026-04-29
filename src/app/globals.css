@@ -43,7 +43,7 @@
   
   /* Border & Input */
   --border: 223 20% 92%; /* #e2e5ec */
-  --input: 223 20% 92%;
+  --input: 223 18% 84%;
   
   /* Ring */
   --ring: 219 100% 61%;
@@ -88,7 +88,7 @@
   --destructive: 347 84% 61%;
   --destructive-foreground: 0 0% 98%;
   --border: 221 34% 15%;
-  --input: 221 34% 15%;
+  --input: 221 20% 28%;
   --ring: 219 100% 61%;
 
   --sidebar-background: 221 34% 7%;
@@ -171,6 +171,16 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html[data-dashboard-shell="true"],
+body[data-dashboard-shell="true"] {
+  height: 100%;
+  overflow: hidden;
+}
+
+body[data-dashboard-shell="true"] {
+  overscroll-behavior: none;
 }
 
 .card {

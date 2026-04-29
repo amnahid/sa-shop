@@ -232,14 +232,14 @@ export function POSClient({
               placeholder="Search by Product Name/Barcode"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full h-11 rounded-md border border-gray-200 bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm"
+              className="w-full h-11 rounded-md border border-input bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm"
             />
           </div>
           <div className="w-64">
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
-              className="w-full h-11 rounded-md border border-gray-200 bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm appearance-none"
+              className="w-full h-11 rounded-md border border-input bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm appearance-none"
             >
               <option value="">All categories</option>
               {categories.map(c => (
@@ -251,7 +251,7 @@ export function POSClient({
             <select
               value={selectedBranch}
               onChange={e => setSelectedBranch(e.target.value)}
-              className="w-full h-11 rounded-md border border-gray-200 bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm appearance-none"
+              className="w-full h-11 rounded-md border border-input bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm appearance-none"
             >
               <option value="">All Branches</option>
               {branches.map(b => (
@@ -327,7 +327,7 @@ export function POSClient({
       <div className="w-[400px] bg-white border-l border-gray-200 flex flex-col min-h-0 shadow-lg z-10 relative">
         <div className="p-4 border-b border-gray-100 flex items-center gap-3">
           <div className="flex-1 relative">
-            <select className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-600 focus:border-primary outline-none appearance-none cursor-pointer">
+            <select className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm text-gray-600 focus:border-primary outline-none appearance-none cursor-pointer">
               <option>Walk In Customer</option>
               {selectedCustomer && <option value={selectedCustomer._id}>{selectedCustomer.name}</option>}
             </select>
@@ -352,7 +352,7 @@ export function POSClient({
                     <p className="text-xs text-gray-500 mt-1">SAR {item.unitPrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-gray-50 rounded border border-gray-200">
+                    <div className="flex items-center bg-gray-50 rounded border border-input">
                       <button onClick={() => updateQty(item.productId, -1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200">−</button>
                       <span className="w-8 text-center text-sm font-medium text-gray-800">{item.quantity}</span>
                       <button onClick={() => updateQty(item.productId, 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200">+</button>
@@ -405,7 +405,7 @@ export function POSClient({
                 <select
                   value={paymentMethod}
                   onChange={e => setPaymentMethod(e.target.value)}
-                  className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-primary outline-none"
+                  className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
                 >
                   <option value="cash">Cash</option>
                   <option value="mada">Mada</option>
@@ -423,7 +423,7 @@ export function POSClient({
                     value={cashReceived}
                     onChange={e => setCashReceived(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-primary outline-none"
+                    className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
                   />
                   {cashReceived && parseFloat(cashReceived) >= grandTotal && (
                     <p className="text-[13px] text-[#0abb75] mt-1.5 font-medium">Change: SAR {changeAmount.toFixed(2)}</p>
@@ -442,7 +442,7 @@ export function POSClient({
                       setReceiptEmail(selectedCustomer.email);
                     }
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                 />
                 <label htmlFor="emailReceipt" className="text-sm font-medium text-gray-600">Email receipt</label>
               </div>
@@ -456,7 +456,7 @@ export function POSClient({
                     onChange={e => setReceiptEmail(e.target.value)}
                     placeholder="customer@example.com"
                     required
-                    className="w-full h-11 rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-primary outline-none"
+                    className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
                   />
                 </div>
               )}
@@ -464,7 +464,7 @@ export function POSClient({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="flex-1 h-11 rounded-md border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                  className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
                 >
                   Back
                 </button>
@@ -479,10 +479,10 @@ export function POSClient({
             </div>
           ) : (
             <div className="p-5 flex items-center gap-3">
-              <button className="flex-1 h-11 rounded-md border border-gray-200 bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
+              <button className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
                 Shipping <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
               </button>
-              <button className="flex-1 h-11 rounded-md border border-gray-200 bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
+              <button className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
                 Discount <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
               </button>
               <button 

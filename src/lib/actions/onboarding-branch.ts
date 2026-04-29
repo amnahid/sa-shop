@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Branch, Membership, Tenant } from "@/models";
+import { type BranchFields, type BranchActionState } from "./onboarding.types";
 
 const branchSchema = z.object({
   name: z.string().trim().min(1, "Branch name is required"),
@@ -16,25 +17,8 @@ const branchSchema = z.object({
   vatBranchCode: z.string().trim().optional(),
 });
 
-type BranchFields = "name";
-
-export type BranchActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code:
-        | "VALIDATION_ERROR"
-        | "AUTH_REQUIRED"
-        | "SETUP_CONTEXT_MISSING"
-        | "HEAD_OFFICE_EXISTS"
-        | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<BranchFields, string>>;
-    };
-
-export const initialBranchActionState: BranchActionState = { status: "idle" };
-
-export async function branchAction(_prevState: BranchActionState, formData: FormData): Promise<BranchActionState> {
+export async function branchAction(
+_prevState: BranchActionState, formData: FormData): Promise<BranchActionState> {
   const parsed = branchSchema.safeParse({
     name: formData.get("name"),
     nameAr: formData.get("nameAr") || "",

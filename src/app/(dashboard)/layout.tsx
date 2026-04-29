@@ -5,6 +5,7 @@ import { getCurrentMembership } from "@/lib/utils/membership";
 import { isMembershipRole } from "@/lib/utils/membership-roles";
 import { serializePermissionOverrides } from "@/lib/utils/permissions";
 import { Tenant } from "@/models";
+import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 export default async function DashboardLayout({
   children,
@@ -25,7 +26,12 @@ export default async function DashboardLayout({
   const membershipRole = membership.role;
   const membershipPermissionOverrides = serializePermissionOverrides(membership.permissionOverrides);
 
-  const tenant = await Tenant.findById(membership.tenantId);
+  const [tenant, unreadNotificationsResult] = await Promise.all([
+    Tenant.findById(membership.tenantId),
+    getUnreadNotificationCount(),
+  ]);
+  const unreadNotificationsCount =
+    "error" in unreadNotificationsResult ? 0 : unreadNotificationsResult.unreadCount;
 
   return (
     <AppShell
@@ -35,6 +41,7 @@ export default async function DashboardLayout({
       membershipPermissionOverrides={membershipPermissionOverrides}
       primaryColor={tenant?.primaryColor}
       logoUrl={tenant?.logoUrl}
+      unreadNotificationsCount={unreadNotificationsCount}
     >
       {children}
     </AppShell>

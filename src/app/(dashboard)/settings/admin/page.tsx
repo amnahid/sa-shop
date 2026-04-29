@@ -32,6 +32,7 @@ const PERMISSION_LABELS: Record<AppPermissionKey, string> = {
   "reports.profit:view": "Profit Reports",
   "reports.lowStock:view": "Low Stock Reports",
   "reports.stockMovements:view": "Stock Movement Reports",
+  "notifications:view": "Notifications",
   "settings:view": "Settings",
   "settings.profile:view": "Profile Settings",
   "settings.team:view": "Team Settings",
@@ -172,7 +173,7 @@ export default async function SettingsAdminPage({ searchParams }: SettingsAdminP
                     <select
                       name="role"
                       defaultValue={member.role}
-                      className="mt-1 flex h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm"
+                      className="mt-1 flex h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
                     >
                       <option value="manager">Manager</option>
                       <option value="cashier">Cashier</option>

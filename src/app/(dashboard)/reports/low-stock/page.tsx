@@ -27,14 +27,14 @@ export default async function LowStockPage({ searchParams }: Props) {
       <form className="bg-card border rounded-lg p-4 mb-6 flex gap-3 items-end">
         <div>
           <label className="block text-sm font-medium mb-1">Branch</label>
-          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm">
+          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm">
             <option value="">All Branches</option>
             {branches.map(b => <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>)}
           </select>
         </div>
         <button type="submit" className="h-9 rounded-md bg-primary text-primary-foreground px-4 text-sm font-medium">Filter</button>
         <a href={`/api/reports/export?type=lowstock${branchId ? `&branchId=${branchId}` : ""}`}
-          className="h-11 rounded-md border border-gray-200 bg-white bg-background px-4 text-sm font-medium flex items-center hover:bg-accent">
+          className="h-11 rounded-md border border-input bg-white bg-background px-4 text-sm font-medium flex items-center hover:bg-accent">
           Export CSV
         </a>
       </form>

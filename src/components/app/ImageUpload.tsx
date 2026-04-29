@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +11,7 @@ interface ImageUploadProps {
   label?: string;
   maxImages?: number;
   className?: string;
+  previewSize?: "compact" | "comfortable";
 }
 
 export function ImageUpload({
@@ -20,10 +20,19 @@ export function ImageUpload({
   label,
   maxImages = 5,
   className,
+  previewSize = "comfortable",
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
+  const maxFileSizeBytes = 10 * 1024 * 1024;
+  const allowedMimeTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+  ]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -31,7 +40,22 @@ export function ImageUpload({
 
     if (value.length + files.length > maxImages) {
       showToast(`You can only upload up to ${maxImages} images`, "error");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
+    }
+
+    for (const file of Array.from(files)) {
+      if (!allowedMimeTypes.has(file.type)) {
+        showToast(`Unsupported image type: ${file.type || "unknown"}`, "error");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      if (file.size > maxFileSizeBytes) {
+        showToast(`"${file.name}" exceeds 10MB upload limit`, "error");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
     }
 
     setUploading(true);
@@ -69,6 +93,18 @@ export function ImageUpload({
     onChange(value.filter((url) => url !== urlToRemove));
   };
 
+  const isSingleMode = maxImages === 1;
+  const gridClassName = isSingleMode
+    ? "grid grid-cols-1"
+    : previewSize === "compact"
+      ? "grid grid-cols-2 sm:grid-cols-3 gap-3"
+      : "grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3";
+  const tileAspectClassName = isSingleMode
+    ? "aspect-[4/3] min-h-44"
+    : previewSize === "compact"
+      ? "aspect-square"
+      : "aspect-[4/3] sm:aspect-square";
+
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
@@ -77,11 +113,14 @@ export function ImageUpload({
         </label>
       )}
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className={gridClassName}>
         {value.map((url) => (
           <div
             key={url}
-            className="group relative aspect-square rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shadow-sm"
+            className={cn(
+              "group relative rounded-lg border border-gray-200 bg-gray-50 overflow-hidden shadow-sm",
+              tileAspectClassName
+            )}
           >
             <img
               src={url}
@@ -91,6 +130,7 @@ export function ImageUpload({
             <button
               type="button"
               onClick={() => removeImage(url)}
+              aria-label="Remove uploaded image"
               className="absolute top-1 right-1 p-1 bg-white/90 rounded-full text-danger shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
             >
               <X className="size-3" />
@@ -104,16 +144,20 @@ export function ImageUpload({
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "aspect-square flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white transition-all hover:border-primary/50 hover:bg-soft-primary/10",
+              "flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white transition-all hover:border-primary/50 hover:bg-soft-primary/10",
+              tileAspectClassName,
               uploading && "cursor-not-allowed opacity-50"
             )}
+            aria-label={uploading ? "Uploading image" : "Upload image"}
           >
             {uploading ? (
               <Loader2 className="size-6 text-primary animate-spin" />
             ) : (
               <>
                 <Upload className="size-6 text-gray-400 mb-1" />
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                  {value.length === 0 ? "Upload" : "Add more"}
+                </span>
               </>
             )}
           </button>
@@ -123,14 +167,14 @@ export function ImageUpload({
       <input
         type="file"
         multiple
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
         className="hidden"
         ref={fileInputRef}
         onChange={handleFileChange}
       />
       
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-        PNG, JPG, WebP up to 10MB. {value.length} / {maxImages} uploaded.
+        JPG, PNG, WebP, GIF, SVG up to 10MB. {value.length} / {maxImages} uploaded.
       </p>
     </div>
   );

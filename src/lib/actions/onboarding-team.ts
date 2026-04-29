@@ -7,32 +7,15 @@ import { sendEmail } from "@/lib/email";
 import { Invitation, Membership, Tenant } from "@/models";
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+import { type TeamActionState } from "./onboarding.types";
 
 const inviteSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
   role: z.enum(["cashier", "manager"]),
 });
 
-export type TeamActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code: "VALIDATION_ERROR" | "AUTH_REQUIRED" | "SETUP_CONTEXT_MISSING" | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: {
-        email?: string;
-        role?: string;
-      };
-    }
-  | {
-      status: "success";
-      code: "INVITE_SENT";
-      message: string;
-    };
-
-export const initialTeamActionState: TeamActionState = { status: "idle" };
-
-export async function inviteTeamAction(_prevState: TeamActionState, formData: FormData): Promise<TeamActionState> {
+export async function inviteTeamAction(
+_prevState: TeamActionState, formData: FormData): Promise<TeamActionState> {
   const parsed = inviteSchema.safeParse({
     email: formData.get("email"),
     role: formData.get("role"),

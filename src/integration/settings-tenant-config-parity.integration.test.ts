@@ -55,7 +55,7 @@ test("updateTenantSettings returns permission error without mutating tenant", as
 
 test("updateTenantSettings persists validated business settings payload", async () => {
   const formData = buildBusinessFormData();
-  formData.set("logoUrl", "https://cdn.example.com/logo.png");
+  formData.set("logoUrl", "/uploads/media/tenant-a/logo.png");
   formData.set("vatRegistered", "on");
   formData.set("email", "owner@example.com");
 
@@ -88,9 +88,37 @@ test("updateTenantSettings persists validated business settings payload", async 
   assert.equal(updatedTenantId, "tenant-a");
   assert.equal(updatedPayload?.baseCurrency, "SAR");
   assert.equal(updatedPayload?.timezone, "Asia/Riyadh");
-  assert.equal(updatedPayload?.logoUrl, "https://cdn.example.com/logo.png");
+  assert.equal(updatedPayload?.logoUrl, "/uploads/media/tenant-a/logo.png");
   assert.equal(updatedPayload?.vatRegistered, true);
   assert.equal(revalidated, true);
+});
+
+test("updateTenantSettings clears logo when logoRemoved flag is set", async () => {
+  const formData = buildBusinessFormData();
+  formData.set("logoUrl", "");
+  formData.set("logoRemoved", "1");
+
+  let updatedPayload: Record<string, unknown> | null = null;
+
+  const result = await updateTenantSettings(formData, {
+    getCurrentMembership: async () =>
+      ({
+        membership: {
+          tenantId: "tenant-a",
+          role: "owner",
+          permissionOverrides: {},
+        },
+      }),
+    canAccess: () => true,
+    updateTenantById: async (_, payload) => {
+      updatedPayload = payload;
+    },
+    revalidateSettingsPath: () => {},
+  });
+
+  assert.equal(result.success, true);
+  if (!result.success) return;
+  assert.equal(updatedPayload?.logoUrl, "");
 });
 
 test("updateTenantSettings persists ZATCA certificate settings", async () => {

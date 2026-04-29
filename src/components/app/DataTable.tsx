@@ -82,7 +82,7 @@ export function DataTable<T>({
                   aria-label="Select all rows"
                   data-bulk-select-all="true"
                   data-selection-name={selectionName}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                 />
               </label>
             </TableHead>
@@ -123,7 +123,7 @@ export function DataTable<T>({
                       aria-label={`Select ${rowLabel}`}
                       data-bulk-row-checkbox="true"
                       data-selection-name={selectionName}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                     />
                   </label>
                 </TableCell>

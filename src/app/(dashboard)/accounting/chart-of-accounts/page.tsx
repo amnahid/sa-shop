@@ -154,7 +154,7 @@ export default async function ChartOfAccountsPage() {
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-gray-50">
               <label className="inline-flex items-center gap-3 text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer">
-                <input type="checkbox" name="allowPosting" defaultChecked className="size-4 rounded border-gray-300 text-primary focus:ring-primary" />
+                <input type="checkbox" name="allowPosting" defaultChecked className="size-4 rounded border-input text-primary focus:ring-primary" />
                 Allow transaction posting
               </label>
               <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-10 h-11">

@@ -203,22 +203,27 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full min-h-0 flex-col p-4",
-        mobile ? "flex w-60 bg-sidebar-background" : "hidden lg:flex"
+        "h-full min-h-0 overflow-hidden flex-col bg-sidebar-background",
+        mobile ? "flex w-60" : "hidden w-60 max-h-full shrink-0 border-r border-sidebar-border lg:flex"
       )}
     >
-      <div className="flex h-12 items-center px-2 mb-6 mt-2">
-        {logoUrl ? (
-          <img src={logoUrl} alt="Logo" className="max-h-10 max-w-[180px] object-contain" />
-        ) : (
-          <h1 className="text-2xl font-bold tracking-tight">
-            <span className="text-primary">e</span>
-            <span className="text-white">Shop</span>
-          </h1>
-        )}
+      <div className="flex-none p-4 pb-0">
+        <div className="flex h-12 items-center px-2 mb-6 mt-2">
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="max-h-10 max-w-[180px] object-contain" />
+          ) : (
+            <h1 className="text-2xl font-bold tracking-tight">
+              <span className="text-primary">e</span>
+              <span className="text-white">Shop</span>
+            </h1>
+          )}
+        </div>
       </div>
 
-      <nav aria-label="Primary navigation" className="flex-1 min-h-0 space-y-6 overflow-y-auto pt-2">
+      <nav
+        aria-label="Primary navigation"
+        className="flex-1 min-h-0 space-y-6 overflow-x-hidden overflow-y-auto overscroll-contain p-4 pt-2"
+      >
         {filteredNavigationConfig.map((group) => renderGroup(group))}
       </nav>
     </aside>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormField } from "@/components/app/FormField";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, ListPlus } from "lucide-react";
 
@@ -25,12 +25,15 @@ export default async function NewProposalPage() {
   const customers = await Customer.find({
     tenantId: membership.tenantId,
     deletedAt: null,
-  }).sort({ name: 1 }).limit(100);
+  }).sort({ name: 1 }).limit(200);
   const products = await Product.find({
     tenantId: membership.tenantId,
     deletedAt: null,
     active: true,
-  }).sort({ name: 1 }).limit(100);
+  }).sort({ name: 1 }).limit(200);
+
+  const customerOptions = customers.map(c => ({ value: c._id.toString(), label: c.name }));
+  const branchOptions = branches.map(b => ({ value: b._id.toString(), label: b.name }));
 
   return (
     <div className="space-y-6">
@@ -61,35 +64,21 @@ export default async function NewProposalPage() {
                 <Input type="text" name="title" id="title" placeholder="Website redesign package" />
               </FormField>
               <FormField label="Customer" htmlFor="customerId">
-                <select
+                <SearchableSelect
                   name="customerId"
-                  id="customerId"
-                  defaultValue=""
-                  className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none"
-                >
-                  <option value="">Walk-in / not specified</option>
-                  {customers.map((customer) => (
-                    <option key={customer._id.toString()} value={customer._id.toString()}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                  options={customerOptions}
+                  placeholder="Select customer"
+                  searchPlaceholder="Search customers..."
+                />
               </FormField>
               <FormField label="Branch *" htmlFor="branchId" required>
-                <select
+                <SearchableSelect
                   name="branchId"
-                  id="branchId"
-                  defaultValue=""
+                  options={branchOptions}
                   required
-                  className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none"
-                >
-                  <option value="">Select branch</option>
-                  {branches.map((branch) => (
-                    <option key={branch._id.toString()} value={branch._id.toString()}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select branch"
+                  searchPlaceholder="Search branches..."
+                />
               </FormField>
             </div>
 

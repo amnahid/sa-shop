@@ -137,7 +137,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             type="date"
             name="fromDate"
             defaultValue={effectiveFromDate}
-            className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
           />
         </div>
         <div>
@@ -146,7 +146,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             type="date"
             name="toDate"
             defaultValue={effectiveToDate}
-            className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
           />
         </div>
         <div className="min-w-60">
@@ -169,7 +169,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             type="month"
             name="closePeriod"
             defaultValue={selectedClosePeriod}
-            className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
           />
         </div>
         <button
@@ -234,7 +234,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
                 name="notes"
                 maxLength={500}
                 placeholder="Close notes (optional)"
-                className="h-11 rounded-md border border-gray-200 bg-white bg-background px-3 text-sm"
+                className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
               />
               <button
                 type="submit"

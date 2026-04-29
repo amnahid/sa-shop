@@ -1,6 +1,7 @@
 import { StockLevel, Product, Branch, Membership, Tenant } from "@/models";
 import { sendLowStockAlert } from "@/lib/email";
 import { reportCriticalFailure } from "@/lib/ops-monitoring";
+import { sendInAppNotification } from "@/lib/in-app-notifications";
 import mongoose from "mongoose";
 
 export async function sendLowStockEmails() {
@@ -84,6 +85,30 @@ export async function sendLowStockEmails() {
             },
           });
           continue;
+        }
+
+        const inAppResult = await sendInAppNotification({
+          tenantId: tenant._id,
+          actorTenantId: tenant._id,
+          recipientUserIds: [user._id],
+          type: "inventory.low_stock",
+          title: "Low stock alert",
+          message: `${lowStockProducts.length} item(s) need restocking.`,
+          linkUrl: "/reports/low-stock",
+          metadata: {
+            totalCount: lowStockProducts.length,
+            items: items.slice(0, 10),
+          },
+        });
+        if (!inAppResult.success) {
+          await reportCriticalFailure({
+            domain: "background-low-stock",
+            operation: "send-low-stock-in-app-notification",
+            error: inAppResult.error,
+            tenantId: tenant._id,
+            actorTenantId: tenant._id,
+            jobName: "low-stock-cron",
+          });
         }
 
         console.log(`[LOW STOCK] Email sent to ${user.email} for tenant ${tenant.name}: ${lowStockProducts.length} items`);

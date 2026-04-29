@@ -4,34 +4,17 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import mongoose from "mongoose";
 import { Membership, Tenant, User } from "@/models";
+import {
+  type SignupFields,
+  type SignupActionState,
+  type SignupSubmissionResult,
+} from "./signup.types";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
-
-type SignupFields = "name" | "email" | "password";
-
-export type SignupActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code: "VALIDATION_ERROR" | "DUPLICATE_EMAIL" | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<SignupFields, string>>;
-    };
-
-export const initialSignupActionState: SignupActionState = { status: "idle" };
-
-type SignupSubmissionResult =
-  | { ok: true; redirectTo: string }
-  | {
-      ok: false;
-      code: "VALIDATION_ERROR" | "DUPLICATE_EMAIL" | "SERVER_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<SignupFields, string>>;
-    };
 
 type SignupDependencies = {
   findExistingUser: (email: string) => Promise<{ _id: unknown } | null>;

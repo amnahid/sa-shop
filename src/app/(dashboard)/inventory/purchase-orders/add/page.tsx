@@ -9,6 +9,7 @@ import { FormField } from "@/components/app/FormField";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Plus, ListPlus } from "lucide-react";
 
 interface Props {
@@ -24,7 +25,10 @@ export default async function AddPurchaseOrderPage({ searchParams }: Props) {
 
   const suppliers = await Supplier.find({ tenantId: membership.tenantId, deletedAt: null, active: true }).sort({ name: 1 });
   const branches = await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
-  const products = await Product.find({ tenantId: membership.tenantId, deletedAt: null, active: true, trackStock: true }).sort({ name: 1 }).limit(100);
+  const products = await Product.find({ tenantId: membership.tenantId, deletedAt: null, active: true, trackStock: true }).sort({ name: 1 }).limit(200);
+
+  const supplierOptions = suppliers.map(s => ({ value: s._id.toString(), label: s.name }));
+  const branchOptions = branches.map(b => ({ value: b._id.toString(), label: b.name }));
 
   return (
     <div className="space-y-6">
@@ -48,20 +52,23 @@ export default async function AddPurchaseOrderPage({ searchParams }: Props) {
           <CardContent className="pt-8 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <FormField label="Supplier *" htmlFor="supplierId" required>
-                <select name="supplierId" id="supplierId" defaultValue={supplierId || ""} required className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none">
-                  <option value="">Select supplier</option>
-                  {suppliers.map(s => (
-                    <option key={s._id.toString()} value={s._id.toString()}>{s.name}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  name="supplierId"
+                  defaultValue={supplierId}
+                  options={supplierOptions}
+                  required
+                  placeholder="Select supplier"
+                  searchPlaceholder="Search suppliers..."
+                />
               </FormField>
               <FormField label="Receive at Branch *" htmlFor="branchId" required>
-                <select name="branchId" id="branchId" required className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none">
-                  <option value="">Select branch</option>
-                  {branches.map(b => (
-                    <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  name="branchId"
+                  options={branchOptions}
+                  required
+                  placeholder="Select branch"
+                  searchPlaceholder="Search branches..."
+                />
               </FormField>
               <FormField label="Expected Date" htmlFor="expectedDate">
                 <Input type="date" name="expectedDate" id="expectedDate" />

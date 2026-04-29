@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import { canAccessPermission } from "@/lib/utils/permissions";
 import { getAuthorizedSessionMembership } from "@/lib/utils/server-authorization";
 import { isTenantAccessible } from "@/lib/utils/tenant-access";
+import { sendInAppNotification } from "@/lib/in-app-notifications";
 
 const INVITE_EXPIRY_DAYS = 7;
 
@@ -268,6 +269,27 @@ export async function sendInvite(formData: FormData, overrides: Partial<InviteLi
     );
   }
 
+  const recipientUserIds = [new mongoose.Types.ObjectId(auth.sessionUserId)];
+  if (recipientUserIds.length > 0) {
+    const inAppResult = await sendInAppNotification({
+      tenantId: validated.data.tenantId,
+      actorTenantId: auth.membership.tenantId,
+      recipientUserIds,
+      type: "team.invite.created",
+      title: "New team invitation sent",
+      message: `${validated.data.email} was invited as ${validated.data.role}.`,
+      linkUrl: "/settings/team",
+      metadata: {
+        email: validated.data.email,
+        role: validated.data.role,
+      },
+      createdById: auth.sessionUserId,
+    });
+    if (!inAppResult.success) {
+      console.error("[INVITE_IN_APP_NOTIFY_FAILED]", inAppResult.error);
+    }
+  }
+
   return { success: true, message: `Invitation sent to ${validated.data.email}.` };
 }
 
@@ -337,6 +359,27 @@ export async function resendInvite(formData: FormData, overrides: Partial<Invite
         actorTenantId: auth.membership.tenantId,
       }
     );
+  }
+
+  const recipientUserIds = [new mongoose.Types.ObjectId(auth.sessionUserId)];
+  if (recipientUserIds.length > 0) {
+    const inAppResult = await sendInAppNotification({
+      tenantId,
+      actorTenantId: auth.membership.tenantId,
+      recipientUserIds,
+      type: "team.invite.resent",
+      title: "Team invitation resent",
+      message: `Invitation was resent to ${invitation.email}.`,
+      linkUrl: "/settings/team",
+      metadata: {
+        email: invitation.email,
+        role: invitation.role,
+      },
+      createdById: auth.sessionUserId,
+    });
+    if (!inAppResult.success) {
+      console.error("[INVITE_RESEND_IN_APP_NOTIFY_FAILED]", inAppResult.error);
+    }
   }
 
   return { success: true, message: `Invitation resent to ${invitation.email}.` };
@@ -417,6 +460,28 @@ export async function acceptInvite(token: string, password: string, name: string
 
   invitation.acceptedAt = new Date();
   await invitation.save();
+
+  const recipientUserIds = [new mongoose.Types.ObjectId(user._id)];
+  if (recipientUserIds.length > 0) {
+    const inAppResult = await sendInAppNotification({
+      tenantId: invitation.tenantId,
+      actorTenantId: invitation.tenantId,
+      recipientUserIds,
+      type: "team.invite.accepted",
+      title: "Invitation accepted",
+      message: `${invitation.email} joined as ${invitation.role}.`,
+      linkUrl: "/settings/team",
+      metadata: {
+        email: invitation.email,
+        role: invitation.role,
+        userId: user._id.toString(),
+      },
+      createdById: user._id,
+    });
+    if (!inAppResult.success) {
+      console.error("[INVITE_ACCEPT_IN_APP_NOTIFY_FAILED]", inAppResult.error);
+    }
+  }
 
   return { success: true, userId: user._id };
 }

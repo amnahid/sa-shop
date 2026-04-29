@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { usePathname } from "next/navigation";
@@ -15,6 +15,7 @@ interface AppShellProps {
   membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
   primaryColor?: string | null;
   logoUrl?: string | null;
+  unreadNotificationsCount?: number;
 }
 
 export function AppShell({
@@ -25,9 +26,20 @@ export function AppShell({
   membershipPermissionOverrides,
   primaryColor,
   logoUrl,
+  unreadNotificationsCount = 0,
 }: AppShellProps) {
   const pathname = usePathname();
   const isPosPage = pathname === "/pos";
+
+  useEffect(() => {
+    document.documentElement.dataset.dashboardShell = "true";
+    document.body.dataset.dashboardShell = "true";
+
+    return () => {
+      delete document.documentElement.dataset.dashboardShell;
+      delete document.body.dataset.dashboardShell;
+    };
+  }, []);
 
   const customStyle = primaryColor ? {
     "--primary": hexToHsl(primaryColor),
@@ -38,25 +50,24 @@ export function AppShell({
   } as React.CSSProperties : undefined;
 
   return (
-    <div className="flex h-screen bg-background" style={customStyle}>
-      <div className="hidden h-full w-60 shrink-0 border-r border-sidebar-border bg-sidebar-background lg:flex lg:flex-col">
-        <Sidebar
-          membershipRole={membershipRole}
-          membershipPermissionOverrides={membershipPermissionOverrides}
-          logoUrl={logoUrl}
-        />
-      </div>
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div className="flex h-dvh min-h-0 overflow-hidden bg-background" style={customStyle}>
+      <Sidebar
+        membershipRole={membershipRole}
+        membershipPermissionOverrides={membershipPermissionOverrides}
+        logoUrl={logoUrl}
+      />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           userName={userName}
           userEmail={userEmail}
           membershipRole={membershipRole}
           membershipPermissionOverrides={membershipPermissionOverrides}
+          unreadNotificationsCount={unreadNotificationsCount}
         />
         <main 
           className={cn(
             "flex-1 min-h-0",
-            isPosPage ? "p-0 overflow-hidden" : "p-6 overflow-auto"
+            isPosPage ? "p-0 overflow-hidden" : "overflow-x-hidden overflow-y-auto overscroll-contain p-6"
           )}
         >
           {children}

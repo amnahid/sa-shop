@@ -26,7 +26,7 @@ async function resolveCategoryForTenant(
   categoryIdInput: string | null
 ): Promise<{ categoryId?: mongoose.Types.ObjectId; error?: string }> {
   const categoryIdStr = categoryIdInput?.trim();
-  if (!categoryIdStr) {
+  if (!categoryIdStr || categoryIdStr === "none") {
     return {};
   }
 

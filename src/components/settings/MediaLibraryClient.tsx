@@ -58,7 +58,19 @@ export function MediaLibraryClient({ assets }: { assets: MediaLibraryAsset[] }) 
   const [uploadPending, setUploadPending] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<FeedbackState | null>(null);
   const [assetFeedback, setAssetFeedback] = useState<FeedbackState | null>(null);
+  const [selectedFileLabel, setSelectedFileLabel] = useState<string>("");
   const [actionPending, startTransition] = useTransition();
+  const maxFileSizeBytes = 10 * 1024 * 1024;
+  const maxFileSizeMb = Math.round(maxFileSizeBytes / (1024 * 1024));
+  const allowedUploadMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "application/pdf",
+    "text/plain",
+  ];
   const tableRows: MediaTableRow[] = assets.map((asset) => ({
     id: asset.id,
     name: asset.name,
@@ -161,16 +173,32 @@ export function MediaLibraryClient({ assets }: { assets: MediaLibraryAsset[] }) 
             setUploadFeedback(null);
             const form = event.currentTarget;
             const formData = new FormData(form);
-            const maybeFile = formData.get("file");
+              const maybeFile = formData.get("file");
 
-            if (!(maybeFile instanceof File) || maybeFile.size <= 0) {
-              setUploadFeedback({ status: "error", message: "Please choose a file to upload." });
-              return;
-            }
+              if (!(maybeFile instanceof File) || maybeFile.size <= 0) {
+                setUploadFeedback({ status: "error", message: "Please choose a file to upload." });
+                return;
+              }
 
-            setUploadPending(true);
-            try {
-              const response = await fetch("/api/media/upload", {
+              if (!allowedUploadMimeTypes.includes(maybeFile.type)) {
+                setUploadFeedback({
+                  status: "error",
+                  message: `Unsupported file type: ${maybeFile.type || "unknown"}.`,
+                });
+                return;
+              }
+
+              if (maybeFile.size > maxFileSizeBytes) {
+                setUploadFeedback({
+                  status: "error",
+                  message: `File exceeds ${maxFileSizeMb}MB upload limit.`,
+                });
+                return;
+              }
+
+              setUploadPending(true);
+              try {
+                const response = await fetch("/api/media/upload", {
                 method: "POST",
                 body: formData,
               });
@@ -185,6 +213,7 @@ export function MediaLibraryClient({ assets }: { assets: MediaLibraryAsset[] }) 
               }
 
               setUploadFeedback({ status: "success", message: "Asset uploaded successfully." });
+              setSelectedFileLabel("");
               form.reset();
               router.refresh();
             } catch {
@@ -205,7 +234,23 @@ export function MediaLibraryClient({ assets }: { assets: MediaLibraryAsset[] }) 
               required
               accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,application/pdf,text/plain"
               className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                if (!file) {
+                  setSelectedFileLabel("");
+                  return;
+                }
+                const readableSize =
+                  file.size < 1024 * 1024
+                    ? `${Math.max(1, Math.round(file.size / 1024))}KB`
+                    : `${(file.size / (1024 * 1024)).toFixed(1)}MB`;
+                setSelectedFileLabel(`${file.name} (${readableSize})`);
+              }}
             />
+            <p className="text-xs text-muted-foreground">
+              JPG, PNG, WebP, GIF, SVG, PDF, TXT up to {maxFileSizeMb}MB.
+              {selectedFileLabel ? ` Selected: ${selectedFileLabel}` : ""}
+            </p>
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium">Asset name (optional)</label>

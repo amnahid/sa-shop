@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormFeedback } from "@/components/app/FormFeedback";
-import { initialLoginActionState, loginAction } from "@/lib/actions/login";
+import { loginAction } from "@/lib/actions/login";
+import { initialLoginActionState } from "@/lib/actions/login.types";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

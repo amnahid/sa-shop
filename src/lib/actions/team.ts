@@ -55,6 +55,19 @@ function isSupportedAvatarUrl(value: string) {
   }
 }
 
+function isSupportedLogoUrl(value: string) {
+  if (value.startsWith("/")) {
+    return /^\/uploads\/media\/[a-zA-Z0-9._/-]+$/.test(value) && !value.includes("..");
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 const profileUpdateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120, "Name must be 120 characters or fewer"),
   phone: z.string().trim().max(50, "Phone number must be 50 characters or fewer").optional(),
@@ -566,14 +579,8 @@ const businessSettingsSchema = z.object({
   logoUrl: z
     .string()
     .trim()
-    .refine((value) => {
-      try {
-        const parsed = new URL(value);
-        return parsed.protocol === "https:" || parsed.protocol === "http:";
-      } catch {
-        return false;
-      }
-    }, "Logo URL must be a valid http(s) URL")
+    .max(2048, "Logo URL is too long")
+    .refine((value) => isSupportedLogoUrl(value), "Logo URL must be a valid http(s) URL or media path")
     .optional(),
   primaryColor: z
     .string()
@@ -702,9 +709,14 @@ function parseTenantSettingsUpdate(formData: FormData): ParsedTenantSettingsUpda
     };
   }
 
+  const data = { ...validated.data };
+  if (formData.get("logoRemoved") === "1") {
+    data.logoUrl = "";
+  }
+
   return {
     success: true,
     form,
-    data: validated.data,
+    data,
   };
 }

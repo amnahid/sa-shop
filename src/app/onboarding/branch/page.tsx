@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormFeedback } from "@/components/app/FormFeedback";
-import { branchAction, initialBranchActionState } from "@/lib/actions/onboarding-branch";
+import { branchAction } from "@/lib/actions/onboarding-branch";
+import { initialBranchActionState } from "@/lib/actions/onboarding.types";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

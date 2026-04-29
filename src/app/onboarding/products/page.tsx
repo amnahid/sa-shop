@@ -4,7 +4,8 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { FormFeedback } from "@/components/app/FormFeedback";
-import { importProductsAction, initialProductsActionState } from "@/lib/actions/onboarding-products";
+import { importProductsAction } from "@/lib/actions/onboarding-products";
+import { initialProductsActionState } from "@/lib/actions/onboarding.types";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

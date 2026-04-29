@@ -4,33 +4,16 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { z } from "zod";
 import { signIn } from "@/lib/auth";
+import {
+  type LoginFields,
+  type LoginActionState,
+  type LoginSubmissionResult,
+} from "./login.types";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
   password: z.string().min(1, "Password is required"),
 });
-
-type LoginFields = "email" | "password";
-
-export type LoginActionState =
-  | { status: "idle" }
-  | {
-      status: "error";
-      code: "VALIDATION_ERROR" | "INVALID_CREDENTIALS" | "AUTH_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<LoginFields, string>>;
-    };
-
-export const initialLoginActionState: LoginActionState = { status: "idle" };
-
-type LoginSubmissionResult =
-  | { ok: true; redirectTo: string }
-  | {
-      ok: false;
-      code: "VALIDATION_ERROR" | "INVALID_CREDENTIALS" | "AUTH_ERROR";
-      message: string;
-      fieldErrors?: Partial<Record<LoginFields, string>>;
-    };
 
 type LoginDependencies = {
   authenticate: (email: string, password: string, redirectTo: string) => Promise<"ok" | "invalid" | "error">;

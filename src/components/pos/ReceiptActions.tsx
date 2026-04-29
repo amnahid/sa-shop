@@ -13,7 +13,7 @@ export function ReceiptActions() {
       </Link>
       <button
         onClick={() => window.print()}
-        className="flex-1 py-2 rounded-md border border-gray-300 text-sm font-medium"
+        className="flex-1 py-2 rounded-md border border-input text-sm font-medium"
       >
         Print
       </button>
@@ -26,6 +26,7 @@ export function ReceiptActions() {
           body {
             background-color: white !important;
           }
+          .receipt-page-shell,
           .min-h-screen {
             min-height: auto !important;
             padding: 0 !important;

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/app/FormField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, ShieldCheck, Mail, Bell, Image as ImageIcon } from "lucide-react";
+import { BusinessLogoField } from "@/components/settings/BusinessLogoField";
 
 interface SettingsPageProps {
   searchParams: Promise<{ error?: string; success?: string; form?: string }>;
@@ -182,13 +183,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-gray-50">
                 <FormField label="Brand Primary Color" htmlFor="primaryColor">
                    <div className="flex items-center gap-4">
-                      <input name="primaryColor" type="color" defaultValue={tenant.primaryColor || "#377dff"} className="h-11 w-20 cursor-pointer rounded-md border border-gray-300 bg-white p-1 shadow-sm hover:border-gray-400 transition-all" />
+                      <input name="primaryColor" type="color" defaultValue={tenant.primaryColor || "#377dff"} className="h-11 w-20 cursor-pointer rounded-md border border-input bg-white p-1 shadow-sm hover:border-gray-500 transition-all" />
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tight">Main application theme color</p>
                    </div>
                 </FormField>
-                <FormField label="Logo URL" htmlFor="logoUrl">
-                  <Input name="logoUrl" id="logoUrl" defaultValue={tenant.logoUrl || ""} placeholder="https://your-domain.com/logo.png" type="url" />
-                </FormField>
+                <BusinessLogoField initialLogoUrl={tenant.logoUrl || ""} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t border-gray-50">
@@ -237,7 +236,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                       id="vatRegistered"
                       type="checkbox"
                       defaultChecked={tenant.vatRegistered}
-                      className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="h-5 w-5 rounded border-input text-primary focus:ring-primary"
                     />
                     <label htmlFor="vatRegistered" className="text-[11px] font-black uppercase tracking-widest text-gray-700 cursor-pointer">Business is VAT Registered (15%)</label>
                  </div>

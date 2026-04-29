@@ -24,6 +24,19 @@ function isSupportedAvatarUrl(value: string) {
   }
 }
 
+function isSupportedLogoUrl(value: string) {
+  if (value.startsWith("/")) {
+    return /^\/uploads\/media\/[a-zA-Z0-9._/-]+$/.test(value) && !value.includes("..");
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function isValidTimeZone(value: string) {
   try {
     Intl.DateTimeFormat(undefined, { timeZone: value });
@@ -77,14 +90,8 @@ const businessSettingsSchema = z.object({
   logoUrl: z
     .string()
     .trim()
-    .refine((value) => {
-      try {
-        const parsed = new URL(value);
-        return parsed.protocol === "https:" || parsed.protocol === "http:";
-      } catch {
-        return false;
-      }
-    }, "Logo URL must be a valid http(s) URL")
+    .max(2048, "Logo URL is too long")
+    .refine((value) => isSupportedLogoUrl(value), "Logo URL must be a valid http(s) URL or media path")
     .optional(),
   baseCurrency: z.string().trim().regex(/^[A-Z]{3}$/, "Base currency must be a valid 3-letter currency code"),
   timezone: z.string().trim().refine((value) => isValidTimeZone(value), "Timezone is invalid"),
@@ -284,5 +291,10 @@ export function parseTenantSettingsUpdate(formData: FormData): ParsedTenantSetti
     };
   }
 
-  return { success: true, form, data: validated.data };
+  const data = { ...validated.data };
+  if (formData.get("logoRemoved") === "1") {
+    data.logoUrl = "";
+  }
+
+  return { success: true, form, data };
 }

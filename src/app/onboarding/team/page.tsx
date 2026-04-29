@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormFeedback } from "@/components/app/FormFeedback";
-import { finishSetup, initialTeamActionState, inviteTeamAction } from "@/lib/actions/onboarding-team";
+import { finishSetup, inviteTeamAction } from "@/lib/actions/onboarding-team";
+import { initialTeamActionState } from "@/lib/actions/onboarding.types";
 
 function InviteButton() {
   const { pending } = useFormStatus();
