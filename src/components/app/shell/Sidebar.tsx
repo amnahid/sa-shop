@@ -203,7 +203,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "h-full flex-col bg-sidebar-background p-4",
+        "flex h-full min-h-0 flex-col bg-sidebar-background p-4",
         SIDEBAR_WIDTH_CLASS,
         mobile ? "flex" : "hidden lg:flex"
       )}
@@ -219,7 +219,7 @@ export function Sidebar({
         )}
       </div>
 
-      <nav aria-label="Primary navigation" className="flex-1 space-y-6 overflow-y-auto pt-2">
+      <nav aria-label="Primary navigation" className="flex-1 min-h-0 space-y-6 overflow-y-auto pt-2">
         {filteredNavigationConfig.map((group) => renderGroup(group))}
       </nav>
     </aside>

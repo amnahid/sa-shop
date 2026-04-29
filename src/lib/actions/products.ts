@@ -90,6 +90,7 @@ export async function createProduct(formData: FormData) {
     trackStock: formData.get("trackStock") === "on",
     lowStockThreshold: parseInt(formData.get("lowStockThreshold") as string || "10"),
     expiryTracking: formData.get("expiryTracking") === "on",
+    imageUrls: formData.getAll("imageUrls") as string[],
     active: true,
   });
 
@@ -142,6 +143,7 @@ export async function updateProduct(id: string, formData: FormData) {
       trackStock: formData.get("trackStock") === "on",
       lowStockThreshold: parseInt(formData.get("lowStockThreshold") as string || "10"),
       expiryTracking: formData.get("expiryTracking") === "on",
+      imageUrls: formData.getAll("imageUrls") as string[],
     },
     { new: true }
   );

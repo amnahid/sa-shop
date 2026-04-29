@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Sidebar } from "./Sidebar";
-import type { SidebarMembershipRole } from "./navigation-config";
+import type { NavigationPermissionKey, SidebarMembershipRole } from "./navigation-config";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface SidebarToggleProps {
   membershipRole?: SidebarMembershipRole | null;
+  membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
 }
 
-export function SidebarToggle({ membershipRole = null }: SidebarToggleProps) {
+export function SidebarToggle({
+  membershipRole = null,
+  membershipPermissionOverrides,
+}: SidebarToggleProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,7 +40,12 @@ export function SidebarToggle({ membershipRole = null }: SidebarToggleProps) {
         >
           <X className="size-5" />
         </button>
-        <Sidebar mobile onNavigate={() => setOpen(false)} membershipRole={membershipRole} />
+        <Sidebar
+          mobile
+          onNavigate={() => setOpen(false)}
+          membershipRole={membershipRole}
+          membershipPermissionOverrides={membershipPermissionOverrides}
+        />
       </DialogContent>
     </Dialog>
   );

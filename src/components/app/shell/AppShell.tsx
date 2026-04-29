@@ -39,7 +39,7 @@ export function AppShell({
 
   return (
     <div className="flex h-screen bg-background" style={customStyle}>
-      <div className="hidden shrink-0 border-r border-sidebar-border lg:block">
+      <div className="hidden h-full w-60 shrink-0 border-r border-sidebar-border lg:block">
         <Sidebar
           membershipRole={membershipRole}
           membershipPermissionOverrides={membershipPermissionOverrides}
@@ -47,7 +47,12 @@ export function AppShell({
         />
       </div>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopBar userName={userName} userEmail={userEmail} membershipRole={membershipRole} />
+        <TopBar
+          userName={userName}
+          userEmail={userEmail}
+          membershipRole={membershipRole}
+          membershipPermissionOverrides={membershipPermissionOverrides}
+        />
         <main 
           className={cn(
             "flex-1 min-h-0",

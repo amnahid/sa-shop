@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import { Branch, Customer, Proposal } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { createRetainer } from "@/lib/actions/retainers";
+import { PageHeader } from "@/components/app/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormField } from "@/components/app/FormField";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
   searchParams: Promise<{ proposalId?: string }>;
@@ -36,13 +42,13 @@ export default async function NewRetainerPage({ searchParams }: Props) {
     : null;
 
   return (
-    <div className="max-w-4xl p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">New Retainer</h1>
-        <Link href="/retainers" className="text-primary hover:underline">
-          ← Back to Retainers
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="New Retainer"
+        section="Sales"
+        breadcrumbs={[{ label: "Retainers", href: "/retainers" }, { label: "New Retainer" }]}
+        description="Establish a prepaid balance for a customer with linked proposals."
+      />
 
       <form
         action={async (formData) => {
@@ -51,109 +57,105 @@ export default async function NewRetainerPage({ searchParams }: Props) {
           if (result.retainerId) {
             redirect(`/retainers/${result.retainerId}`);
           }
-          console.error(result.error);
         }}
-        className="space-y-6 rounded-lg border bg-card p-6"
+        className="space-y-8 max-w-4xl"
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Retainer Title</label>
-            <input
-              type="text"
-              name="title"
-              defaultValue={prefillProposal?.title || ""}
-              placeholder="Support retainer - Q4"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Linked Proposal</label>
-            <select
-              name="proposalId"
-              defaultValue={prefillProposal?._id.toString() || ""}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Not linked</option>
-              {proposals.map((proposal) => (
-                <option key={proposal._id.toString()} value={proposal._id.toString()}>
-                  {proposal.proposalNumber} • {proposal.customerName || "Walk-in"} • SAR{" "}
-                  {parseFloat(proposal.grandTotal.toString()).toFixed(2)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="py-4 border-b border-gray-100">
+             <CardTitle className="text-sm font-bold uppercase tracking-tight">Retainer Details</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-6">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              <FormField label="Retainer Title" htmlFor="title">
+                <Input
+                  type="text"
+                  name="title"
+                  id="title"
+                  defaultValue={prefillProposal?.title || ""}
+                  placeholder="Support retainer - Q4"
+                />
+              </FormField>
+              <FormField label="Linked Proposal" htmlFor="proposalId">
+                <select
+                  name="proposalId"
+                  id="proposalId"
+                  defaultValue={prefillProposal?._id.toString() || ""}
+                  className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none"
+                >
+                  <option value="">Not linked</option>
+                  {proposals.map((proposal) => (
+                    <option key={proposal._id.toString()} value={proposal._id.toString()}>
+                      {proposal.proposalNumber} • {proposal.customerName || "Walk-in"} • SAR{" "}
+                      {parseFloat(proposal.grandTotal.toString()).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Customer *</label>
-            <select
-              name="customerId"
-              defaultValue={prefillProposal?.customerId?.toString() || ""}
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Select customer</option>
-              {customers.map((customer) => (
-                <option key={customer._id.toString()} value={customer._id.toString()}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Branch *</label>
-            <select
-              name="branchId"
-              defaultValue={prefillProposal?.branchId?.toString() || ""}
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Select branch</option>
-              {branches.map((branch) => (
-                <option key={branch._id.toString()} value={branch._id.toString()}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Retainer Total (SAR) *</label>
-            <input
-              type="number"
-              name="totalAmount"
-              min="0.01"
-              step="0.01"
-              required
-              defaultValue={prefillProposal ? parseFloat(prefillProposal.grandTotal.toString()).toFixed(2) : ""}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              <FormField label="Customer *" htmlFor="customerId" required>
+                <select
+                  name="customerId"
+                  id="customerId"
+                  defaultValue={prefillProposal?.customerId?.toString() || ""}
+                  required
+                  className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none"
+                >
+                  <option value="">Select customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer._id.toString()} value={customer._id.toString()}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Branch *" htmlFor="branchId" required>
+                <select
+                  name="branchId"
+                  id="branchId"
+                  defaultValue={prefillProposal?.branchId?.toString() || ""}
+                  required
+                  className="flex h-11 w-full rounded-md border border-gray-400 bg-white px-3 text-sm focus:border-primary outline-none"
+                >
+                  <option value="">Select branch</option>
+                  {branches.map((branch) => (
+                    <option key={branch._id.toString()} value={branch._id.toString()}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Retainer Total (SAR) *" htmlFor="totalAmount" required>
+                <Input
+                  type="number"
+                  name="totalAmount"
+                  id="totalAmount"
+                  min="0.01"
+                  step="0.01"
+                  required
+                  defaultValue={prefillProposal ? parseFloat(prefillProposal.grandTotal.toString()).toFixed(2) : ""}
+                />
+              </FormField>
+            </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Notes</label>
-          <textarea
-            name="notes"
-            rows={3}
-            placeholder="Billing scope, usage policy, or close conditions..."
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </div>
+            <FormField label="Notes" htmlFor="notes">
+              <Textarea
+                name="notes"
+                id="notes"
+                placeholder="Billing scope, usage policy, or close conditions..."
+              />
+            </FormField>
+          </CardContent>
+        </Card>
 
-        <div className="flex justify-end gap-3 border-t pt-4">
-          <Link
-            href="/retainers"
-            className="flex h-10 items-center rounded-md border border-input bg-background px-4 text-sm font-medium"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-          >
+        <div className="flex justify-end gap-3 pt-4">
+          <Button asChild variant="outline" className="font-black uppercase tracking-widest text-[11px] px-8 h-11">
+             <Link href="/retainers">Cancel</Link>
+          </Button>
+          <Button type="submit" className="font-black uppercase tracking-widest text-[11px] px-12 h-11 shadow-lg">
             Create Retainer
-          </button>
+          </Button>
         </div>
       </form>
     </div>

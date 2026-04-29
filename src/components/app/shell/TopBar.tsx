@@ -1,19 +1,28 @@
 import { SidebarToggle } from "./SidebarToggle";
 import { UserMenu } from "./UserMenu";
 import { Globe, Printer, Layers, Bell } from "lucide-react";
-import type { SidebarMembershipRole } from "./navigation-config";
+import type { NavigationPermissionKey, SidebarMembershipRole } from "./navigation-config";
 
 interface TopBarProps {
   userName?: string | null;
   userEmail?: string | null;
   membershipRole?: SidebarMembershipRole | null;
+  membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
 }
 
-export function TopBar({ userName, userEmail, membershipRole = null }: TopBarProps) {
+export function TopBar({
+  userName,
+  userEmail,
+  membershipRole = null,
+  membershipPermissionOverrides,
+}: TopBarProps) {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div className="flex items-center gap-3">
-        <SidebarToggle membershipRole={membershipRole} />
+        <SidebarToggle
+          membershipRole={membershipRole}
+          membershipPermissionOverrides={membershipPermissionOverrides}
+        />
         
         <div className="h-5 w-px bg-gray-200 mx-2" />
 
@@ -41,7 +50,12 @@ export function TopBar({ userName, userEmail, membershipRole = null }: TopBarPro
         
         <div className="h-5 w-px bg-gray-200 mx-1" />
 
-        <UserMenu name={userName} email={userEmail} />
+        <UserMenu
+          name={userName}
+          email={userEmail}
+          role={membershipRole}
+          permissionOverrides={membershipPermissionOverrides}
+        />
       </div>
     </header>
   );

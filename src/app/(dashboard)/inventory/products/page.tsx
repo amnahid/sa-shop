@@ -207,7 +207,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               barcode: p.barcode,
               name: p.name,
               nameAr: p.nameAr,
-              sellingPrice: p.sellingPrice,
+              sellingPrice: parseFloat(p.sellingPrice.toString()),
               unit: p.unit,
               vatRate: p.vatRate,
               trackStock: p.trackStock,

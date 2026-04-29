@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Product, Category } from "@/models";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import {
   archiveProduct,
   permanentlyDeleteProduct,
   restoreProduct,
-  updateProduct,
 } from "@/lib/actions/products";
-import { FormFeedback } from "@/components/app/FormFeedback";
+import { PageHeader } from "@/components/app/PageHeader";
+import { Button } from "@/components/ui/button";
+import { ProductForm } from "@/components/inventory/ProductForm";
+import { RotateCcw, Trash2, Archive } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -36,149 +36,91 @@ export default async function EditProductPage({ params, searchParams }: Props) {
   const isArchived = product.deletedAt !== null;
 
   return (
-    <div className="p-6 max-w-2xl">
-      <Breadcrumb items={[{ label: "Products", href: "/inventory/products" }, { label: product.name }]} />
-      <div className="mt-4 mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-foreground">Edit Product</h1>
-        <div className="flex gap-2">
-          {isArchived ? (
-            <>
+    <div className="space-y-6">
+      <PageHeader
+        title={product.name}
+        section="Inventory"
+        breadcrumbs={[
+          { label: "Products", href: "/inventory/products" },
+          { label: product.name },
+        ]}
+        actions={
+          <div className="flex gap-2">
+            {isArchived ? (
+              <>
+                <form
+                  action={async () => {
+                    "use server";
+                    await restoreProduct(id);
+                    redirect(`/inventory/products/${id}?success=Restored`);
+                  }}
+                >
+                  <Button type="submit" variant="outline" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
+                    <RotateCcw className="size-3.5 mr-2" />
+                    Restore
+                  </Button>
+                </form>
+                <form
+                  action={async () => {
+                    "use server";
+                    await permanentlyDeleteProduct(id);
+                    redirect("/inventory/products?success=Deleted");
+                  }}
+                >
+                  <Button type="submit" variant="destructive" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
+                    <Trash2 className="size-3.5 mr-2" />
+                    Delete
+                  </Button>
+                </form>
+              </>
+            ) : (
               <form
                 action={async () => {
                   "use server";
-                  const result = await restoreProduct(id);
-                  if ("error" in result) {
-                    redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
-                  }
-                  redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
+                  await archiveProduct(id);
+                  redirect(`/inventory/products/${id}?success=Archived`);
                 }}
               >
-                <button type="submit" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-9 px-3 text-xs font-medium">Restore</button>
+                <Button type="submit" variant="soft-danger" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
+                  <Archive className="size-3.5 mr-2" />
+                  Archive
+                </Button>
               </form>
-              <form
-                action={async () => {
-                  "use server";
-                  const result = await permanentlyDeleteProduct(id);
-                  if ("error" in result) {
-                    redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
-                  }
-                  redirect("/inventory/products?success=Product%20deleted%20permanently");
-                }}
-              >
-                <button type="submit" className="inline-flex items-center justify-center rounded-md bg-red-600 text-white h-9 px-3 text-xs font-medium">Delete Permanently</button>
-              </form>
-            </>
-          ) : (
-            <form
-              action={async () => {
-                "use server";
-                const result = await archiveProduct(id);
-                if ("error" in result) {
-                  redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
-                }
-                redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
-              }}
-            >
-              <button type="submit" className="inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700 h-9 px-3 text-xs font-medium">Archive</button>
-            </form>
-          )}
-        </div>
-      </div>
-
-      <FormFeedback status="error" message={error} />
-      <FormFeedback status="success" message={success} />
-
-      <form
-        action={async (formData) => {
-          "use server";
-          const result = await updateProduct(id, formData);
-          if ("error" in result) {
-            redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error ?? "Operation failed")}`);
-          }
-          redirect(`/inventory/products/${id}?success=${encodeURIComponent(result.message ?? "Operation succeeded")}`);
-        }}
-        className="space-y-4"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="sku" className="block text-sm font-medium text-foreground mb-1">SKU</label>
-            <input id="sku" name="sku" type="text" defaultValue={product.sku} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+            )}
           </div>
-          <div>
-            <label htmlFor="barcode" className="block text-sm font-medium text-foreground mb-1">Barcode</label>
-            <input id="barcode" name="barcode" type="text" defaultValue={product.barcode || ""} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          </div>
-        </div>
+        }
+      />
 
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">Name *</label>
-          <input id="name" name="name" type="text" required defaultValue={product.name} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      {error ? (
+        <div className="rounded-md border border-danger/20 bg-soft-danger px-4 py-3 text-sm text-danger font-bold uppercase tracking-tight">
+          {error}
         </div>
+      ) : null}
+      {success ? (
+        <div className="rounded-md border border-success/20 bg-soft-success px-4 py-3 text-sm text-success font-bold uppercase tracking-tight">
+          {success}
+        </div>
+      ) : null}
 
-        <div>
-          <label htmlFor="nameAr" className="block text-sm font-medium text-foreground mb-1">الاسم (Arabic)</label>
-          <input id="nameAr" name="nameAr" type="text" dir="rtl" defaultValue={product.nameAr || ""} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-foreground mb-1">Category</label>
-            <select id="categoryId" name="categoryId" defaultValue={product.categoryId?.toString() || ""} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="">No category</option>
-              {categories.map((cat) => (
-                <option key={cat._id.toString()} value={cat._id.toString()}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="unit" className="block text-sm font-medium text-foreground mb-1">Unit</label>
-            <select id="unit" name="unit" defaultValue={product.unit} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="piece">Piece</option>
-              <option value="kg">Kg</option>
-              <option value="g">Gram</option>
-              <option value="l">Liter</option>
-              <option value="ml">ML</option>
-              <option value="pack">Pack</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="sellingPrice" className="block text-sm font-medium text-foreground mb-1">Selling Price (SAR) *</label>
-            <input id="sellingPrice" name="sellingPrice" type="number" step="0.01" required defaultValue={product.sellingPrice.toString()} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="vatRate" className="block text-sm font-medium text-foreground mb-1">VAT Rate</label>
-            <select id="vatRate" name="vatRate" defaultValue={product.vatRate.toString()} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-              <option value="0.15">15%</option>
-              <option value="0">0%</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="lowStockThreshold" className="block text-sm font-medium text-foreground mb-1">Low Stock Threshold</label>
-            <input id="lowStockThreshold" name="lowStockThreshold" type="number" defaultValue={product.lowStockThreshold} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-          </div>
-          <div className="flex items-center gap-4 pt-6">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="trackStock" defaultChecked={product.trackStock} className="size-4" />
-              <span className="text-sm">Track Stock</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" name="expiryTracking" defaultChecked={product.expiryTracking} className="size-4" />
-              <span className="text-sm">Expiry Tracking</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="flex justify-between gap-2 pt-4">
-          <Link href="/inventory/products" className="inline-flex items-center justify-center rounded-md border border-input bg-background text-foreground h-10 px-4 py-2 text-sm font-medium">Cancel</Link>
-          <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 py-2 text-sm font-medium">Save Changes</button>
-        </div>
-      </form>
+      <ProductForm 
+        categories={categories} 
+        isEdit 
+        initialData={{
+          id: product._id.toString(),
+          sku: product.sku,
+          barcode: product.barcode,
+          name: product.name,
+          nameAr: product.nameAr,
+          categoryId: product.categoryId,
+          unit: product.unit,
+          price: parseFloat(product.sellingPrice.toString()),
+          vatRate: product.vatRate,
+          trackStock: product.trackStock,
+          threshold: product.lowStockThreshold,
+          expiryTracking: product.expiryTracking,
+          imageUrls: product.imageUrls,
+        }} 
+      />
     </div>
   );
 }

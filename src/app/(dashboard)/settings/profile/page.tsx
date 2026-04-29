@@ -1,22 +1,18 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Membership, User } from "@/models";
-import { updateProfile, changePassword } from "@/lib/actions/team";
+import { changePassword } from "@/lib/actions/team";
 import { canAccessPermission } from "@/lib/utils/permissions";
+import { PageHeader } from "@/components/app/PageHeader";
+import { ProfileForm } from "@/components/settings/ProfileForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormField } from "@/components/app/FormField";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Lock } from "lucide-react";
 
 interface ProfilePageProps {
   searchParams: Promise<{ error?: string; success?: string; form?: string }>;
-}
-
-const formLabelByKey: Record<string, string> = {
-  profile: "Personal information",
-  password: "Password",
-};
-
-function getFeedbackMessage(error: string, fieldErrors?: Record<string, string[]>) {
-  const firstFieldError = Object.values(fieldErrors ?? {}).find((messages) => messages?.length)?.[0];
-  return firstFieldError ?? error;
 }
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
@@ -38,136 +34,81 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     redirect("/");
   }
 
-  const canViewMediaLibrary = canAccessPermission(
-    "settings.media:view",
-    membership.role,
-    membership.permissionOverrides
-  );
   const { error, success, form } = await searchParams;
-  const feedbackPrefix = form ? `${formLabelByKey[form] ?? "Profile"}: ` : "";
 
   return (
-    <div className="p-6 max-w-xl">
-      <h1 className="text-2xl font-bold text-foreground mb-6">My Profile</h1>
+    <div className="max-w-4xl space-y-8">
+      <PageHeader
+        title="My Profile"
+        section="Settings"
+        breadcrumbs={[
+          { label: "Settings", href: "/settings" },
+          { label: "Profile" },
+        ]}
+        description="Update your personal details, profile picture, and security credentials."
+      />
 
-      {error ? (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          {feedbackPrefix}
+      {error && form === "password" ? (
+        <div className="rounded-md border border-danger/20 bg-soft-danger px-4 py-3 text-sm text-danger font-bold uppercase tracking-tight">
           {error}
         </div>
       ) : null}
-      {success ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700"
-        >
-          {feedbackPrefix}
+      {success && form === "password" ? (
+        <div className="rounded-md border border-success/20 bg-soft-success px-4 py-3 text-sm text-success font-bold uppercase tracking-tight">
           {success}
         </div>
       ) : null}
 
-      <form
-        action={async (formData) => {
-          "use server";
-          const result = await updateProfile(formData);
-          const params = new URLSearchParams({ form: result.form });
-          if (!result.success) {
-            params.set("error", getFeedbackMessage(result.error, result.fieldErrors));
-            redirect(`/settings/profile?${params.toString()}`);
-          }
-          params.set("success", result.message);
-          redirect(`/settings/profile?${params.toString()}`);
-        }}
-        className="bg-card border rounded-lg p-6 space-y-4 mb-6"
-      >
-        <h2 className="text-lg font-semibold">Personal Information</h2>
+      <ProfileForm user={{
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+        avatarUrl: user.avatarUrl || "",
+      }} />
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Name</label>
-          <input name="name" defaultValue={user.name} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input value={user.email} readOnly className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground" />
-          <p className="text-xs text-muted-foreground mt-1">Contact support to change email</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Phone</label>
-          <input name="phone" defaultValue={user.phone || ""} type="tel" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Avatar URL</label>
-          <input
-            name="avatarUrl"
-            defaultValue={user.avatarUrl || ""}
-            placeholder="https://... or /uploads/media/..."
-            type="url"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            Use a public http(s) URL or managed media path.{" "}
-            {canViewMediaLibrary ? (
-              <Link href="/settings/media-library" className="underline">
-                Open media library
-              </Link>
-            ) : null}
-          </p>
-          {user.avatarUrl ? (
-            <div className="mt-2 flex items-center gap-3">
-              <div
-                aria-hidden
-                className="h-10 w-10 rounded-full border border-border bg-muted bg-cover bg-center"
-                style={{ backgroundImage: `url("${user.avatarUrl}")` }}
-              />
-              <p className="text-xs text-muted-foreground break-all">Current avatar: {user.avatarUrl}</p>
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2 py-4 border-b border-gray-50">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-soft-warning text-warning">
+            <Lock className="size-4" />
+          </div>
+          <CardTitle className="text-sm font-bold uppercase tracking-tight">Change Password</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-8">
+          <form
+            action={async (formData) => {
+              "use server";
+              const result = await changePassword(formData);
+              const params = new URLSearchParams({ form: result.form });
+              if (!result.success) {
+                params.set("error", result.error);
+                redirect(`/settings/profile?${params.toString()}`);
+              }
+              params.set("success", result.message);
+              redirect(`/settings/profile?${params.toString()}`);
+            }}
+            className="space-y-8"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <FormField label="Current Password" htmlFor="currentPassword" required>
+                <Input name="currentPassword" id="currentPassword" type="password" required />
+              </FormField>
+              <FormField label="New Password" htmlFor="newPassword" required hint="At least 8 characters">
+                <Input name="newPassword" id="newPassword" type="password" required minLength={8} />
+              </FormField>
+              <FormField label="Confirm New Password" htmlFor="confirmPassword" required>
+                <Input name="confirmPassword" id="confirmPassword" type="password" required />
+              </FormField>
             </div>
-          ) : null}
-        </div>
 
-        <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 text-sm font-medium">Save Profile</button>
-      </form>
-
-      <form
-        action={async (formData) => {
-          "use server";
-          const result = await changePassword(formData);
-          const params = new URLSearchParams({ form: result.form });
-          if (!result.success) {
-            params.set("error", getFeedbackMessage(result.error, result.fieldErrors));
-            redirect(`/settings/profile?${params.toString()}`);
-          }
-          params.set("success", result.message);
-          redirect(`/settings/profile?${params.toString()}`);
-        }}
-        className="bg-card border rounded-lg p-6 space-y-4"
-      >
-        <h2 className="text-lg font-semibold">Change Password</h2>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Current Password</label>
-          <input name="currentPassword" type="password" required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">New Password</label>
-          <input name="newPassword" type="password" required minLength={8} placeholder="At least 8 chars, upper/lower/number" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Confirm New Password</label>
-          <input name="confirmPassword" type="password" required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-
-        <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-4 text-sm font-medium">Update Password</button>
-      </form>
+            <div className="flex justify-end pt-4 border-t border-gray-50">
+              <Button type="submit" className="font-black uppercase tracking-widest text-[11px] px-12 h-11 shadow-sm">
+                Update Password
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
