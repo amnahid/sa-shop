@@ -39,7 +39,7 @@ export function AppShell({
 
   return (
     <div className="flex h-screen bg-background" style={customStyle}>
-      <div className="hidden h-full w-60 shrink-0 border-r border-sidebar-border lg:block">
+      <div className="hidden h-full w-60 shrink-0 border-r border-sidebar-border bg-sidebar-background lg:flex lg:flex-col">
         <Sidebar
           membershipRole={membershipRole}
           membershipPermissionOverrides={membershipPermissionOverrides}

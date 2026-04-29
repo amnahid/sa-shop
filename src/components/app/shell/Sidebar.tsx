@@ -203,9 +203,8 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full min-h-0 flex-col bg-sidebar-background p-4",
-        SIDEBAR_WIDTH_CLASS,
-        mobile ? "flex" : "hidden lg:flex"
+        "flex h-full min-h-0 flex-col p-4",
+        mobile ? "flex w-60 bg-sidebar-background" : "hidden lg:flex"
       )}
     >
       <div className="flex h-12 items-center px-2 mb-6 mt-2">
