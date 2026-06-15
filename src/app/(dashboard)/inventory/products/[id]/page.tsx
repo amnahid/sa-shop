@@ -33,7 +33,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
 
   const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 }).lean();
   const { error, success } = await searchParams;
-  const isArchived = (product as any).deletedAt !== null;
+  const isArchived = (product as { deletedAt?: Date | null }).deletedAt !== null;
 
   return (
     <div className="space-y-6">
@@ -56,7 +56,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
                   }}
                 >
                   <Button type="submit" variant="outline" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
-                    <RotateCcw className="size-3.5 mr-2" />
+                    <RotateCcw className="size-3.5 me-2" />
                     Restore
                   </Button>
                 </form>
@@ -68,7 +68,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
                   }}
                 >
                   <Button type="submit" variant="destructive" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
-                    <Trash2 className="size-3.5 mr-2" />
+                    <Trash2 className="size-3.5 me-2" />
                     Delete
                   </Button>
                 </form>
@@ -82,7 +82,7 @@ export default async function EditProductPage({ params, searchParams }: Props) {
                 }}
               >
                 <Button type="submit" variant="soft-danger" size="sm" className="font-bold uppercase tracking-widest text-[10px]">
-                  <Archive className="size-3.5 mr-2" />
+                  <Archive className="size-3.5 me-2" />
                   Archive
                 </Button>
               </form>

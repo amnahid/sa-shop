@@ -103,7 +103,7 @@ export default async function RetainersPage({ searchParams }: Props) {
         actions={
           <Button asChild size="sm" className="font-bold uppercase tracking-wider text-[11px] px-6">
             <Link href="/retainers/new">
-              <Plus className="size-3.5 mr-2" />
+              <Plus className="size-3.5 me-2" />
               New Retainer
             </Link>
           </Button>

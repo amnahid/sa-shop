@@ -115,6 +115,7 @@ export interface IInvoice extends Document {
   customerAddress?: string;
   subtotal: mongoose.Types.Decimal128;
   discountTotal: mongoose.Types.Decimal128;
+  shippingTotal: mongoose.Types.Decimal128;
   vatTotal: mongoose.Types.Decimal128;
   grandTotal: mongoose.Types.Decimal128;
   payments: IInvoicePayment[];
@@ -188,6 +189,10 @@ const invoiceSchema = new Schema<IInvoice>(
       required: true,
     },
     discountTotal: {
+      type: Schema.Types.Decimal128,
+      default: 0,
+    },
+    shippingTotal: {
       type: Schema.Types.Decimal128,
       default: 0,
     },

@@ -1,0 +1,28 @@
+{
+  "common": {
+    "dashboard": "لوحة القيادة",
+    "inventory": "المخزون",
+    "pos": "نقطة البيع",
+    "customers": "العملاء",
+    "suppliers": "الموردين",
+    "accounting": "المحاسبة",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "search": "بحث...",
+    "add": "إضافة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "language": "اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور"
+  }
+}

@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <div className="text-center py-4">
               <p className="text-green-600 font-medium mb-2">Check your email!</p>
-              <p className="text-sm text-muted-foreground">We've sent a password reset link to your email.</p>
+              <p className="text-sm text-muted-foreground">We&apos;ve sent a password reset link to your email.</p>
             </div>
           ) : (
             <form action={async (formData) => {

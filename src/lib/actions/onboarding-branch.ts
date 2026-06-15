@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Branch, Membership, Tenant } from "@/models";
-import { type BranchFields, type BranchActionState } from "./onboarding.types";
+import { type BranchActionState } from "./onboarding.types";
 
 const branchSchema = z.object({
   name: z.string().trim().min(1, "Branch name is required"),

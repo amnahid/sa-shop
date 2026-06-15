@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { 
@@ -203,6 +202,7 @@ async function seed() {
     } else if (model === Tenant) {
       await Tenant.deleteMany({ _id: demoTenantId });
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (model as any).deleteMany({ tenantId: demoTenantId } as any);
     }
   }
@@ -318,6 +318,7 @@ async function seed() {
 
   // ── Step 4: Products ───────────────────────────────────────────────────────
   console.log("\n📦 Creating products...");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const products: any[] = [];
 
   for (const p of PRODUCTS_DATA) {
@@ -526,7 +527,7 @@ async function seed() {
 
   // ── Step 9: Suppliers ─────────────────────────────────────────────────────
   console.log("\n🚚 Creating suppliers...");
-  const suppliers: any[] = [];
+  const suppliers: mongoose.Document[] = [];
 
   for (const s of SUPPLIERS_DATA) {
     const result = await Supplier.create({

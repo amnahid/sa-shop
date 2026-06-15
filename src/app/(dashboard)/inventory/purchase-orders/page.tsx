@@ -94,7 +94,7 @@ export default async function PurchaseOrdersPage({ searchParams }: Props) {
         actions={
           <Button asChild size="sm" className="font-bold uppercase tracking-wider text-[11px] px-6">
             <Link href="/inventory/purchase-orders/add">
-              <Plus className="size-3.5 mr-2" />
+              <Plus className="size-3.5 me-2" />
               New PO
             </Link>
           </Button>

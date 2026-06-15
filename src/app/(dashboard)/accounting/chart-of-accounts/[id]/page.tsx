@@ -130,10 +130,10 @@ export default async function AccountDetailPage({ params }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-left font-medium">Counterparty</th>
-                <th className="p-3 text-right font-medium">Amount</th>
+                <th className="p-3 text-start font-medium">Date</th>
+                <th className="p-3 text-start font-medium">Type</th>
+                <th className="p-3 text-start font-medium">Counterparty</th>
+                <th className="p-3 text-end font-medium">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -142,7 +142,7 @@ export default async function AccountDetailPage({ params }: Props) {
                   <td className="p-3 text-muted-foreground">{entry.entryDate.toLocaleDateString()}</td>
                   <td className="p-3 capitalize">{entry.kind}</td>
                   <td className="p-3 text-muted-foreground">{entry.counterpartyName || "-"}</td>
-                  <td className="p-3 text-right font-medium">SAR {entry.amount.toFixed(2)}</td>
+                  <td className="p-3 text-end font-medium">SAR {entry.amount.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>

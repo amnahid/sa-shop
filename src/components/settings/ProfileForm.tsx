@@ -46,7 +46,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         showToast("Profile updated successfully", "success");
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       showToast("An unexpected error occurred", "error");
     } finally {
       setLoading(false);

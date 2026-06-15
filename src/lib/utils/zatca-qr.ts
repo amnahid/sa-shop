@@ -43,8 +43,6 @@ export async function generateQrCodeData(data: QRData): Promise<string> {
 export async function generateQrCodePng(data: QRData): Promise<string> {
   const tlvData = await generateQrCodeData(data);
 
-  const base64Data = Buffer.from(tlvData, "hex").toString("base64");
-
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <rect width="200" height="200" fill="white"/>
   <text x="100" y="90" text-anchor="middle" font-size="10" fill="#333">Scan to verify</text>

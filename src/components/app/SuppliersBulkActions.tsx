@@ -4,9 +4,10 @@ import { BulkActions } from "./BulkActions";
 import { bulkImportSuppliers } from "@/lib/actions/bulk";
 import { exportSuppliersCsv } from "@/lib/utils/csv-export";
 
-export function SuppliersBulkActions({ suppliers }: { suppliers: any[] }) {
+export function SuppliersBulkActions({ suppliers }: { suppliers: unknown[] }) {
   const handleExport = () => {
-    const csv = exportSuppliersCsv(suppliers);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const csv = exportSuppliersCsv(suppliers as any[]);
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");

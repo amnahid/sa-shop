@@ -1,0 +1,28 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "pos": "POS",
+    "customers": "Customers",
+    "suppliers": "Suppliers",
+    "accounting": "Accounting",
+    "reports": "Reports",
+    "settings": "Settings",
+    "search": "Search...",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic"
+  },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password"
+  }
+}

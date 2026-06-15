@@ -51,15 +51,17 @@ export const authOptions: NextAuthConfig = {
     maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
-      if (session.user) {
-        session.user.id = token.id as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
+      if (session.user && token.id) {
+        session.user.id = token.id;
       }
       return session;
     },

@@ -6,6 +6,13 @@ import { getCurrentMembership } from "@/lib/utils/membership";
 import { canAccessPermission } from "@/lib/utils/permissions";
 import { Membership } from "@/models";
 import { listTenantInvitations, resendInvite, revokeInvite, sendInvite } from "@/lib/actions/invite";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TeamMember = {
   _id: { toString(): string };
@@ -95,8 +102,8 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left p-3 font-medium">Name</th>
-              <th className="text-left p-3 font-medium">Email</th>
+              <th className="text-start p-3 font-medium">Name</th>
+              <th className="text-start p-3 font-medium">Email</th>
               <th className="text-center p-3 font-medium">Role</th>
               <th className="text-center p-3 font-medium">Status</th>
               <th className="text-center p-3 font-medium">Actions</th>
@@ -113,7 +120,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
                 <tr key={member._id.toString()} className="border-t">
                   <td className="p-3 font-medium">
                     {user.name}
-                    {isCurrentUser && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
+                    {isCurrentUser && <span className="ms-2 text-xs text-muted-foreground">(you)</span>}
                   </td>
                   <td className="p-3 text-muted-foreground">{user.email}</td>
                   <td className="p-3 text-center">
@@ -154,11 +161,16 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
             placeholder="teammate@example.com"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
-          <select name="role" defaultValue="cashier" className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-            <option value="cashier">Cashier</option>
-            <option value="manager">Manager</option>
-            {canManageAdmin && <option value="owner">Owner</option>}
-          </select>
+          <Select name="role" defaultValue="cashier">
+            <SelectTrigger className="h-10 bg-background">
+              <SelectValue placeholder="Select Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cashier">Cashier</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              {canManageAdmin && <SelectItem value="owner">Owner</SelectItem>}
+            </SelectContent>
+          </Select>
           <button
             type="submit"
             className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
@@ -178,7 +190,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
-              <th className="text-left p-3 font-medium">Email</th>
+              <th className="text-start p-3 font-medium">Email</th>
               <th className="text-center p-3 font-medium">Role</th>
               <th className="text-center p-3 font-medium">Status</th>
               <th className="text-center p-3 font-medium">Sent</th>

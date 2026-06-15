@@ -1,5 +1,4 @@
 
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PurchaseOrder, Supplier, Branch } from "@/models";
 import { submitPurchaseOrder, cancelPurchaseOrder, receivePurchaseOrderLine } from "@/lib/actions/purchase-orders";
@@ -106,11 +105,11 @@ export default async function PurchaseOrderDetailPage({ params }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="text-left p-3 font-medium">Product</th>
-              <th className="text-right p-3 font-medium">Unit Cost</th>
+              <th className="text-start p-3 font-medium">Product</th>
+              <th className="text-end p-3 font-medium">Unit Cost</th>
               <th className="text-center p-3 font-medium">Ordered</th>
               <th className="text-center p-3 font-medium">Received</th>
-              <th className="text-right p-3 font-medium">Total</th>
+              <th className="text-end p-3 font-medium">Total</th>
               <th className="text-center p-3 font-medium">Receive</th>
             </tr>
           </thead>
@@ -124,12 +123,12 @@ export default async function PurchaseOrderDetailPage({ params }: Props) {
                     <span className="font-medium">{line.name}</span>
                     <span className="block text-xs text-muted-foreground">{line.sku}</span>
                   </td>
-                  <td className="p-3 text-right">SAR {line.unitCost.toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {line.unitCost.toFixed(2)}</td>
                   <td className="p-3 text-center">{line.quantityOrdered}</td>
                   <td className={`p-3 text-center font-medium ${isFullyReceived ? "text-green-600" : "text-orange-600"}`}>
                     {line.quantityReceived}
                   </td>
-                  <td className="p-3 text-right font-medium">SAR {line.totalCost.toFixed(2)}</td>
+                  <td className="p-3 text-end font-medium">SAR {line.totalCost.toFixed(2)}</td>
                   <td className="p-3 text-center">
                     {canReceive && !isFullyReceived ? (
                       <ReceiveLineButton
@@ -147,8 +146,8 @@ export default async function PurchaseOrderDetailPage({ params }: Props) {
           </tbody>
           <tfoot className="bg-muted border-t-2">
             <tr>
-              <td colSpan={4} className="p-3 font-medium text-right">Total</td>
-              <td className="p-3 text-right font-bold">SAR {totalValue.toFixed(2)}</td>
+              <td colSpan={4} className="p-3 font-medium text-end">Total</td>
+              <td className="p-3 text-end font-bold">SAR {totalValue.toFixed(2)}</td>
               <td></td>
             </tr>
           </tfoot>

@@ -3,7 +3,6 @@
 import crypto from "crypto";
 import { User, Membership } from "@/models";
 import { sendEmail } from "@/lib/email";
-import mongoose from "mongoose";
 
 const RESET_TOKEN_EXPIRY = 60 * 60 * 1000;
 

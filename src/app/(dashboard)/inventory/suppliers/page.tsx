@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
 import { FormField } from "@/components/app/FormField";
-import { Plus, Truck } from "lucide-react";
+import { Plus } from "lucide-react";
 import { SuppliersBulkActions } from "@/components/app/SuppliersBulkActions";
 
 interface SupplierRow {

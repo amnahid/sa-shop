@@ -3,7 +3,7 @@ import { getCurrentMembership } from "@/lib/utils/membership";
 import { Product, StockLevel, Branch } from "@/models";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, PackageSearch } from "lucide-react";
@@ -63,14 +63,14 @@ export default async function StockPage() {
           <Table>
             <TableHeader className="bg-[#f9fafb]">
               <TableRow className="hover:bg-transparent border-b border-gray-100">
-                <TableHead className="pl-8">Product Details</TableHead>
+                <TableHead className="ps-8">Product Details</TableHead>
                 {branches.map(b => (
-                  <TableHead key={b._id.toString()} className="text-right">
+                  <TableHead key={b._id.toString()} className="text-end">
                     {b.name}
-                    {b.isHeadOffice && <span className="ml-1 text-[8px] opacity-60">HQ</span>}
+                    {b.isHeadOffice && <span className="ms-1 text-[8px] opacity-60">HQ</span>}
                   </TableHead>
                 ))}
-                <TableHead className="text-right px-8 font-black text-gray-900">Total Stock</TableHead>
+                <TableHead className="text-end px-8 font-black text-gray-900">Total Stock</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,7 +86,7 @@ export default async function StockPage() {
                   const total = branches.reduce((sum, b) => sum + getStock(product._id.toString(), b._id.toString()), 0);
                   return (
                     <TableRow key={product._id.toString()} className="group hover:bg-gray-50/50 transition-colors">
-                      <TableCell className="pl-8 py-4">
+                      <TableCell className="ps-8 py-4">
                         <div className="font-bold text-gray-900">{product.name}</div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-0.5">{product.sku}</div>
                       </TableCell>
@@ -94,7 +94,7 @@ export default async function StockPage() {
                         const stock = getStock(product._id.toString(), branch._id.toString());
                         const isLow = stock <= product.lowStockThreshold;
                         return (
-                          <TableCell key={branch._id.toString()} className="text-right">
+                          <TableCell key={branch._id.toString()} className="text-end">
                             <span className={cn(
                               "font-bold",
                               isLow && stock > 0 ? "text-danger" : "text-gray-700"
@@ -102,12 +102,12 @@ export default async function StockPage() {
                               {stock}
                             </span>
                             {isLow && stock > 0 && (
-                              <AlertTriangle className="size-3 text-danger inline ml-1.5 mb-0.5" />
+                              <AlertTriangle className="size-3 text-danger inline ms-1.5 mb-0.5" />
                             )}
                           </TableCell>
                         );
                       })}
-                      <TableCell className="text-right pr-8">
+                      <TableCell className="text-end pe-8">
                         <Button variant="secondary" size="xs" className="font-black text-primary min-w-[60px]" asChild>
                            <Link href={`/inventory/stock/${product._id}`}>
                               {total}

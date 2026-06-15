@@ -10,7 +10,7 @@ export default async function AddProductPage() {
   }
 
   const tenantId = membership.tenantId;
-  const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 });
+  const categories = await Category.find({ tenantId, deletedAt: null }).sort({ name: 1 }).lean();
 
   return (
     <div className="space-y-6">
@@ -24,7 +24,7 @@ export default async function AddProductPage() {
         description="Register a new product in your catalog with pricing, stock tracking, and gallery."
       />
 
-      <ProductForm categories={categories} />
+      <ProductForm categories={JSON.parse(JSON.stringify(categories))} />
     </div>
   );
 }

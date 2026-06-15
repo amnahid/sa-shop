@@ -9,7 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
 
 export interface ComboboxOption {
   value: string;
@@ -36,7 +35,7 @@ export function Combobox({
   className,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchPlaceholder] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -60,18 +59,18 @@ export function Combobox({
           <span className="truncate">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0 shadow-lg" align="start">
         <div className="flex flex-col min-h-0 max-h-[300px]">
           <div className="flex items-center border-b border-gray-100 px-3 sticky top-0 bg-white z-10">
-            <Search className="mr-2 size-4 shrink-0 text-gray-400" />
+            <Search className="me-2 size-4 shrink-0 text-gray-400" />
             <input
               className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder={searchPlaceholder}
               value={searchQuery}
-              onChange={(e) => setSearchPlaceholder(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex-1 overflow-y-auto p-1">
@@ -91,12 +90,12 @@ export function Combobox({
                   onClick={() => {
                     onValueChange(option.value);
                     setOpen(false);
-                    setSearchPlaceholder("");
+                    setSearchQuery("");
                   }}
                 >
-                  <span className="truncate flex-1 text-left">{option.label}</span>
+                  <span className="truncate flex-1 text-start">{option.label}</span>
                   {value === option.value && (
-                    <Check className="ml-2 size-4 shrink-0" />
+                    <Check className="ms-2 size-4 shrink-0" />
                   )}
                 </button>
               ))

@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 const steps = [
   { number: 1, label: "Business", href: "/onboarding/business" },
   { number: 2, label: "Branch", href: "/onboarding/branch" },

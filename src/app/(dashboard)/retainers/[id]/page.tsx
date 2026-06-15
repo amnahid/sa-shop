@@ -135,9 +135,9 @@ export default async function RetainerDetailPage({ params }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="p-3 text-left font-medium">Invoice #</th>
-                <th className="p-3 text-left font-medium">Consumed At</th>
-                <th className="p-3 text-right font-medium">Amount</th>
+                <th className="p-3 text-start font-medium">Invoice #</th>
+                <th className="p-3 text-start font-medium">Consumed At</th>
+                <th className="p-3 text-end font-medium">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -157,7 +157,7 @@ export default async function RetainerDetailPage({ params }: Props) {
                   <td className="p-3 text-muted-foreground">
                     {consumption.consumedAt.toLocaleDateString("en-SA")}
                   </td>
-                  <td className="p-3 text-right font-medium">
+                  <td className="p-3 text-end font-medium">
                     SAR {parseFloat(consumption.amount.toString()).toFixed(2)}
                   </td>
                 </tr>

@@ -70,8 +70,8 @@ export function StatCard({
       </div>
       
       {/* Decorative Wave-like circles (based on screenshot style) */}
-      <div className="absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-      <div className="absolute -top-6 -left-6 h-24 w-24 rounded-full bg-black/5 blur-xl" />
+      <div className="absolute -bottom-6 -end-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+      <div className="absolute -top-6 -start-6 h-24 w-24 rounded-full bg-black/5 blur-xl" />
     </div>
   );
   return href ? <Link href={href} className="block">{inner}</Link> : inner;

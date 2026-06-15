@@ -1,13 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import {
   Invoice, InvoiceCounter, ParkedSale, Product, StockLevel, StockMovement,
   Branch, Customer, Membership, IdempotencyRecord, Retainer, Tenant,
+  TenantZatcaConfig
 } from "@/models";
-import { generateInvoiceHash, generateQrCodePng } from "@/lib/utils/zatca-qr";
-import { buildInvoiceXml } from "@/lib/utils/zatca-xml";
+import { ZatcaClient } from "@/integration/zatca/ZatcaClient";
+import { ZatcaInvoiceData, ZATCA_INITIAL_PIH } from "@/integration/zatca/types";
 import { sendInvoiceReceipt } from "@/lib/email";
 import { reportCriticalFailure } from "@/lib/ops-monitoring";
 import mongoose from "mongoose";
@@ -16,25 +16,8 @@ function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-async function getNextInvoiceNumber(tenantId: mongoose.Types.ObjectId) {
-  const counter = await InvoiceCounter.findOneAndUpdate(
-    { tenantId },
-    { $inc: { currentValue: 1 } },
-    { new: true, upsert: true }
-  );
-  return `INV-${counter.currentValue.toString().padStart(8, "0")}`;
-}
-
 async function checkIdempotency(key: string) {
   return IdempotencyRecord.findOne({ key });
-}
-
-async function saveIdempotency(key: string, tenantId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, body: Record<string, unknown>) {
-  await IdempotencyRecord.findOneAndUpdate(
-    { key },
-    { key, tenantId, userId, responseBody: body },
-    { upsert: true }
-  );
 }
 
 export async function processSale(formData: FormData) {
@@ -50,6 +33,9 @@ export async function processSale(formData: FormData) {
 
   const tenantId = membership.tenantId;
   const userId = session.user.id;
+
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
 
   try {
     const linesRaw = formData.get("lines");
@@ -80,7 +66,8 @@ export async function processSale(formData: FormData) {
     const customerId = formData.get("customerId") as string || undefined;
     const retainerId = formData.get("retainerId") as string || undefined;
     const paymentMethod = formData.get("paymentMethod") as string;
-    const cashReceived = parseFloat(formData.get("cashReceived") as string) || 0;
+    const shippingAmount = parseFloat(formData.get("shippingAmount") as string) || 0;
+    const globalDiscountAmount = parseFloat(formData.get("discountAmount") as string) || 0;
     const idempotencyKey = formData.get("idempotencyKey") as string;
 
     if (!branchId) return { error: "No branch selected" };
@@ -91,9 +78,10 @@ export async function processSale(formData: FormData) {
     }
 
   const subtotal = round2(lines.reduce((s, l) => s + l.netAmount, 0));
-  const discountTotal = round2(lines.reduce((s, l) => s + l.discountAmount, 0));
+  const lineDiscountTotal = round2(lines.reduce((s, l) => s + l.discountAmount, 0));
+  const discountTotal = round2(lineDiscountTotal + globalDiscountAmount);
   const vatTotal = round2(lines.reduce((s, l) => s + l.vatAmount, 0));
-  const grandTotal = round2(subtotal + vatTotal - discountTotal);
+  const grandTotal = round2(subtotal + vatTotal - discountTotal + shippingAmount);
   let resolvedCustomerId = customerId;
 
   let sourceRetainer:
@@ -140,10 +128,6 @@ export async function processSale(formData: FormData) {
     };
   }
 
-  const products = await Product.find({
-    _id: { $in: lines.map(l => new mongoose.Types.ObjectId(l.productId)) },
-  });
-
   const stockLevels = await StockLevel.find({
     tenantId,
     productId: { $in: lines.map(l => new mongoose.Types.ObjectId(l.productId)) },
@@ -162,156 +146,190 @@ export async function processSale(formData: FormData) {
     }
   }
 
-  const invoiceNumber = await getNextInvoiceNumber(tenantId);
-  const now = new Date();
-  const invoiceId = new mongoose.Types.ObjectId();
+    const invoiceId = new mongoose.Types.ObjectId();
+    const now = new Date();
 
-  const invoiceLines = lines.map(l => ({
-    productId: new mongoose.Types.ObjectId(l.productId),
-    sku: l.sku,
-    name: l.name,
-    nameAr: l.nameAr,
-    quantity: mongoose.Types.Decimal128.fromString(l.quantity.toString()),
-    unitPrice: mongoose.Types.Decimal128.fromString(l.unitPrice.toString()),
-    discountAmount: mongoose.Types.Decimal128.fromString(l.discountAmount.toString()),
-    netAmount: mongoose.Types.Decimal128.fromString(l.netAmount.toString()),
-    vatRate: l.vatRate,
-    vatAmount: mongoose.Types.Decimal128.fromString(l.vatAmount.toString()),
-    totalAmount: mongoose.Types.Decimal128.fromString(l.totalAmount.toString()),
-  }));
+    // 1. Atomic sequence and PIH fetch/update
+    const counter = await InvoiceCounter.findOneAndUpdate(
+      { tenantId, branchId: new mongoose.Types.ObjectId(branchId) },
+      { $inc: { currentValue: 1 } },
+      { 
+        new: true, 
+        upsert: true, 
+        session: mongoSession,
+        setDefaultsOnInsert: true 
+      }
+    );
 
-  const payments = [{
-    method: paymentMethod as "cash" | "mada" | "visa" | "mastercard" | "amex" | "stc_pay" | "apple_pay",
-    amount: mongoose.Types.Decimal128.fromString(grandTotal.toString()),
-    receivedAt: now,
-  }];
+    const invoiceNumber = `INV-${counter.currentValue.toString().padStart(8, "0")}`;
+    const previousHash = counter.previousInvoiceHash || ZATCA_INITIAL_PIH;
 
-  const tenant = await Tenant.findById(tenantId);
-  const previousInvoice = await Invoice.findOne({ tenantId, branchId: new mongoose.Types.ObjectId(branchId) })
-    .sort({ issuedAt: -1 });
+    // 2. Prepare ZATCA signing
+    const zatcaConfig = await TenantZatcaConfig.findOne({ tenantId }).session(mongoSession);
+    const tenant = await Tenant.findById(tenantId).session(mongoSession);
+    const customer = resolvedCustomerId ? await Customer.findById(resolvedCustomerId).session(mongoSession) : null;
 
-  const invoiceHash = await generateInvoiceHash({
-    invoiceNumber,
-    issuedAt: now,
-    grandTotal,
-    vatTotal,
-    lines: lines.map(l => ({
+    if (!zatcaConfig || !tenant) {
+      throw new Error("Tenant ZATCA configuration is missing");
+    }
+
+    const zatcaClient = new ZatcaClient(zatcaConfig);
+    const invoiceType: "Simplified" | "Standard" = (grandTotal >= 1000 && customer?.vatNumber) ? "Standard" : "Simplified";
+
+    const zatcaData: ZatcaInvoiceData = {
+      uuid: invoiceId.toString(),
+      invoiceNumber,
+      invoiceType,
+      issueDate: now,
+      pih: previousHash,
+      currency: "SAR",
+      subtotal,
+      vatTotal,
+      totalWithVat: grandTotal,
+      seller: {
+        name: zatcaConfig.sellerName,
+        nameAr: zatcaConfig.sellerNameAr,
+        trn: zatcaConfig.trn,
+        buildingNumber: zatcaConfig.address.buildingNumber,
+        streetName: zatcaConfig.address.streetName,
+        district: zatcaConfig.address.district,
+        city: zatcaConfig.address.city,
+        postalCode: zatcaConfig.address.postalCode,
+        countryCode: "SA",
+      },
+      buyer: {
+        name: customer?.name || "Walk-in Customer",
+        trn: customer?.vatNumber || undefined,
+        // Simplified invoices can omit buyer details, but standard needs them
+        buildingNumber: "1234", 
+        streetName: "Street",
+        district: "District",
+        city: "City",
+        postalCode: "12345",
+      },
+      lineItems: lines.map(l => ({
+        name: l.name,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        vatRate: l.vatRate * 100,
+        vatAmount: l.vatAmount,
+        totalAmount: l.totalAmount,
+      })),
+    };
+
+    const zatcaResult = await zatcaClient.processInvoice(zatcaData);
+
+    // 3. Update PIH for next invoice
+    await InvoiceCounter.updateOne(
+      { _id: counter._id },
+      { previousInvoiceHash: zatcaResult.xmlHash },
+      { session: mongoSession }
+    );
+
+    const invoiceLines = lines.map(l => ({
+      productId: new mongoose.Types.ObjectId(l.productId),
+      sku: l.sku,
       name: l.name,
-      quantity: l.quantity,
-      unitPrice: l.unitPrice,
-      totalAmount: l.totalAmount,
-    })),
-  });
+      nameAr: l.nameAr,
+      quantity: mongoose.Types.Decimal128.fromString(l.quantity.toString()),
+      unitPrice: mongoose.Types.Decimal128.fromString(l.unitPrice.toString()),
+      discountAmount: mongoose.Types.Decimal128.fromString(l.discountAmount.toString()),
+      netAmount: mongoose.Types.Decimal128.fromString(l.netAmount.toString()),
+      vatRate: l.vatRate,
+      vatAmount: mongoose.Types.Decimal128.fromString(l.vatAmount.toString()),
+      totalAmount: mongoose.Types.Decimal128.fromString(l.totalAmount.toString()),
+    }));
 
-  const qrCodeImage = await generateQrCodePng({
-    sellerName: tenant?.name || "Shop",
-    sellerVatNumber: tenant?.vatNumber || "",
-    timestamp: now.toISOString(),
-    invoiceTotal: grandTotal,
-    vatTotal,
-    signature: invoiceHash.substring(0, 64),
-  });
+    const payments = [{
+      method: paymentMethod as "cash" | "mada" | "visa" | "mastercard" | "stc_pay",
+      amount: mongoose.Types.Decimal128.fromString(grandTotal.toString()),
+      receivedAt: now,
+    }];
 
-  const xmlPayload = buildInvoiceXml(
-    {
+    await Invoice.create([{
       _id: invoiceId,
       tenantId,
       branchId: new mongoose.Types.ObjectId(branchId),
       cashierId: new mongoose.Types.ObjectId(userId),
       invoiceNumber,
-      invoiceType: "simplified" as const,
-      status: "completed" as const,
+      invoiceType: invoiceType.toLowerCase(),
+      status: "completed",
       uuid: invoiceId.toString(),
       issuedAt: now,
+      previousHash,
+      invoiceHash: zatcaResult.xmlHash,
+      qrCode: zatcaResult.qrCode,
+      xmlPayload: zatcaResult.xml,
       subtotal: mongoose.Types.Decimal128.fromString(subtotal.toString()),
       discountTotal: mongoose.Types.Decimal128.fromString(discountTotal.toString()),
+      shippingTotal: mongoose.Types.Decimal128.fromString(shippingAmount.toString()),
       vatTotal: mongoose.Types.Decimal128.fromString(vatTotal.toString()),
       grandTotal: mongoose.Types.Decimal128.fromString(grandTotal.toString()),
-      lines: invoiceLines,
       payments,
-    } as Parameters<typeof buildInvoiceXml>[0],
-    {
-      sellerName: tenant?.name || "Shop",
-      sellerVatNumber: tenant?.vatNumber || "",
-      sellerAddress: tenant?.address || "",
-      sellerCrNumber: tenant?.crNumber || "",
-      invoiceType: "simplified",
-      invoiceHash,
-    }
-  );
+      customerId: resolvedCustomerId ? new mongoose.Types.ObjectId(resolvedCustomerId) : undefined,
+      retainerId: sourceRetainer?._id,
+      lines: invoiceLines,
+    }], { session: mongoSession });
 
-  await Invoice.create({
-    _id: invoiceId,
-    tenantId,
-    branchId: new mongoose.Types.ObjectId(branchId),
-    cashierId: new mongoose.Types.ObjectId(userId),
-    invoiceNumber,
-    invoiceType: "simplified",
-    status: "completed",
-    uuid: invoiceId.toString(),
-    issuedAt: now,
-    previousHash: previousInvoice?.invoiceHash || "",
-    invoiceHash,
-    qrCode: qrCodeImage,
-    xmlPayload,
-    subtotal: mongoose.Types.Decimal128.fromString(subtotal.toString()),
-    discountTotal: mongoose.Types.Decimal128.fromString(discountTotal.toString()),
-    vatTotal: mongoose.Types.Decimal128.fromString(vatTotal.toString()),
-    grandTotal: mongoose.Types.Decimal128.fromString(grandTotal.toString()),
-    payments,
-    customerId: resolvedCustomerId ? new mongoose.Types.ObjectId(resolvedCustomerId) : undefined,
-    retainerId: sourceRetainer?._id,
-    lines: invoiceLines,
-  });
+    for (const line of lines) {
+      const stock = stockLevels.find(s => s.productId.toString() === line.productId);
+      const currentQty = stock ? parseFloat(stock.quantity.toString()) : 0;
 
-  for (const line of lines) {
-    const stock = stockLevels.find(s => s.productId.toString() === line.productId);
-    const currentQty = stock ? parseFloat(stock.quantity.toString()) : 0;
+      if (stock) {
+        await StockLevel.findByIdAndUpdate(stock._id, {
+          quantity: (currentQty - line.quantity).toString(),
+        }, { session: mongoSession });
+      }
 
-    if (stock) {
-      await StockLevel.findByIdAndUpdate(stock._id, {
-        quantity: (currentQty - line.quantity).toString(),
-      });
+      await StockMovement.create([{
+        tenantId,
+        productId: new mongoose.Types.ObjectId(line.productId),
+        branchId: new mongoose.Types.ObjectId(branchId),
+        type: "sale",
+        quantityDelta: (-line.quantity).toString(),
+        quantityAfter: currentQty - line.quantity,
+        reason: `Sale #${invoiceNumber}`,
+        userId: new mongoose.Types.ObjectId(userId),
+      }], { session: mongoSession });
     }
 
-    await StockMovement.create({
-      tenantId,
-      productId: new mongoose.Types.ObjectId(line.productId),
-      branchId: new mongoose.Types.ObjectId(branchId),
-      type: "sale",
-      quantityDelta: (-line.quantity).toString(),
-      quantityAfter: currentQty - line.quantity,
-      reason: `Sale #${invoiceNumber}`,
-      userId: new mongoose.Types.ObjectId(userId),
-    });
-  }
+    if (resolvedCustomerId) {
+      await Customer.findByIdAndUpdate(resolvedCustomerId, {
+        $inc: { visitCount: 1 },
+        $set: { lastVisitAt: now },
+      }, { session: mongoSession });
+    }
 
-  if (resolvedCustomerId) {
-    await Customer.findByIdAndUpdate(resolvedCustomerId, {
-      $inc: { visitCount: 1 },
-      $set: { lastVisitAt: now },
-    });
-  }
-
-  if (sourceRetainer) {
-    const newConsumed = round2(sourceRetainer.consumedAmount + grandTotal);
-    const shouldClose = newConsumed >= sourceRetainer.totalAmount;
-    await Retainer.findByIdAndUpdate(sourceRetainer._id, {
-      consumedAmount: mongoose.Types.Decimal128.fromString(newConsumed.toFixed(2)),
-      status: shouldClose ? "closed" : "active",
-      closedAt: shouldClose ? now : undefined,
-      closedById: shouldClose ? new mongoose.Types.ObjectId(userId) : undefined,
-      $push: {
-        consumptions: {
-          invoiceId,
-          invoiceNumber,
-          amount: mongoose.Types.Decimal128.fromString(grandTotal.toFixed(2)),
-          consumedAt: now,
-          consumedById: new mongoose.Types.ObjectId(userId),
+    if (sourceRetainer) {
+      const newConsumed = round2(sourceRetainer.consumedAmount + grandTotal);
+      const shouldClose = newConsumed >= sourceRetainer.totalAmount;
+      await Retainer.findByIdAndUpdate(sourceRetainer._id, {
+        consumedAmount: mongoose.Types.Decimal128.fromString(newConsumed.toFixed(2)),
+        status: shouldClose ? "closed" : "active",
+        closedAt: shouldClose ? now : undefined,
+        closedById: shouldClose ? new mongoose.Types.ObjectId(userId) : undefined,
+        $push: {
+          consumptions: {
+            invoiceId,
+            invoiceNumber,
+            amount: mongoose.Types.Decimal128.fromString(grandTotal.toFixed(2)),
+            consumedAt: now,
+            consumedById: new mongoose.Types.ObjectId(userId),
+          },
         },
-      },
-    });
-  }
+      }, { session: mongoSession });
+    }
+
+    if (idempotencyKey) {
+      await IdempotencyRecord.findOneAndUpdate(
+        { key: idempotencyKey },
+        { key: idempotencyKey, tenantId, userId, responseBody: { invoiceId: invoiceId.toString() } },
+        { upsert: true, session: mongoSession }
+      );
+    }
+
+    await mongoSession.commitTransaction();
+    mongoSession.endSession();
 
   const emailReceipt = formData.get("emailReceipt") === "true";
   const receiptEmail = formData.get("receiptEmail") as string;
@@ -341,12 +359,13 @@ export async function processSale(formData: FormData) {
     });
   }
 
-  if (idempotencyKey) {
-    await saveIdempotency(idempotencyKey, tenantId, new mongoose.Types.ObjectId(userId), { invoiceId: invoiceId.toString() });
-  }
-
     return { invoiceId: invoiceId.toString() };
   } catch (error) {
+    if (mongoSession.inTransaction()) {
+      await mongoSession.abortTransaction();
+    }
+    mongoSession.endSession();
+    
     await reportCriticalFailure({
       domain: "pos-checkout",
       operation: "process-sale",
@@ -463,6 +482,26 @@ export async function recallSale(parkedId: string) {
     customerId: parked.customerId?.toString(),
     note: parked.note,
   };
+}
+
+export async function listParkedSales(tenantId: string, branchId: string) {
+  const session = await getSession();
+  if (!session?.user?.id) return [];
+
+  const parked = await ParkedSale.find({
+    tenantId: new mongoose.Types.ObjectId(tenantId),
+    branchId: new mongoose.Types.ObjectId(branchId),
+    expiresAt: { $gt: new Date() },
+  }).populate("customerId").sort({ createdAt: -1 });
+
+  return parked.map(p => ({
+    _id: p._id.toString(),
+    customerName: (p.customerId as unknown as { name: string })?.name || "Walk In Customer",
+    itemCount: p.lines.length,
+    totalAmount: p.lines.reduce((s, l) => s + parseFloat(l.totalAmount.toString()), 0),
+    createdAt: p.createdAt,
+    note: p.note,
+  }));
 }
 
 export async function loadProducts(tenantId: string, branchId: string, categoryId?: string, search?: string) {

@@ -11,54 +11,54 @@ function csvLine(values: Array<string | number | boolean | null | undefined>) {
     .join(",");
 }
 
-export function exportProductsCsv(products: Record<string, any>[]): string {
+export function exportProductsCsv(products: Record<string, unknown>[]): string {
   const lines: string[] = ["SKU,Barcode,Name,Arabic Name,Price,Unit,VAT Rate,Stock Track,Low Stock Threshold"];
   products.forEach((p) => {
     lines.push(
       csvLine([
-        p.sku,
-        p.barcode || "",
-        p.name,
-        p.nameAr || "",
-        p.sellingPrice,
-        p.unit || "piece",
-        p.vatRate,
+        p.sku as string,
+        (p.barcode as string) || "",
+        p.name as string,
+        (p.nameAr as string) || "",
+        p.sellingPrice as number,
+        (p.unit as string) || "piece",
+        p.vatRate as number,
         p.trackStock ? "TRUE" : "FALSE",
-        p.lowStockThreshold || 10,
+        (p.lowStockThreshold as number) || 10,
       ])
     );
   });
   return lines.join("\n");
 }
 
-export function exportCustomersCsv(customers: any[]): string {
+export function exportCustomersCsv(customers: Record<string, unknown>[]): string {
   const lines: string[] = ["Name,Arabic Name,Phone,Email,VAT Number,City"];
   customers.forEach((c) => {
     lines.push(
       csvLine([
-        c.name,
-        c.nameAr || "",
-        c.phone || "",
-        c.email || "",
-        c.vatNumber || "",
-        c.city || "",
+        c.name as string,
+        (c.nameAr as string) || "",
+        (c.phone as string) || "",
+        (c.email as string) || "",
+        (c.vatNumber as string) || "",
+        (c.city as string) || "",
       ])
     );
   });
   return lines.join("\n");
 }
 
-export function exportSuppliersCsv(suppliers: any[]): string {
+export function exportSuppliersCsv(suppliers: Record<string, unknown>[]): string {
   const lines: string[] = ["Name,Contact,Phone,Email,VAT Number,Payment Terms"];
   suppliers.forEach((s) => {
     lines.push(
       csvLine([
-        s.name,
-        s.contactName || "",
-        s.phone || "",
-        s.email || "",
-        s.vatNumber || "",
-        s.paymentTerms || "",
+        s.name as string,
+        (s.contactName as string) || "",
+        (s.phone as string) || "",
+        (s.email as string) || "",
+        (s.vatNumber as string) || "",
+        (s.paymentTerms as string) || "",
       ])
     );
   });

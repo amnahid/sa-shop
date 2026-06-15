@@ -51,9 +51,9 @@ export default async function ProductStockPage({ params }: Props) {
           <table className="w-full">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-2 text-sm font-medium">Branch</th>
-                <th className="text-right p-2 text-sm font-medium">Quantity</th>
-                <th className="text-right p-2 text-sm font-medium">Status</th>
+                <th className="text-start p-2 text-sm font-medium">Branch</th>
+                <th className="text-end p-2 text-sm font-medium">Quantity</th>
+                <th className="text-end p-2 text-sm font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -66,8 +66,8 @@ export default async function ProductStockPage({ params }: Props) {
                 return (
                   <tr key={branch._id.toString()} className="border-t">
                     <td className="p-2">{branch.name}</td>
-                    <td className="p-2 text-right font-medium">{qty}</td>
-                    <td className="p-2 text-right">
+                    <td className="p-2 text-end font-medium">{qty}</td>
+                    <td className="p-2 text-end">
                       {isZero ? (
                         <span className="text-red-600 text-sm">Out of stock</span>
                       ) : isLow ? (
@@ -122,11 +122,11 @@ export default async function ProductStockPage({ params }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-2">Date</th>
-                <th className="text-left p-2">Branch</th>
-                <th className="text-left p-2">Type</th>
-                <th className="text-right p-2">Qty</th>
-                <th className="text-left p-2">Reason</th>
+                <th className="text-start p-2">Date</th>
+                <th className="text-start p-2">Branch</th>
+                <th className="text-start p-2">Type</th>
+                <th className="text-end p-2">Qty</th>
+                <th className="text-start p-2">Reason</th>
               </tr>
             </thead>
             <tbody>
@@ -149,7 +149,7 @@ export default async function ProductStockPage({ params }: Props) {
                     <td className="p-2">{m.createdAt.toLocaleDateString()}</td>
                     <td className="p-2">{branch?.name || "-"}</td>
                     <td className="p-2">{typeLabels[m.type] || m.type}</td>
-                    <td className={`p-2 text-right ${qty > 0 ? "text-green-600" : "text-red-600"}`}>
+                    <td className={`p-2 text-end ${qty > 0 ? "text-green-600" : "text-red-600"}`}>
                       {qty > 0 ? "+" : ""}{qty}
                     </td>
                     <td className="p-2 text-muted-foreground">{m.reason || "-"}</td>

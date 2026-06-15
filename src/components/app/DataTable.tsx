@@ -16,7 +16,8 @@ export interface DataTableColumn<T> {
   key: string;
   header: string;
   align?: "left" | "right" | "center";
-  render: (row: T) => ReactNode;
+  render?: (row: T) => ReactNode;
+  className?: string;
 }
 
 export interface DataTableBulkAction {
@@ -93,11 +94,11 @@ export function DataTable<T>({
               className={cn(
                 "h-12 px-6 text-[11px] font-extrabold uppercase tracking-widest text-gray-500",
                 col.align === "right"
-                  ? "text-right"
+                  ? "text-end"
                   : col.align === "center"
                   ? "text-center"
                   : "",
-                idx === 0 && !hasBulkActions && "pl-8"
+                idx === 0 && !hasBulkActions && "ps-8"
               )}
             >
               {col.header}
@@ -134,14 +135,15 @@ export function DataTable<T>({
                   className={cn(
                     "px-6 py-4 text-[13px] font-medium text-gray-700",
                     col.align === "right"
-                      ? "text-right"
+                      ? "text-end"
                       : col.align === "center"
                       ? "text-center"
                       : "",
-                    idx === 0 && !hasBulkActions && "pl-8"
+                    idx === 0 && !hasBulkActions && "ps-8",
+                    col.className
                   )}
                 >
-                  {col.render(row)}
+                  {col.render ? col.render(row) : (row as Record<string, unknown>)[col.key] as ReactNode}
                 </TableCell>
               ))}
             </TableRow>
@@ -162,7 +164,7 @@ export function DataTable<T>({
               </span>{" "}
               Items selected
             </p>
-            <div className="ml-auto flex flex-wrap gap-2">
+            <div className="ms-auto flex flex-wrap gap-2">
               {bulk.actions.map((action) => (
                 <Button
                   key={action.key}

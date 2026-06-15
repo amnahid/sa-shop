@@ -154,7 +154,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 <FormField label="Business Name (EN)" htmlFor="name" required>
                   <Input name="name" id="name" defaultValue={tenant.name} placeholder="Business Legal Name" required />
                 </FormField>
-                <FormField label="Business Name (AR)" htmlFor="nameAr" required className="text-right">
+                <FormField label="Business Name (AR)" htmlFor="nameAr" required className="text-end">
                   <Input name="nameAr" id="nameAr" defaultValue={tenant.nameAr || ""} dir="rtl" placeholder="اسم الشركة القانوني" required />
                 </FormField>
                 <FormField label="CR Number" htmlFor="crNumber">
@@ -175,7 +175,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                  <FormField label="Address (English)" htmlFor="address">
                     <Input name="address" id="address" defaultValue={tenant.address || ""} placeholder="Street, District, City" />
                  </FormField>
-                 <FormField label="Address (Arabic)" htmlFor="addressAr" className="text-right">
+                 <FormField label="Address (Arabic)" htmlFor="addressAr" className="text-end">
                     <Input name="addressAr" id="addressAr" defaultValue={tenant.addressAr || ""} dir="rtl" placeholder="الشارع، الحي، المدينة" />
                  </FormField>
               </div>

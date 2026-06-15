@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Download, Upload, Loader2 } from "lucide-react";
 import { parseCSV } from "@/lib/utils/csv";
 import { useToast } from "@/components/ui/toast";
+import { type CsvImportRow } from "@/lib/actions/bulk";
 
 interface BulkActionsProps {
   onExport: () => void;
-  onImport: (data: any[]) => Promise<{ success?: boolean; error?: string }>;
+  onImport: (data: CsvImportRow[]) => Promise<{ success?: boolean; error?: string }>;
   entityName: string;
 }
 
@@ -53,7 +54,7 @@ export function BulkActions({ onExport, onImport, entityName }: BulkActionsProps
         onClick={onExport}
         className="font-bold uppercase tracking-wider text-[11px]"
       >
-        <Download className="size-3.5 mr-2" />
+        <Download className="size-3.5 me-2" />
         Export
       </Button>
       
@@ -74,9 +75,9 @@ export function BulkActions({ onExport, onImport, entityName }: BulkActionsProps
           className="font-bold uppercase tracking-wider text-[11px]"
         >
           {importing ? (
-            <Loader2 className="size-3.5 mr-2 animate-spin" />
+            <Loader2 className="size-3.5 me-2 animate-spin" />
           ) : (
-            <Upload className="size-3.5 mr-2" />
+            <Upload className="size-3.5 me-2" />
           )}
           Import
         </Button>

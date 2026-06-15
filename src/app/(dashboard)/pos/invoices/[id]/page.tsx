@@ -130,12 +130,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-3 font-medium">Product</th>
-                <th className="text-right p-3 font-medium">Unit Price</th>
+                <th className="text-start p-3 font-medium">Product</th>
+                <th className="text-end p-3 font-medium">Unit Price</th>
                 <th className="text-center p-3 font-medium">Qty</th>
-                <th className="text-right p-3 font-medium">Net</th>
-                <th className="text-right p-3 font-medium">VAT</th>
-                <th className="text-right p-3 font-medium">Total</th>
+                <th className="text-end p-3 font-medium">Net</th>
+                <th className="text-end p-3 font-medium">VAT</th>
+                <th className="text-end p-3 font-medium">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -147,11 +147,11 @@ export default async function InvoiceDetailPage({ params }: Props) {
                       <span className="font-medium">{line.name}</span>
                       <span className="block text-xs text-muted-foreground">{line.sku}</span>
                     </td>
-                    <td className="p-3 text-right">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
+                    <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
                     <td className="p-3 text-center">{parseFloat(line.quantity.toString())}</td>
-                    <td className="p-3 text-right">SAR {parseFloat(line.netAmount.toString()).toFixed(2)}</td>
-                    <td className="p-3 text-right">SAR {parseFloat(line.vatAmount.toString()).toFixed(2)}</td>
-                    <td className={`p-3 text-right font-medium ${total < 0 ? "text-red-500" : ""}`}>
+                    <td className="p-3 text-end">SAR {parseFloat(line.netAmount.toString()).toFixed(2)}</td>
+                    <td className="p-3 text-end">SAR {parseFloat(line.vatAmount.toString()).toFixed(2)}</td>
+                    <td className={`p-3 text-end font-medium ${total < 0 ? "text-red-500" : ""}`}>
                       SAR {total.toFixed(2)}
                     </td>
                   </tr>

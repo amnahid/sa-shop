@@ -71,7 +71,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
         {canViewProfile && (
           <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
             <Link href="/settings/profile">
-              <User className="mr-3 size-4" />
+              <User className="me-3 size-4" />
               <span className="text-[13px] font-bold">My Profile</span>
             </Link>
           </DropdownMenuItem>
@@ -80,7 +80,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
         {canViewSettings && (
           <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
             <Link href="/settings">
-              <Settings className="mr-3 size-4" />
+              <Settings className="me-3 size-4" />
               <span className="text-[13px] font-bold">General Settings</span>
             </Link>
           </DropdownMenuItem>
@@ -89,7 +89,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
         {canViewTeam && (
           <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
             <Link href="/settings/team">
-              <Users className="mr-3 size-4" />
+              <Users className="me-3 size-4" />
               <span className="text-[13px] font-bold">Team Management</span>
             </Link>
           </DropdownMenuItem>
@@ -103,7 +103,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
             {canViewAdmin && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
                 <Link href="/settings/admin">
-                  <ShieldCheck className="mr-3 size-4" />
+                  <ShieldCheck className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Security & Admin</span>
                 </Link>
               </DropdownMenuItem>
@@ -112,7 +112,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
             {canViewBranches && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
                 <Link href="/settings/branches">
-                  <Building2 className="mr-3 size-4" />
+                  <Building2 className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Manage Branches</span>
                 </Link>
               </DropdownMenuItem>
@@ -121,7 +121,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
             {canViewMedia && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
                 <Link href="/settings/media-library">
-                  <ImageIcon className="mr-3 size-4" />
+                  <ImageIcon className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Media Library</span>
                 </Link>
               </DropdownMenuItem>
@@ -130,7 +130,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
             {canViewEmail && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
                 <Link href="/settings/email-templates">
-                  <Mail className="mr-3 size-4" />
+                  <Mail className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Email Templates</span>
                 </Link>
               </DropdownMenuItem>
@@ -139,7 +139,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
             {canViewNotification && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
                 <Link href="/settings/notification-templates">
-                  <Bell className="mr-3 size-4" />
+                  <Bell className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Notification Templates</span>
                 </Link>
               </DropdownMenuItem>
@@ -153,7 +153,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
           onSelect={() => signOut({ callbackUrl: "/login" })}
           className="cursor-pointer rounded-md focus:bg-soft-danger focus:text-danger text-danger transition-colors py-2"
         >
-          <LogOut className="mr-3 size-4" />
+          <LogOut className="me-3 size-4" />
           <span className="text-[13px] font-bold">Sign out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

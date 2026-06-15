@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 
 export interface ISoftDelete {
@@ -9,7 +10,7 @@ export interface SoftDeletePluginOptions {
   deletedAt?: string;
 }
 
-export function softDeletePlugin(schema: mongoose.Schema<any>, options: SoftDeletePluginOptions = {}) {
+export function softDeletePlugin(schema: mongoose.Schema, options: SoftDeletePluginOptions = {}) {
   const fieldName = options.deletedAt || 'deletedAt';
 
   schema.add({
@@ -25,31 +26,31 @@ export function softDeletePlugin(schema: mongoose.Schema<any>, options: SoftDele
   });
 
   schema.methods.softDelete = async function (userId?: mongoose.Types.ObjectId) {
-    (this as any)[fieldName] = new Date();
+    (this as Record<string, unknown>)[fieldName] = new Date();
     if (userId) {
-      (this as any).deletedBy = userId;
+      (this as Record<string, unknown>).deletedBy = userId;
     }
     return this.save();
   };
 
   schema.methods.restore = async function () {
-    (this as any)[fieldName] = null;
-    (this as any).deletedBy = null;
+    (this as Record<string, unknown>)[fieldName] = null;
+    (this as Record<string, unknown>).deletedBy = null;
     return this.save();
   };
 
   schema.statics.findActive = function (this: mongoose.Model<any>, ...args: any[]) {
-    const query: Record<string, unknown> = {};
+    const query: Record<string, any> = {};
     query[fieldName] = null;
-    return this.find(query, ...args);
+    return (this.find as any)(query, ...args);
   };
 
   schema.statics.findAll = function (this: mongoose.Model<any>, ...args: any[]) {
-    return this.find(...args);
+    return (this.find as any)(...args);
   };
 
   schema.statics.findWithDeleted = function (this: mongoose.Model<any>, ...args: any[]) {
-    return this.find(...args);
+    return (this.find as any)(...args);
   };
 
   schema.pre('countDocuments', function () {

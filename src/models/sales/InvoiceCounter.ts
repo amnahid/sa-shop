@@ -4,6 +4,7 @@ export interface IInvoiceCounter extends Document {
   tenantId: mongoose.Types.ObjectId;
   branchId?: mongoose.Types.ObjectId;
   currentValue: number;
+  previousInvoiceHash: string;
 }
 
 const invoiceCounterSchema = new Schema<IInvoiceCounter>(
@@ -21,6 +22,10 @@ const invoiceCounterSchema = new Schema<IInvoiceCounter>(
       type: Number,
       required: true,
       default: 0,
+    },
+    previousInvoiceHash: {
+      type: String,
+      default: 'NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjOTljMmYxN2ZiNTVkMzRlYzYzMDMzNjE5YTM0ZGY4YjEwNw==', // ZATCA Initial PIH
     },
   },
   {

@@ -7,9 +7,45 @@ import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 function Select({
+  name,
+  required,
+  onValueChange,
+  defaultValue,
+  value: controlledValue,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+}: React.ComponentProps<typeof SelectPrimitive.Root> & {
+  name?: string
+  required?: boolean
+}) {
+  const [internalValue, setInternalValue] = React.useState(defaultValue || controlledValue || "")
+  const value = controlledValue !== undefined ? controlledValue : internalValue
+
+  const handleValueChange = (val: string) => {
+    if (controlledValue === undefined) {
+      setInternalValue(val)
+    }
+    onValueChange?.(val)
+  }
+
+  return (
+    <>
+      {name && (
+        <input
+          type="hidden"
+          name={name}
+          value={value}
+          required={required}
+          aria-hidden="true"
+        />
+      )}
+      <SelectPrimitive.Root
+        data-slot="select"
+        value={value}
+        onValueChange={handleValueChange}
+        {...props}
+      />
+    </>
+  )
 }
 
 function SelectGroup({
@@ -66,7 +102,7 @@ function SelectContent({
   className,
   children,
   position = "popper",
-  align = "center",
+  align = "start",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -117,12 +153,12 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-2 pr-8 pl-2 text-[13px] font-bold outline-hidden select-none focus:bg-soft-primary focus:text-primary data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-2 pe-8 ps-2 text-[13px] font-bold outline-hidden select-none focus:bg-soft-primary focus:text-primary data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}
     >
-      <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
+      <span className="pointer-events-none absolute end-2 flex size-4 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="pointer-events-none size-4" />
         </SelectPrimitive.ItemIndicator>

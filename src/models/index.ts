@@ -9,6 +9,7 @@ export { Organization } from './tenancy/Organization';
 export { User } from './tenancy/User';
 export { Membership } from './tenancy/Membership';
 export { Branch } from './tenancy/Branch';
+export { TenantZatcaConfig } from './tenancy/TenantZatcaConfig';
 
 export { Category } from './inventory/Category';
 export { Product } from './inventory/Product';
@@ -24,6 +25,11 @@ export { Retainer, type IRetainer, type RetainerStatus } from "./sales/Retainer"
 
 export { Supplier } from './suppliers/Supplier';
 export { PurchaseOrder } from './suppliers/PurchaseOrder';
+
+export { EmployeeProfile } from './hr/EmployeeProfile';
+export { Attendance } from './hr/Attendance';
+export { Payroll } from './hr/Payroll';
+
 export { ChartOfAccount } from './accounting/ChartOfAccount';
 export { AccountingEntry } from './accounting/AccountingEntry';
 export { PaymentRecord } from './accounting/PaymentRecord';

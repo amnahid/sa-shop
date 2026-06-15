@@ -6,8 +6,8 @@ import { getAuthorizedSessionMembership } from "@/lib/utils/server-authorization
 import type { AppPermissionKey } from "@/lib/utils/permissions";
 import { revalidatePath } from "next/cache";
 
-type CsvImportValue = string | number | boolean | null | undefined;
-type CsvImportRow = Record<string, CsvImportValue>;
+export type CsvImportValue = string | number | boolean | null | undefined;
+export type CsvImportRow = Record<string, CsvImportValue>;
 
 interface BulkMutationSummary {
   requested: number;

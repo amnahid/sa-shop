@@ -29,7 +29,11 @@ export async function createCategory(formData: FormData) {
   }
 
   const nameAr = formData.get("nameAr") as string;
-  const parentId = formData.get("parentId") as string;
+  let parentId = formData.get("parentId") as string;
+
+  if (parentId === "none") {
+    parentId = "";
+  }
 
   if (parentId && !mongoose.Types.ObjectId.isValid(parentId)) {
     return { error: "Invalid parent category" };
@@ -70,7 +74,11 @@ export async function updateCategory(id: string, formData: FormData) {
 
   const name = formData.get("name") as string;
   const nameAr = formData.get("nameAr") as string;
-  const parentId = formData.get("parentId") as string;
+  let parentId = formData.get("parentId") as string;
+
+  if (parentId === "none") {
+    parentId = "";
+  }
 
   if (parentId && !mongoose.Types.ObjectId.isValid(parentId)) {
     return { error: "Invalid parent category" };

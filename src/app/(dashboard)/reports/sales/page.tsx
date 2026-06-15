@@ -61,7 +61,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
         <CardContent className="pt-6">
           <form className="flex flex-wrap gap-6 items-end">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ml-1">From Date</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">From Date</label>
               <Input
                 type="date"
                 name="fromDate"
@@ -69,7 +69,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ml-1">To Date</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">To Date</label>
               <Input
                 type="date"
                 name="toDate"
@@ -77,7 +77,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
               />
             </div>
             <div className="space-y-1.5 min-w-[200px]">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ml-1">Branch</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">Branch</label>
               <select
                 name="branchId"
                 defaultValue={branchId || ""}
@@ -89,7 +89,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
                 ))}
               </select>
             </div>
-            <div className="flex gap-3 ml-auto">
+            <div className="flex gap-3 ms-auto">
               <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-6 h-11">
                 Filter Data
               </Button>
@@ -97,7 +97,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
                 <a
                   href={`/api/reports/export?type=sales&fromDate=${fromDate || today.toISOString().split("T")[0]}&toDate=${toDate || new Date().toISOString().split("T")[0]}${branchId ? `&branchId=${branchId}` : ""}`}
                 >
-                  <Download className="size-3 mr-2" />
+                  <Download className="size-3 me-2" />
                   CSV
                 </a>
               </Button>
@@ -132,7 +132,7 @@ export default async function SalesReportPage({ searchParams }: Props) {
             <div className="flex items-end gap-2 h-48 px-2">
               {report.hourly.map(h => (
                 <div key={h.hour} className="flex-1 flex flex-col items-center gap-3 group relative">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  <div className="absolute -top-8 start-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     SAR {h.total.toFixed(2)}
                   </div>
                   <div
@@ -156,17 +156,17 @@ export default async function SalesReportPage({ searchParams }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50/50">
                 <tr>
-                  <th className="text-left px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Branch Name</th>
-                  <th className="text-right px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Sales</th>
-                  <th className="text-right px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Transactions</th>
+                  <th className="text-start px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Branch Name</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Sales</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Transactions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {report.byBranch.map(b => (
                   <tr key={b.branchId} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 font-bold text-gray-800">{b.branchName}</td>
-                    <td className="px-6 py-4 text-right font-black text-primary">SAR {b.total.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-right font-medium text-gray-600">{b.count}</td>
+                    <td className="px-6 py-4 text-end font-black text-primary">SAR {b.total.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-end font-medium text-gray-600">{b.count}</td>
                   </tr>
                 ))}
               </tbody>

@@ -6,8 +6,6 @@ function asOptionalString(value: FormDataEntryValue | null) {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-const PROFILE_FORM_NAME = "profile";
-const PASSWORD_FORM_NAME = "password";
 const BUSINESS_FORM_NAME = "business";
 const ZATCA_FORM_NAME = "zatca";
 

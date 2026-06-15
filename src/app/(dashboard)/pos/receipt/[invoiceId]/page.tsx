@@ -2,6 +2,7 @@
 import { Invoice, Branch, Tenant } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { ReceiptActions } from "@/components/pos/ReceiptActions";
+import Image from "next/image";
 
 interface Props {
   params: Promise<{ invoiceId: string }>;
@@ -29,6 +30,7 @@ export default async function ReceiptPage({ params }: Props) {
 
   const subtotal = parseFloat(invoice.subtotal.toString());
   const discountTotal = parseFloat(invoice.discountTotal.toString());
+  const shippingTotal = invoice.shippingTotal ? parseFloat(invoice.shippingTotal.toString()) : 0;
   const vatTotal = parseFloat(invoice.vatTotal.toString());
   const grandTotal = parseFloat(invoice.grandTotal.toString());
 
@@ -51,7 +53,7 @@ export default async function ReceiptPage({ params }: Props) {
       <div className="bg-white text-black w-full max-w-sm rounded-lg border shadow-sm overflow-hidden">
         <div className="p-6 text-center border-b">
           {tenant?.logoUrl && (
-            <img src={tenant.logoUrl} alt="logo" className="h-12 mx-auto mb-3 object-contain" />
+            <Image src={tenant.logoUrl} alt="logo" width={200} height={48} unoptimized className="h-12 mx-auto mb-3 object-contain" />
           )}
           <h1 className="text-lg font-bold">{tenant?.name || "Shop"}</h1>
           {tenant?.address && <p className="text-sm text-gray-600">{tenant.address}</p>}
@@ -69,9 +71,9 @@ export default async function ReceiptPage({ params }: Props) {
             <table className="w-full text-sm mb-4">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-1 text-gray-600 font-medium">Item</th>
+                  <th className="text-start py-1 text-gray-600 font-medium">Item</th>
                   <th className="text-center py-1 text-gray-600 font-medium">Qty</th>
-                  <th className="text-right py-1 text-gray-600 font-medium">Total</th>
+                  <th className="text-end py-1 text-gray-600 font-medium">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,7 +86,7 @@ export default async function ReceiptPage({ params }: Props) {
                       </span>
                     </td>
                     <td className="py-1 text-center">{parseFloat(line.quantity.toString())}</td>
-                    <td className="py-1 text-right">
+                    <td className="py-1 text-end">
                       SAR {parseFloat(line.totalAmount.toString()).toFixed(2)}
                     </td>
                   </tr>
@@ -102,6 +104,12 @@ export default async function ReceiptPage({ params }: Props) {
               <div className="flex justify-between">
                 <span className="text-gray-600">Discount</span>
                 <span>-SAR {discountTotal.toFixed(2)}</span>
+              </div>
+            )}
+            {shippingTotal > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Shipping</span>
+                <span>SAR {shippingTotal.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
@@ -137,7 +145,7 @@ export default async function ReceiptPage({ params }: Props) {
 
           {invoice.qrCode && (
             <div className="mt-4 flex justify-center">
-              <img src={invoice.qrCode} alt="QR" className="w-24 h-24" />
+              <Image src={invoice.qrCode} alt="QR" width={96} height={96} unoptimized className="w-24 h-24" />
             </div>
           )}
         </div>

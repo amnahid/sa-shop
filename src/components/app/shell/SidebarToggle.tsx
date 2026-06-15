@@ -27,7 +27,7 @@ export function SidebarToggle({
 
       <DialogContent
         showCloseButton={false}
-        className="left-0 top-0 z-50 h-dvh w-60 max-w-[85vw] -translate-x-0 -translate-y-0 rounded-none border-r bg-sidebar-background p-0"
+        className="start-0 top-0 z-50 h-dvh w-60 max-w-[85vw] -translate-x-0 -translate-y-0 rounded-none border-r bg-sidebar-background p-0"
       >
         <DialogTitle className="sr-only">Navigation menu</DialogTitle>
         <DialogDescription className="sr-only">
@@ -36,7 +36,7 @@ export function SidebarToggle({
         <button
           onClick={() => setOpen(false)}
           aria-label="Close menu"
-          className="absolute right-2 top-2 z-10 rounded-md p-2 hover:bg-sidebar-accent"
+          className="absolute end-2 top-2 z-10 rounded-md p-2 hover:bg-sidebar-accent"
         >
           <X className="size-5" />
         </button>

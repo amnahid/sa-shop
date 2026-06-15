@@ -1,4 +1,4 @@
-import { StockLevel, Product, Branch, Membership, Tenant } from "@/models";
+import { StockLevel, Membership, Tenant } from "@/models";
 import { sendLowStockAlert } from "@/lib/email";
 import { reportCriticalFailure } from "@/lib/ops-monitoring";
 import { sendInAppNotification } from "@/lib/in-app-notifications";

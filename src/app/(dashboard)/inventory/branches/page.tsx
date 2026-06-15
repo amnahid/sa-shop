@@ -59,7 +59,7 @@ export default async function BranchesPage() {
               <FormField label="Branch Name" htmlFor="name" required>
                 <Input id="name" name="name" type="text" placeholder="Main Store" required />
               </FormField>
-              <FormField label="الاسم (Arabic)" htmlFor="nameAr" className="text-right">
+              <FormField label="الاسم (Arabic)" htmlFor="nameAr" className="text-end">
                 <Input id="nameAr" name="nameAr" type="text" dir="rtl" placeholder="اسم الفرع" />
               </FormField>
               <FormField label="City" htmlFor="city">

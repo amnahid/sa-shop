@@ -1,6 +1,6 @@
 "use server";
 
-import { Invoice, StockMovement, Membership, Branch, Product, StockLevel, Customer } from "@/models";
+import { Invoice, StockMovement, StockLevel, Customer, Product } from "@/models";
 import { IInvoiceLine } from "@/models/sales/Invoice";
 import mongoose from "mongoose";
 
@@ -235,6 +235,39 @@ export async function getDashboardMetrics(tenantId: string, branchId?: string) {
     active: true,
   });
 
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+
+  const weeklySalesRaw = await Invoice.aggregate([
+    {
+      $match: {
+        ...branchFilter,
+        status: "completed",
+        issuedAt: { $gte: sevenDaysAgo, $lt: tomorrow },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$issuedAt" } },
+        total: { $sum: { $toDouble: "$grandTotal" } },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const weeklySales = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgo);
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().split("T")[0];
+    const found = weeklySalesRaw.find(w => w._id === iso);
+    weeklySales.push({
+      date: iso,
+      label: d.toLocaleDateString(undefined, { weekday: 'short' }),
+      total: found ? found.total : 0,
+    });
+  }
+
   const customerCount = await Customer.countDocuments({
     tenantId: tenantOid,
     deletedAt: null,
@@ -296,6 +329,7 @@ export async function getDashboardMetrics(tenantId: string, branchId?: string) {
     productCount,
     customerCount,
     lowStockCount: lowStock[0]?.count || 0,
+    weeklySales,
     recentInvoices,
   };
 }

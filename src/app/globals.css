@@ -152,7 +152,7 @@
   --radius-xl: 12px;
   --radius-2xl: 16px;
   
-  --font-sans: 'Poppins', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-ibm-plex-arabic), 'Poppins', 'Figtree', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', ui-monospace, monospace;
 
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -220,6 +220,10 @@ body[data-dashboard-shell="true"] {
 }
 
 /* RTL Support */
+[lang="ar"] {
+  --font-sans: var(--font-ibm-plex-arabic), var(--font-inter), 'Poppins', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+}
+
 [dir="rtl"] {
   text-align: right;
 }

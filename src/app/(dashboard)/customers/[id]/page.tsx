@@ -162,9 +162,9 @@ export default async function CustomerDetailPage({ params, searchParams }: Props
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-3 font-medium">Invoice</th>
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-right p-3 font-medium">Total</th>
+                <th className="text-start p-3 font-medium">Invoice</th>
+                <th className="text-start p-3 font-medium">Date</th>
+                <th className="text-end p-3 font-medium">Total</th>
                 <th className="text-center p-3 font-medium">Status</th>
               </tr>
             </thead>
@@ -173,7 +173,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Props
                 <tr key={inv._id} className="border-t">
                   <td className="p-3 font-medium">{inv.invoiceNumber}</td>
                   <td className="p-3 text-muted-foreground">{inv.issuedAt.toLocaleDateString()}</td>
-                  <td className="p-3 text-right font-medium">SAR {inv.grandTotal.toFixed(2)}</td>
+                  <td className="p-3 text-end font-medium">SAR {inv.grandTotal.toFixed(2)}</td>
                   <td className="p-3 text-center">
                     <span className={`text-xs px-2 py-1 rounded ${
                       inv.status === "completed" ? "bg-green-100 text-green-800" :

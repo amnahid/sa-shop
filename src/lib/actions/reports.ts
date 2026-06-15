@@ -1,6 +1,6 @@
 "use server";
 
-import { Invoice, StockMovement, StockLevel, Product, Branch, Membership } from "@/models";
+import { Invoice, StockMovement, StockLevel } from "@/models";
 import mongoose from "mongoose";
 
 export async function getSalesReport(

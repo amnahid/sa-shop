@@ -3,79 +3,129 @@ import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Branch } from "@/models";
 import { getLowStockReport } from "@/lib/actions/reports";
-
-interface Props {
-  searchParams: Promise<{ branchId?: string }>;
-}
-
-export default async function LowStockPage({ searchParams }: Props) {
-  const { branchId } = await searchParams;
-
+import { PageHeader } from "@/components/app/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Package, Download, Filter, AlertCircle } from "lucide-react";
+export default async function LowStockReportPage({
+  searchParams,
+}: {
+  searchParams: { branchId?: string };
+}) {
+  const branchId = searchParams.branchId;
   const membership = await getCurrentMembership();
-  if (!membership) return <div>No active membership</div>;
+  if (!membership) return null;
 
-  const branches = await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
+  const branches = await Branch.find({ tenantId: membership.tenantId }).sort({ name: 1 }).lean();
   const items = await getLowStockReport(membership.tenantId.toString(), branchId);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Low Stock Alerts</h1>
-        <Link href="/reports" className="text-primary hover:underline">← Back to Reports</Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Low Stock Alerts"
+        section="Insights"
+        breadcrumbs={[
+          { label: "Reports", href: "/reports" },
+          { label: "Low Stock" },
+        ]}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/reports">Back to Reports</Link>
+          </Button>
+        }
+      />
 
-      <form className="bg-card border rounded-lg p-4 mb-6 flex gap-3 items-end">
-        <div>
-          <label className="block text-sm font-medium mb-1">Branch</label>
-          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm">
-            <option value="">All Branches</option>
-            {branches.map(b => <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>)}
-          </select>
-        </div>
-        <button type="submit" className="h-9 rounded-md bg-primary text-primary-foreground px-4 text-sm font-medium">Filter</button>
-        <a href={`/api/reports/export?type=lowstock${branchId ? `&branchId=${branchId}` : ""}`}
-          className="h-11 rounded-md border border-input bg-white bg-background px-4 text-sm font-medium flex items-center hover:bg-accent">
-          Export CSV
-        </a>
-      </form>
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center gap-2 py-3 border-b border-gray-50">
+          <Filter className="size-4 text-primary" />
+          <CardTitle className="text-sm font-bold uppercase tracking-tight">Filter Alerts</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form className="flex flex-wrap gap-6 items-end">
+            <div className="space-y-1.5 min-w-[200px]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">Branch</label>
+              <select
+                name="branchId"
+                defaultValue={branchId || ""}
+                className="flex h-11 w-full rounded-md border border-input bg-white px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">All Branches</option>
+                {branches.map(b => (
+                  <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 ms-auto">
+              <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-6 h-11">
+                Refresh Alerts
+              </Button>
+              <Button variant="secondary" asChild className="h-11 font-bold uppercase tracking-wider text-[11px]">
+                <a
+                  href={`/api/reports/export?type=lowstock${branchId ? `&branchId=${branchId}` : ""}`}
+                >
+                  <Download className="size-3 me-2" />
+                  CSV
+                </a>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-      <div className="bg-card border rounded-lg overflow-hidden">
+      <Card className="overflow-hidden">
+        <CardHeader className="py-3 border-b border-gray-50">
+          <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-2">
+            <AlertCircle className="size-4 text-danger" />
+            Stock Deficit Report
+          </CardTitle>
+        </CardHeader>
         {items.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">All stock levels are healthy</div>
+          <div className="p-20 text-center flex flex-col items-center gap-3">
+             <div className="p-4 rounded-full bg-soft-success text-success">
+                <Package className="size-8" />
+             </div>
+             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">All stock levels are healthy</p>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-3 font-medium">Product</th>
-                <th className="text-left p-3 font-medium">Branch</th>
-                <th className="text-right p-3 font-medium">Current</th>
-                <th className="text-right p-3 font-medium">Threshold</th>
-                <th className="text-right p-3 font-medium">Deficit</th>
-                <th className="text-right p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, i) => (
-                <tr key={i} className="border-t">
-                  <td className="p-3">
-                    <span className="font-medium">{item.productName}</span>
-                    <span className="block text-xs text-muted-foreground">{item.productSku}</span>
-                  </td>
-                  <td className="p-3">{item.branchName}</td>
-                  <td className={`p-3 text-right font-medium ${item.quantity === 0 ? "text-red-600" : "text-yellow-600"}`}>
-                    {item.quantity}
-                  </td>
-                  <td className="p-3 text-right text-muted-foreground">{item.threshold}</td>
-                  <td className="p-3 text-right text-red-500 font-medium">{item.deficit > 0 ? item.deficit : 0}</td>
-                  <td className="p-3 text-right">
-                    <Link href={`/inventory/stock/${item.productId}`} className="text-primary hover:underline text-sm">View</Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50/50">
+                <tr>
+                  <th className="text-start px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Product</th>
+                  <th className="text-start px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Branch</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Current Qty</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Threshold</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Deficit</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {items.map((item, i) => (
+                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-gray-900">{item.productName}</div>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{item.productSku}</div>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-600">{item.branchName}</td>
+                    <td className={`px-6 py-4 text-end font-black tabular-nums ${item.quantity === 0 ? "text-danger" : "text-warning"}`}>
+                      {item.quantity}
+                    </td>
+                    <td className="px-6 py-4 text-end text-gray-500 font-medium tabular-nums">{item.threshold}</td>
+                    <td className="px-6 py-4 text-end text-danger font-black tabular-nums bg-soft-danger/20">
+                      {item.deficit > 0 ? item.deficit : 0}
+                    </td>
+                    <td className="px-6 py-4 text-end">
+                      <Button variant="outline" size="xs" className="font-bold uppercase tracking-widest text-[9px]" asChild>
+                        <Link href={`/inventory/products/${item.productId}`}>View Details</Link>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

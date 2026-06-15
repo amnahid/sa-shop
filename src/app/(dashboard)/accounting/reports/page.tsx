@@ -256,7 +256,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
           </div>
 
           {monthCloseStatus.issues.length > 0 ? (
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
+            <ul className="mt-3 list-disc space-y-1 ps-5 text-sm text-red-700">
               {monthCloseStatus.issues.map((issue) => (
                 <li key={issue}>{issue}</li>
               ))}
@@ -287,11 +287,11 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="p-3 text-left font-medium">Account</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-right font-medium">Debit</th>
-                <th className="p-3 text-right font-medium">Credit</th>
-                <th className="p-3 text-right font-medium">Balance</th>
+                <th className="p-3 text-start font-medium">Account</th>
+                <th className="p-3 text-start font-medium">Type</th>
+                <th className="p-3 text-end font-medium">Debit</th>
+                <th className="p-3 text-end font-medium">Credit</th>
+                <th className="p-3 text-end font-medium">Balance</th>
               </tr>
             </thead>
             <tbody>
@@ -301,9 +301,9 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
                     {row.accountCode} · {row.accountName}
                   </td>
                   <td className="p-3 capitalize text-muted-foreground">{row.accountType}</td>
-                  <td className="p-3 text-right">SAR {row.debit.toFixed(2)}</td>
-                  <td className="p-3 text-right">SAR {row.credit.toFixed(2)}</td>
-                  <td className={`p-3 text-right font-medium ${row.balance >= 0 ? "" : "text-red-600"}`}>
+                  <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
+                  <td className={`p-3 text-end font-medium ${row.balance >= 0 ? "" : "text-red-600"}`}>
                     SAR {row.balance.toFixed(2)}
                   </td>
                 </tr>
@@ -312,9 +312,9 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             <tfoot className="bg-muted/50 font-medium">
               <tr>
                 <td className="p-3" colSpan={2}>Totals</td>
-                <td className="p-3 text-right">SAR {trialBalance.totalDebit.toFixed(2)}</td>
-                <td className="p-3 text-right">SAR {trialBalance.totalCredit.toFixed(2)}</td>
-                <td className={`p-3 text-right ${hasTrialImbalance ? "text-red-600" : "text-green-700"}`}>
+                <td className="p-3 text-end">SAR {trialBalance.totalDebit.toFixed(2)}</td>
+                <td className="p-3 text-end">SAR {trialBalance.totalCredit.toFixed(2)}</td>
+                <td className={`p-3 text-end ${hasTrialImbalance ? "text-red-600" : "text-green-700"}`}>
                   {hasTrialImbalance ? "Not Balanced" : "Balanced"}
                 </td>
               </tr>
@@ -338,18 +338,18 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="p-3 text-left font-medium">Date</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-left font-medium">Counterparty / Ref</th>
-                <th className="p-3 text-right font-medium">Debit</th>
-                <th className="p-3 text-right font-medium">Credit</th>
-                <th className="p-3 text-right font-medium">Running Balance</th>
+                <th className="p-3 text-start font-medium">Date</th>
+                <th className="p-3 text-start font-medium">Type</th>
+                <th className="p-3 text-start font-medium">Counterparty / Ref</th>
+                <th className="p-3 text-end font-medium">Debit</th>
+                <th className="p-3 text-end font-medium">Credit</th>
+                <th className="p-3 text-end font-medium">Running Balance</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-t bg-muted/40">
                 <td className="p-3" colSpan={5}>Opening Balance</td>
-                <td className={`p-3 text-right font-medium ${ledger.openingBalance < 0 ? "text-red-600" : ""}`}>
+                <td className={`p-3 text-end font-medium ${ledger.openingBalance < 0 ? "text-red-600" : ""}`}>
                   SAR {ledger.openingBalance.toFixed(2)}
                 </td>
               </tr>
@@ -361,9 +361,9 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
                     {row.counterpartyName || "-"}
                     {row.referenceId ? ` · ${row.referenceId}` : ""}
                   </td>
-                  <td className="p-3 text-right">SAR {row.debit.toFixed(2)}</td>
-                  <td className="p-3 text-right">SAR {row.credit.toFixed(2)}</td>
-                  <td className={`p-3 text-right font-medium ${row.runningBalance < 0 ? "text-red-600" : ""}`}>
+                  <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
+                  <td className={`p-3 text-end font-medium ${row.runningBalance < 0 ? "text-red-600" : ""}`}>
                     SAR {row.runningBalance.toFixed(2)}
                   </td>
                 </tr>
@@ -372,9 +372,9 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             <tfoot className="bg-muted/50 font-medium">
               <tr>
                 <td className="p-3" colSpan={3}>Period Totals</td>
-                <td className="p-3 text-right">SAR {ledger.periodDebit.toFixed(2)}</td>
-                <td className="p-3 text-right">SAR {ledger.periodCredit.toFixed(2)}</td>
-                <td className={`p-3 text-right ${ledger.closingBalance < 0 ? "text-red-600" : "text-foreground"}`}>
+                <td className="p-3 text-end">SAR {ledger.periodDebit.toFixed(2)}</td>
+                <td className="p-3 text-end">SAR {ledger.periodCredit.toFixed(2)}</td>
+                <td className={`p-3 text-end ${ledger.closingBalance < 0 ? "text-red-600" : "text-foreground"}`}>
                   SAR {ledger.closingBalance.toFixed(2)}
                 </td>
               </tr>
@@ -394,8 +394,8 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="p-3 text-left font-medium">Account</th>
-                  <th className="p-3 text-right font-medium">Amount</th>
+                  <th className="p-3 text-start font-medium">Account</th>
+                  <th className="p-3 text-end font-medium">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -404,7 +404,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
                     <td className="p-3">
                       {item.accountCode} · {item.accountName}
                     </td>
-                    <td className="p-3 text-right font-medium">SAR {item.total.toFixed(2)}</td>
+                    <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -422,8 +422,8 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="p-3 text-left font-medium">Account</th>
-                  <th className="p-3 text-right font-medium">Total</th>
+                  <th className="p-3 text-start font-medium">Account</th>
+                  <th className="p-3 text-end font-medium">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -432,7 +432,7 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
                     <td className="p-3">
                       {item.accountCode} · {item.accountName}
                     </td>
-                    <td className="p-3 text-right font-medium">SAR {item.total.toFixed(2)}</td>
+                    <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

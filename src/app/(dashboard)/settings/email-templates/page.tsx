@@ -112,11 +112,11 @@ export default async function EmailTemplatesPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="p-3 text-left font-medium">Name</th>
-                  <th className="p-3 text-left font-medium">Key</th>
-                  <th className="p-3 text-left font-medium">Subject</th>
+                  <th className="p-3 text-start font-medium">Name</th>
+                  <th className="p-3 text-start font-medium">Key</th>
+                  <th className="p-3 text-start font-medium">Subject</th>
                   <th className="p-3 text-center font-medium">Status</th>
-                  <th className="p-3 text-right font-medium">Action</th>
+                  <th className="p-3 text-end font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +136,7 @@ export default async function EmailTemplatesPage() {
                         {template.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-end">
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/settings/email-templates/${template._id.toString()}`}>
                           Edit

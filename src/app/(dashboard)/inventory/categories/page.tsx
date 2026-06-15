@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/app/FormField";
 import { Plus } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   archiveCategory,
   bulkArchiveCategories,
   bulkDeleteCategories,
@@ -180,24 +187,25 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
               <FormField label="Category Name" htmlFor="name" required>
                 <Input name="name" id="name" type="text" placeholder="e.g. Beverages" required />
               </FormField>
-              <FormField label="Arabic Name (الاسم)" htmlFor="nameAr" className="text-right">
+              <FormField label="Arabic Name (الاسم)" htmlFor="nameAr" className="text-end">
                 <Input name="nameAr" id="nameAr" type="text" dir="rtl" placeholder="اسم الفئة" />
               </FormField>
               <FormField label="Parent Category" htmlFor="parentId">
-                <select
-                  name="parentId"
-                  id="parentId"
-                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">Root (no parent)</option>
-                  {categories
-                    .filter((category) => category.deletedAt === null)
-                    .map((cat) => (
-                      <option key={cat._id.toString()} value={cat._id.toString()}>
-                        {cat.name}
-                      </option>
-                    ))}
-                </select>
+                <Select name="parentId">
+                  <SelectTrigger id="parentId" className="h-11">
+                    <SelectValue placeholder="Root (no parent)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Root (no parent)</SelectItem>
+                    {categories
+                      .filter((category) => category.deletedAt === null)
+                      .map((cat) => (
+                        <SelectItem key={cat._id.toString()} value={cat._id.toString()}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </FormField>
             </div>
             <div className="flex justify-end pt-2 border-t border-gray-50">

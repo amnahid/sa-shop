@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Membership, Tenant } from "@/models";
-import { type BusinessFields, type BusinessActionState } from "./onboarding.types";
+import { type BusinessActionState } from "./onboarding.types";
 
 const businessSchema = z.object({
   name: z.string().trim().min(1, "Business name is required"),

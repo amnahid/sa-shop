@@ -83,7 +83,7 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
           <Button asChild variant={resolvedStatus === "read" ? "default" : "outline"} size="sm">
             <Link href="/notifications?status=read">Read</Link>
           </Button>
-          <span className="ml-auto text-xs font-semibold text-muted-foreground">
+          <span className="ms-auto text-xs font-semibold text-muted-foreground">
             {unreadCount} unread
           </span>
         </div>

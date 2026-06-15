@@ -8,7 +8,6 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { Button } from "@/components/ui/button";
 import type { ProposalStatus } from "@/models/sales/Proposal";
 import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface ProposalRow {
   id: string;
@@ -103,7 +102,7 @@ export default async function ProposalsPage({ searchParams }: Props) {
         actions={
           <Button asChild size="sm" className="font-bold uppercase tracking-wider text-[11px] px-6">
             <Link href="/proposals/new">
-              <Plus className="size-3.5 mr-2" />
+              <Plus className="size-3.5 me-2" />
               New Proposal
             </Link>
           </Button>

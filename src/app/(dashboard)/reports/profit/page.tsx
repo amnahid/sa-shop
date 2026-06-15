@@ -3,124 +3,163 @@ import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Branch } from "@/models";
 import { getProfitReport } from "@/lib/actions/reports";
-
-interface Props {
-  searchParams: Promise<{
-    fromDate?: string;
-    toDate?: string;
-    branchId?: string;
-  }>;
-}
-
-export default async function ProfitPage({ searchParams }: Props) {
-  const { fromDate, toDate, branchId } = await searchParams;
-
+import { PageHeader } from "@/components/app/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TrendingUp, Download, Filter } from "lucide-react";
+export default async function ProfitReportPage({
+  searchParams,
+}: {
+  searchParams: { fromDate?: string; toDate?: string; branchId?: string };
+}) {
+  const { fromDate, toDate, branchId } = searchParams;
   const membership = await getCurrentMembership();
-  if (!membership) return <div>No active membership</div>;
-
-  const branches = await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
+  if (!membership) return null;
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  today.setMonth(today.getMonth() - 1); // Default to last 30 days
 
+  const branches = await Branch.find({ tenantId: membership.tenantId }).sort({ name: 1 }).lean();
   const report = await getProfitReport(membership.tenantId.toString(), {
     fromDate: fromDate ? new Date(fromDate) : today,
-    toDate: toDate ? new Date(toDate) : tomorrow,
+    toDate: toDate ? new Date(toDate) : new Date(),
     branchId,
   });
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Profit & Margin Report</h1>
-        <Link href="/reports" className="text-primary hover:underline">← Back to Reports</Link>
+    <div className="space-y-6">
+      <PageHeader
+        title="Profit & Margin"
+        section="Insights"
+        breadcrumbs={[
+          { label: "Reports", href: "/reports" },
+          { label: "Profit" },
+        ]}
+        actions={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/reports">Back to Reports</Link>
+          </Button>
+        }
+      />
+
+      <Card className="mb-8">
+        <CardHeader className="flex flex-row items-center gap-2 py-3 border-b border-gray-50">
+          <Filter className="size-4 text-primary" />
+          <CardTitle className="text-sm font-bold uppercase tracking-tight">Filter Report</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <form className="flex flex-wrap gap-6 items-end">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">From Date</label>
+              <Input
+                type="date"
+                name="fromDate"
+                defaultValue={fromDate || today.toISOString().split("T")[0]}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">To Date</label>
+              <Input
+                type="date"
+                name="toDate"
+                defaultValue={toDate || new Date().toISOString().split("T")[0]}
+              />
+            </div>
+            <div className="space-y-1.5 min-w-[200px]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 ms-1">Branch</label>
+              <select
+                name="branchId"
+                defaultValue={branchId || ""}
+                className="flex h-11 w-full rounded-md border border-input bg-white px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">All Branches</option>
+                {branches.map(b => (
+                  <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 ms-auto">
+              <Button type="submit" className="font-bold uppercase tracking-wider text-[11px] px-6 h-11">
+                Filter Data
+              </Button>
+              <Button variant="secondary" asChild className="h-11 font-bold uppercase tracking-wider text-[11px]">
+                <a
+                  href={`/api/reports/export?type=profit&fromDate=${fromDate || today.toISOString().split("T")[0]}&toDate=${toDate || new Date().toISOString().split("T")[0]}${branchId ? `&branchId=${branchId}` : ""}`}
+                >
+                  <Download className="size-3 me-2" />
+                  CSV
+                </a>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-4 mb-8">
+        {[
+          { label: "Revenue", value: `SAR ${report.totals.revenue.toFixed(2)}`, color: "text-primary" },
+          { label: "COGS", value: `SAR ${report.totals.cost.toFixed(2)}`, color: "text-gray-900" },
+          { label: "Gross Profit", value: `SAR ${report.totals.profit.toFixed(2)}`, color: report.totals.profit >= 0 ? "text-success" : "text-danger" },
+          { label: "Margin", value: `${report.totals.margin.toFixed(1)}%`, color: report.totals.margin >= 0 ? "text-success" : "text-danger" },
+        ].map((stat, i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">{stat.label}</p>
+              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <form className="bg-card border rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="block text-sm font-medium mb-1">From Date</label>
-          <input type="date" name="fromDate" defaultValue={fromDate || today.toISOString().split("T")[0]} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">To Date</label>
-          <input type="date" name="toDate" defaultValue={toDate || new Date().toISOString().split("T")[0]} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Branch</label>
-          <select name="branchId" defaultValue={branchId || ""} className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm">
-            <option value="">All Branches</option>
-            {branches.map(b => <option key={b._id.toString()} value={b._id.toString()}>{b.name}</option>)}
-          </select>
-        </div>
-        <button type="submit" className="h-9 rounded-md bg-primary text-primary-foreground px-4 text-sm font-medium">Filter</button>
-      </form>
-
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Revenue</p>
-          <p className="text-2xl font-bold">SAR {report.totals.revenue.toFixed(2)}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">COGS</p>
-          <p className="text-2xl font-bold">SAR {report.totals.cost.toFixed(2)}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Gross Profit</p>
-          <p className={`text-2xl font-bold ${report.totals.profit >= 0 ? "text-green-600" : "text-red-500"}`}>
-            SAR {report.totals.profit.toFixed(2)}
-          </p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Margin</p>
-          <p className={`text-2xl font-bold ${report.totals.margin >= 0 ? "text-green-600" : "text-red-500"}`}>
-            {report.totals.margin.toFixed(1)}%
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-card border rounded-lg overflow-hidden">
-        <div className="p-4 border-b">
-          <h2 className="font-semibold">By Category</h2>
-        </div>
+      <Card className="overflow-hidden">
+        <CardHeader className="py-3 border-b border-gray-50">
+          <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-2">
+            <TrendingUp className="size-4 text-primary" />
+            Performance by Category
+          </CardTitle>
+        </CardHeader>
         {report.byCategory.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">No data for this period</div>
+          <div className="p-20 text-center">
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No data for this period</p>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-3 font-medium">Category</th>
-                <th className="text-right p-3 font-medium">Items Sold</th>
-                <th className="text-right p-3 font-medium">Revenue</th>
-                <th className="text-right p-3 font-medium">COGS</th>
-                <th className="text-right p-3 font-medium">Profit</th>
-                <th className="text-right p-3 font-medium">Margin</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.byCategory.map(c => {
-                const profit = c.totalRevenue - c.totalCost;
-                const margin = c.totalRevenue > 0 ? (profit / c.totalRevenue) * 100 : 0;
-                return (
-                  <tr key={c._id?.toString() || "uncategorized"} className="border-t">
-                    <td className="p-3 font-medium">{c.categoryName || "Uncategorized"}</td>
-                    <td className="p-3 text-right">{c.itemsSold}</td>
-                    <td className="p-3 text-right">SAR {c.totalRevenue.toFixed(2)}</td>
-                    <td className="p-3 text-right text-muted-foreground">SAR {c.totalCost.toFixed(2)}</td>
-                    <td className={`p-3 text-right font-medium ${profit >= 0 ? "text-green-600" : "text-red-500"}`}>
-                      SAR {profit.toFixed(2)}
-                    </td>
-                    <td className={`p-3 text-right font-medium ${margin >= 0 ? "text-green-600" : "text-red-500"}`}>
-                      {margin.toFixed(1)}%
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50/50">
+                <tr>
+                  <th className="text-start px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Category</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Items Sold</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Revenue</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">COGS</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Profit</th>
+                  <th className="text-end px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">Margin</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {report.byCategory.map(c => {
+                  const profit = c.totalRevenue - c.totalCost;
+                  const margin = c.totalRevenue > 0 ? (profit / c.totalRevenue) * 100 : 0;
+                  return (
+                    <tr key={c._id?.toString() || "uncategorized"} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-gray-800">{c.categoryName || "Uncategorized"}</td>
+                      <td className="px-6 py-4 text-end font-medium text-gray-600">{c.itemsSold}</td>
+                      <td className="px-6 py-4 text-end font-bold text-gray-900">SAR {c.totalRevenue.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-end text-gray-500">SAR {c.totalCost.toFixed(2)}</td>
+                      <td className={`px-6 py-4 text-end font-black ${profit >= 0 ? "text-success" : "text-danger"}`}>
+                        SAR {profit.toFixed(2)}
+                      </td>
+                      <td className={`px-6 py-4 text-end font-black ${margin >= 0 ? "text-success" : "text-danger"}`}>
+                        {margin.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

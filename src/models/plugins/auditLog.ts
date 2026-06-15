@@ -73,10 +73,10 @@ export async function logAudit(
   });
 }
 
-export function auditPlugin(schema: mongoose.Schema<any>, options: { collectionName?: string } = {}) {
-  const collectionName = options.collectionName || (schema as any).modelName || 'unknown';
+export function auditPlugin(schema: mongoose.Schema, options: { collectionName?: string } = {}) {
+  const collectionName = options.collectionName || 'unknown';
 
-  schema.post('save', function (doc) {
+  schema.post('save', function (doc: mongoose.Document & { __orig?: Record<string, unknown>, tenantId?: mongoose.Types.ObjectId, __userId?: mongoose.Types.ObjectId }) {
     const changedPaths = doc.modifiedPaths();
     if (changedPaths.length === 0) return;
 
@@ -84,17 +84,17 @@ export function auditPlugin(schema: mongoose.Schema<any>, options: { collectionN
     const after: Record<string, unknown> = {};
 
     changedPaths.forEach((path) => {
-      before[path] = (doc as any).__orig?.[path];
-      after[path] = (doc as any)[path];
+      before[path] = doc.__orig?.[path];
+      after[path] = (doc as unknown as Record<string, unknown>)[path];
     });
 
-    const tenantId = (doc as any).tenantId;
-    const userId = (doc as any).__userId;
+    const tenantId = doc.tenantId;
+    const userId = doc.__userId;
 
     if (tenantId && userId) {
       logAudit({
-        tenantId: (doc as any).tenantId,
-        userId: (doc as any).__userId || new mongoose.Types.ObjectId(),
+        tenantId: doc.tenantId as mongoose.Types.ObjectId,
+        userId: doc.__userId || new mongoose.Types.ObjectId(),
         action: 'update',
         collection: collectionName,
         documentId: doc._id as mongoose.Types.ObjectId,

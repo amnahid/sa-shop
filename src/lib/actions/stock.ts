@@ -1,8 +1,7 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
-import { StockLevel, StockMovement, Product, Branch, Membership } from "@/models";
+import { StockLevel, StockMovement, Branch, Membership } from "@/models";
 import mongoose from "mongoose";
 
 export async function adjustStock(formData: FormData) {
@@ -23,7 +22,6 @@ export async function adjustStock(formData: FormData) {
   const branchId = formData.get("branchId") as string;
   const adjustment = parseInt(formData.get("adjustment") as string);
   const reason = formData.get("reason") as string;
-  const notes = formData.get("notes") as string;
 
   if (!productId || !branchId) {
     return { error: "Product and branch are required" };
@@ -133,8 +131,6 @@ export async function transferStock(formData: FormData) {
       reservedQuantity: "0",
     });
   }
-
-  const product = await Product.findById(productId);
 
   await StockMovement.create({
     tenantId,

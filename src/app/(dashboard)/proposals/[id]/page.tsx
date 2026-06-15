@@ -104,11 +104,11 @@ export default async function ProposalDetailPage({ params }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="p-3 text-left font-medium">Product</th>
+              <th className="p-3 text-start font-medium">Product</th>
               <th className="p-3 text-center font-medium">Qty</th>
-              <th className="p-3 text-right font-medium">Unit Price</th>
-              <th className="p-3 text-right font-medium">VAT</th>
-              <th className="p-3 text-right font-medium">Total</th>
+              <th className="p-3 text-end font-medium">Unit Price</th>
+              <th className="p-3 text-end font-medium">VAT</th>
+              <th className="p-3 text-end font-medium">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -119,9 +119,9 @@ export default async function ProposalDetailPage({ params }: Props) {
                   <span className="block text-xs text-muted-foreground">{line.sku}</span>
                 </td>
                 <td className="p-3 text-center">{line.quantity}</td>
-                <td className="p-3 text-right">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
-                <td className="p-3 text-right">SAR {parseFloat(line.lineVatAmount.toString()).toFixed(2)}</td>
-                <td className="p-3 text-right font-medium">
+                <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
+                <td className="p-3 text-end">SAR {parseFloat(line.lineVatAmount.toString()).toFixed(2)}</td>
+                <td className="p-3 text-end font-medium">
                   SAR {parseFloat(line.lineTotal.toString()).toFixed(2)}
                 </td>
               </tr>
@@ -129,22 +129,22 @@ export default async function ProposalDetailPage({ params }: Props) {
           </tbody>
           <tfoot className="border-t-2 bg-muted text-sm">
             <tr>
-              <td colSpan={4} className="p-3 text-right font-medium">
+              <td colSpan={4} className="p-3 text-end font-medium">
                 Subtotal
               </td>
-              <td className="p-3 text-right">SAR {parseFloat(proposal.subtotal.toString()).toFixed(2)}</td>
+              <td className="p-3 text-end">SAR {parseFloat(proposal.subtotal.toString()).toFixed(2)}</td>
             </tr>
             <tr>
-              <td colSpan={4} className="p-3 text-right font-medium">
+              <td colSpan={4} className="p-3 text-end font-medium">
                 VAT
               </td>
-              <td className="p-3 text-right">SAR {parseFloat(proposal.vatTotal.toString()).toFixed(2)}</td>
+              <td className="p-3 text-end">SAR {parseFloat(proposal.vatTotal.toString()).toFixed(2)}</td>
             </tr>
             <tr>
-              <td colSpan={4} className="p-3 text-right text-base font-bold">
+              <td colSpan={4} className="p-3 text-end text-base font-bold">
                 Grand Total
               </td>
-              <td className="p-3 text-right text-base font-bold">
+              <td className="p-3 text-end text-base font-bold">
                 SAR {parseFloat(proposal.grandTotal.toString()).toFixed(2)}
               </td>
             </tr>

@@ -53,6 +53,7 @@ export const ADMIN_SCOPED_PERMISSION_KEYS: AppPermissionKey[] = [
   "settings.templates.email:view",
   "settings.templates.notification:view",
   "accounting:view",
+  "hr:view",
 ];
 
 const ALL_MEMBERSHIP_ROLES: MembershipRole[] = ["owner", "manager", "cashier"];
@@ -90,7 +91,7 @@ export const permissionRoleDefaults: Record<AppPermissionKey, readonly Membershi
   "settings.templates.email:view": MANAGEMENT_MEMBERSHIP_ROLES,
   "settings.templates.notification:view": MANAGEMENT_MEMBERSHIP_ROLES,
   "accounting:view": OWNER_MEMBERSHIP_ROLES,
-  "hr:view": OWNER_MEMBERSHIP_ROLES,
+  "hr:view": MANAGEMENT_MEMBERSHIP_ROLES,
   "promotions:view": OWNER_MEMBERSHIP_ROLES,
   "integrations:view": OWNER_MEMBERSHIP_ROLES,
   "ai:view": OWNER_MEMBERSHIP_ROLES,

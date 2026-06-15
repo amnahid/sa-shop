@@ -148,13 +148,6 @@ function toInvitationStatus(invitation: Pick<InvitationRecord, "acceptedAt" | "r
   return "pending";
 }
 
-function getInvitationStatus(
-  invitation: Pick<InvitationRecord, "acceptedAt" | "revokedAt" | "expiresAt">,
-  now = new Date()
-): InvitationStatus {
-  return toInvitationStatus(invitation, now);
-}
-
 function canManageOwnerInvites(
   role: InvitationRole,
   membershipRole: InvitationRole,

@@ -4,6 +4,15 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { FormFeedback } from "@/components/app/FormFeedback";
 import { listTenantInvitations, resendInvite, revokeInvite, sendInvite } from "@/lib/actions/invite";
 import { updateMemberRole, updateMemberScopedPermissions } from "@/lib/actions/team";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import {
   ADMIN_SCOPED_PERMISSION_KEYS,
@@ -140,12 +149,12 @@ export default async function SettingsAdminPage({ searchParams }: SettingsAdminP
                   <h2 className="text-base font-semibold">
                     {user.name || "Unnamed user"}
                     {isCurrentUser && (
-                      <span className="ml-2 text-xs text-muted-foreground">(you)</span>
+                      <span className="ms-2 text-xs text-muted-foreground">(you)</span>
                     )}
                   </h2>
                   <p className="text-sm text-muted-foreground">{user.email || "No email"}</p>
                 </div>
-                <div className="text-right text-xs text-muted-foreground space-y-1">
+                <div className="text-end text-xs text-muted-foreground space-y-1">
                   <p>
                     Role: <span className="font-medium capitalize text-foreground">{member.role}</span>
                   </p>
@@ -164,27 +173,25 @@ export default async function SettingsAdminPage({ searchParams }: SettingsAdminP
                     if (nextRole !== "manager" && nextRole !== "cashier") {
                       return;
                     }
-                    await updateMemberRole(memberId, nextRole);
+                    await updateMemberRole(memberId, nextRole as "manager" | "cashier");
                   }}
                   className="flex items-end gap-3"
                 >
-                  <div>
-                    <label className="text-sm font-medium">Role</label>
-                    <select
-                      name="role"
-                      defaultValue={member.role}
-                      className="mt-1 flex h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
-                    >
-                      <option value="manager">Manager</option>
-                      <option value="cashier">Cashier</option>
-                    </select>
+                  <div className="flex-1 max-w-[200px]">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-gray-500 mb-1 block ms-0.5">Role</label>
+                    <Select name="role" defaultValue={member.role}>
+                      <SelectTrigger className="h-10 bg-white">
+                        <SelectValue placeholder="Select Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="cashier">Cashier</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <button
-                    type="submit"
-                    className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-                  >
+                  <Button type="submit" size="sm" className="font-bold uppercase tracking-widest text-[10px] h-10 px-6">
                     Save Role
-                  </button>
+                  </Button>
                 </form>
               ) : (
                 <p className="text-xs text-muted-foreground">
@@ -261,24 +268,26 @@ export default async function SettingsAdminPage({ searchParams }: SettingsAdminP
           className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto]"
         >
           <input type="hidden" name="tenantId" value={currentMembership.tenantId.toString()} />
-          <input
+          <Input
             name="email"
             type="email"
             required
             placeholder="teammate@example.com"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="h-10 bg-white"
           />
-          <select name="role" defaultValue="cashier" className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
-            <option value="cashier">Cashier</option>
-            <option value="manager">Manager</option>
-            {canManageAdmin && <option value="owner">Owner</option>}
-          </select>
-          <button
-            type="submit"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-          >
+          <Select name="role" defaultValue="cashier">
+            <SelectTrigger className="h-10 bg-white">
+              <SelectValue placeholder="Select Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cashier">Cashier</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              {canManageAdmin && <SelectItem value="owner">Owner</SelectItem>}
+            </SelectContent>
+          </Select>
+          <Button type="submit" className="font-bold uppercase tracking-widest text-[10px] h-10 px-6">
             Send Invite
-          </button>
+          </Button>
         </form>
       </section>
 
@@ -289,7 +298,7 @@ export default async function SettingsAdminPage({ searchParams }: SettingsAdminP
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
-              <th className="text-left p-3 font-medium">Email</th>
+              <th className="text-start p-3 font-medium">Email</th>
               <th className="text-center p-3 font-medium">Role</th>
               <th className="text-center p-3 font-medium">Status</th>
               <th className="text-center p-3 font-medium">Sent</th>

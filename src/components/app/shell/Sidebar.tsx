@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -18,8 +19,6 @@ import {
 
 const NON_NAVIGABLE_STATUSES: NavigationAvailabilityStatus[] = ["coming_soon", "disabled"];
 
-const SIDEBAR_WIDTH_CLASS = "w-60";
-
 function isRouteExact(pathname: string, route: string) {
   return pathname === route;
 }
@@ -30,10 +29,6 @@ function isRouteNested(pathname: string, route: string) {
 
 function isRouteActive(pathname: string, route: string) {
   return isRouteExact(pathname, route) || isRouteNested(pathname, route);
-}
-
-function isItemActive(item: SidebarNavigationItem, pathname: string): boolean {
-  return isRouteActive(pathname, item.route);
 }
 
 function isItemNavigable(status: NavigationAvailabilityStatus) {
@@ -92,7 +87,7 @@ export function Sidebar({
     () =>
       new Set(
         filteredNavigationConfig
-          .filter((group) => group.items.some((item) => isItemActive(item, pathname)))
+          .filter((group) => group.items.some((item) => isRouteActive(pathname, item.route)))
           .map((group) => group.id)
       ),
     [filteredNavigationConfig, pathname]
@@ -126,7 +121,7 @@ export function Sidebar({
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
               <span className="truncate">{item.label}</span>
               {statusLabel ? (
-                <span className="ml-auto rounded border border-white/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/60">
+                <span className="ms-auto rounded border border-white/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/60">
                   {statusLabel}
                 </span>
               ) : null}
@@ -139,7 +134,7 @@ export function Sidebar({
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
               <span className="truncate">{item.label}</span>
               {statusLabel ? (
-                <span className="ml-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/30">
+                <span className="ms-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/30">
                   {statusLabel}
                 </span>
               ) : null}
@@ -210,7 +205,7 @@ export function Sidebar({
       <div className="flex-none p-4 pb-0">
         <div className="flex h-12 items-center px-2 mb-6 mt-2">
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="max-h-10 max-w-[180px] object-contain" />
+            <Image src={logoUrl} alt="Logo" width={180} height={40} unoptimized className="max-h-10 max-w-[180px] object-contain" />
           ) : (
             <h1 className="text-2xl font-bold tracking-tight">
               <span className="text-primary">e</span>

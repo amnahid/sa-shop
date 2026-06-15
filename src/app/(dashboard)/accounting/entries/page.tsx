@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/app/PageHeader";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
 import { FormField } from "@/components/app/FormField";
@@ -16,7 +17,6 @@ import {
 import {
   createAccountingEntry,
   ensureTenantChartOfAccounts,
-  getCounterpartyOptions,
   transitionAccountingEntryStatus,
 } from "@/lib/actions/accounting";
 import { loadEntityAuditTimelineBatch } from "@/lib/actions/audit-trail";
@@ -42,20 +42,25 @@ interface EntryRow {
 }
 
 interface Props {
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; status?: string }>;
 }
 
 export default async function AccountingEntriesPage({ searchParams }: Props) {
-  const { error, success } = await searchParams;
+  const { error, success, status: statusFilter } = await searchParams;
   const membership = await getCurrentMembership();
+  if (!membership) return <div>No active membership</div>;
   if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
 
   await ensureTenantChartOfAccounts(membership.tenantId);
 
-  const [accounts, entries, counterparties] = await Promise.all([
+  const entryQuery: { tenantId: string; status?: string } = { tenantId: membership.tenantId.toString() };
+  if (statusFilter && ["draft", "posted", "void"].includes(statusFilter)) {
+    entryQuery.status = statusFilter;
+  }
+
+  const [accounts, entries] = await Promise.all([
     ChartOfAccount.find({ tenantId: membership.tenantId, active: true, allowPosting: true }).sort({ code: 1 }),
-    AccountingEntry.find({ tenantId: membership.tenantId }).sort({ entryDate: -1 }).limit(100).populate("accountId"),
-    getCounterpartyOptions(membership.tenantId),
+    AccountingEntry.find(entryQuery).sort({ entryDate: -1 }).limit(100).populate("accountId"),
   ]);
   const auditResult = await loadEntityAuditTimelineBatch(
     "accounting-entry",
@@ -127,7 +132,16 @@ export default async function AccountingEntriesPage({ searchParams }: Props) {
     {
       key: "status",
       header: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          <StatusBadge status={row.status} />
+          {row.status === "void" && row.voidReason && (
+            <span className="text-[10px] text-gray-400 font-medium italic max-w-[120px] truncate" title={row.voidReason}>
+              {row.voidReason}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: "actions",
@@ -283,12 +297,53 @@ export default async function AccountingEntriesPage({ searchParams }: Props) {
         </CardContent>
       </Card>
 
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-2">
+          <Link 
+            href="/accounting/entries" 
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest border transition-all",
+              !statusFilter ? "bg-primary text-white border-primary" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+            )}
+          >
+            All
+          </Link>
+          <Link 
+            href="/accounting/entries?status=draft" 
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest border transition-all",
+              statusFilter === "draft" ? "bg-primary text-white border-primary" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+            )}
+          >
+            Draft
+          </Link>
+          <Link 
+            href="/accounting/entries?status=posted" 
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest border transition-all",
+              statusFilter === "posted" ? "bg-primary text-white border-primary" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+            )}
+          >
+            Posted
+          </Link>
+          <Link 
+            href="/accounting/entries?status=void" 
+            className={cn(
+              "px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-widest border transition-all",
+              statusFilter === "void" ? "bg-primary text-white border-primary" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+            )}
+          >
+            Void
+          </Link>
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}
         empty={{
-          title: "No entries yet",
+          title: statusFilter ? `No ${statusFilter} entries found` : "No entries yet",
           description: "Create your first draft or posted revenue/expense entry above.",
         }}
       />

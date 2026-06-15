@@ -1,4 +1,4 @@
-import { IInvoice, IInvoiceLine } from "@/models/sales/Invoice";
+import { IInvoice } from "@/models/sales/Invoice";
 
 function escapeXml(str: string): string {
   return str

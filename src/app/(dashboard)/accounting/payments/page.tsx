@@ -4,6 +4,13 @@ import { DataTable, type DataTableColumn } from "@/components/app/DataTable";
 import { FormField } from "@/components/app/FormField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createPaymentRecord, getCounterpartyOptions } from "@/lib/actions/accounting";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
@@ -115,29 +122,44 @@ export default async function AccountingPaymentsPage({ searchParams }: Props) {
         <h2 className="mb-3 text-sm font-medium">Record Payment</h2>
         <div className="grid gap-3 md:grid-cols-4">
           <FormField label="Party Type" htmlFor="partyType" required>
-            <select id="partyType" name="partyType" required className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="customer">Customer</option>
-              <option value="vendor">Vendor</option>
-            </select>
+            <Select name="partyType" required defaultValue="customer">
+              <SelectTrigger id="partyType" className="h-9">
+                <SelectValue placeholder="Select Party Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="customer">Customer</SelectItem>
+                <SelectItem value="vendor">Vendor</SelectItem>
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Party Name" htmlFor="partyName" required>
             <Input id="partyName" name="partyName" required placeholder="Counterparty name" />
           </FormField>
           <FormField label="Customer (optional)" htmlFor="customerId">
-            <select id="customerId" name="customerId" className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="">Select customer</option>
-              {counterparties.customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>{customer.name}</option>
-              ))}
-            </select>
+            <Select name="customerId">
+              <SelectTrigger id="customerId" className="h-9">
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select customer</SelectItem>
+                {counterparties.customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Vendor (optional)" htmlFor="supplierId">
-            <select id="supplierId" name="supplierId" className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="">Select vendor</option>
-              {counterparties.suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-              ))}
-            </select>
+            <Select name="supplierId">
+              <SelectTrigger id="supplierId" className="h-9">
+                <SelectValue placeholder="Select vendor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Select vendor</SelectItem>
+                {counterparties.suppliers.map((supplier) => (
+                  <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Amount (SAR)" htmlFor="amount" required>
             <Input id="amount" name="amount" type="number" min="0.01" step="0.01" required />
@@ -146,21 +168,31 @@ export default async function AccountingPaymentsPage({ searchParams }: Props) {
             <Input id="paymentDate" name="paymentDate" type="date" defaultValue={todayIso} />
           </FormField>
           <FormField label="Method" htmlFor="method">
-            <select id="method" name="method" className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="cash">Cash</option>
-              <option value="mada">MADA</option>
-              <option value="visa">Visa</option>
-              <option value="mastercard">Mastercard</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="stc_pay">STC Pay</option>
-              <option value="other">Other</option>
-            </select>
+            <Select name="method" defaultValue="cash">
+              <SelectTrigger id="method" className="h-9">
+                <SelectValue placeholder="Select method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="mada">MADA</SelectItem>
+                <SelectItem value="visa">Visa</SelectItem>
+                <SelectItem value="mastercard">Mastercard</SelectItem>
+                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                <SelectItem value="stc_pay">STC Pay</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Status" htmlFor="status">
-            <select id="status" name="status" className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-            </select>
+            <Select name="status" defaultValue="completed">
+              <SelectTrigger id="status" className="h-9">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
           </FormField>
           <FormField label="Reference" htmlFor="referenceNumber">
             <Input id="referenceNumber" name="referenceNumber" placeholder="Optional" />

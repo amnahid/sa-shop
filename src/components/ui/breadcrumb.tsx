@@ -20,7 +20,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       </Link>
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1">
-          <ChevronRight className="size-3" />
+          <ChevronRight className="size-3 rtl:rotate-180" />
           {item.href ? (
             <Link href={item.href} className="hover:text-foreground">
               {item.label}
