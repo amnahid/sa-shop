@@ -311,6 +311,13 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
         permissionKey: "accounting:view",
       },
       {
+        id: "accounting-trial-balance",
+        label: "Trial Balance",
+        route: "/accounting/trial-balance",
+        status: "ready",
+        permissionKey: "accounting:view",
+      },
+      {
         id: "accounting-reports",
         label: "Accounting Reports",
         route: "/accounting/reports",

@@ -64,6 +64,12 @@ export default async function AccountingPage() {
           description="Track money received from customers and paid to vendors."
         />
         <FeatureCard
+          href="/accounting/trial-balance"
+          icon={FileSpreadsheet}
+          title="Trial Balance"
+          description="Summarised account balances with opening, period activity, and closing."
+        />
+        <FeatureCard
           href="/accounting/reports"
           icon={FileSpreadsheet}
           title="Accounting Reports"

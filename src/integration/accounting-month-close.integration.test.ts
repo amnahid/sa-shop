@@ -22,8 +22,8 @@ test("accounting export CSVs include expected headers and totals", () => {
     totalDebit: 0,
     totalCredit: 1250.5,
   });
-  assert.match(trialBalanceCsv, /Account Code,Account Name,Type,Debit,Credit,Balance/);
-  assert.match(trialBalanceCsv, /TOTAL,,,0,1250.5,-1250.5/);
+  assert.match(trialBalanceCsv, /Account Code,Account Name,Arabic Name,Type,Opening Balance,Debit,Credit,Closing Balance/);
+  assert.match(trialBalanceCsv, /TOTAL,,,,0,0,1250.5,-1250.5/);
 
   const ledgerCsv = exportLedgerByAccountCsv({
     account: { code: "1100", name: "Cash on Hand", type: "asset" },

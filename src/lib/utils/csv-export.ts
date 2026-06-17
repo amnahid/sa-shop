@@ -137,19 +137,26 @@ export function exportTrialBalanceCsv(data: {
   rows: Array<{
     accountCode: string;
     accountName: string;
+    accountNameAr?: string;
     accountType: string;
+    openingBalance?: number;
     debit: number;
     credit: number;
     balance: number;
+    closingBalance?: number;
   }>;
   totalDebit: number;
   totalCredit: number;
 }): string {
-  const lines: string[] = ["Account Code,Account Name,Type,Debit,Credit,Balance"];
+  const lines: string[] = ["Account Code,Account Name,Arabic Name,Type,Opening Balance,Debit,Credit,Closing Balance"];
   data.rows.forEach((row) => {
-    lines.push(csvLine([row.accountCode, row.accountName, row.accountType, row.debit, row.credit, row.balance]));
+    const closing = row.closingBalance ?? row.balance;
+    const opening = row.openingBalance ?? 0;
+    lines.push(csvLine([row.accountCode, row.accountName, row.accountNameAr ?? "", row.accountType, opening, row.debit, row.credit, closing]));
   });
-  lines.push(csvLine(["TOTAL", "", "", data.totalDebit, data.totalCredit, data.totalDebit - data.totalCredit]));
+  const totalOpening = data.rows.reduce((s, r) => s + (r.openingBalance ?? 0), 0);
+  const totalClosing = data.rows.reduce((s, r) => s + (r.closingBalance ?? r.balance), 0);
+  lines.push(csvLine(["TOTAL", "", "", "", totalOpening, data.totalDebit, data.totalCredit, totalClosing]));
   return lines.join("\n");
 }
 

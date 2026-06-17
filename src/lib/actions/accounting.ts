@@ -908,44 +908,125 @@ function buildEntryMatch(tenantOid: mongoose.Types.ObjectId, range: ReportDateRa
   return match;
 }
 
-export async function getTrialBalanceReport(tenantId: string, filters: ReportFilters) {
+type TrialBalanceFilters = ReportFilters & {
+  includeDraft?: boolean;
+};
+
+type TrialBalanceRow = {
+  accountId: mongoose.Types.ObjectId;
+  accountCode: string;
+  accountName: string;
+  accountNameAr: string;
+  accountType: string;
+  openingBalance: number;
+  debit: number;
+  credit: number;
+  balance: number;
+  closingBalance: number;
+};
+
+export async function getTrialBalanceReport(tenantId: string, filters: TrialBalanceFilters) {
   const parsed = parseReportDateRange(filters);
   if (parsed.error) {
     return { error: parsed.error, rows: [], totalDebit: 0, totalCredit: 0 };
   }
 
   const tenantOid = new mongoose.Types.ObjectId(tenantId);
-  const match = buildEntryMatch(tenantOid, parsed.range || {});
-  const rows = await AccountingEntry.aggregate([
-    { $match: match },
-    {
-      $lookup: {
-        from: "chartofaccounts",
-        let: { accountId: "$accountId" },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ["$_id", "$$accountId"] },
-              tenantId: tenantOid,
-            },
-          },
-          {
-            $project: {
-              code: 1,
-              name: 1,
-              type: 1,
-            },
-          },
-        ],
-        as: "account",
+  const range = parsed.range || {};
+
+  const periodStatusFilter = filters.includeDraft ? { $in: ["posted", "draft"] } : "posted";
+
+  const accountProject = {
+    code: 1,
+    name: 1,
+    nameAr: 1,
+    type: 1,
+  };
+
+  // Helper to build lookup pipeline
+  function buildLookup() {
+    return [
+      {
+        $lookup: {
+          from: "chartofaccounts",
+          let: { accountId: "$accountId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$accountId"] }, tenantId: tenantOid } },
+            { $project: accountProject },
+          ],
+          as: "account",
+        },
       },
-    },
-    { $unwind: "$account" },
+      { $unwind: "$account" },
+    ];
+  }
+
+  // --- Opening balances: all posted entries before fromDate ---
+  const openingByAccount = new Map<string, { balance: number; code: string; name: string; nameAr: string; type: string }>();
+  if (range.fromDate) {
+    const openingMatch: Record<string, unknown> = {
+      tenantId: tenantOid,
+      status: "posted",
+      entryDate: { $lt: range.fromDate },
+    };
+    const openingAgg = await AccountingEntry.aggregate([
+      { $match: openingMatch },
+      ...buildLookup(),
+      {
+        $group: {
+          _id: "$account._id",
+          accountCode: { $first: "$account.code" },
+          accountName: { $first: "$account.name" },
+          accountNameAr: { $first: { $ifNull: ["$account.nameAr", ""] } },
+          accountType: { $first: "$account.type" },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          accountId: "$_id",
+          accountCode: 1,
+          accountName: 1,
+          accountNameAr: 1,
+          accountType: 1,
+          total: 1,
+        },
+      },
+    ]);
+    for (const row of openingAgg) {
+      const isDebitNormal = DEBIT_NORMAL_ACCOUNT_TYPES.includes(row.accountType);
+      const balance = isDebitNormal ? row.total : -row.total;
+      openingByAccount.set(row.accountId.toString(), {
+        balance,
+        code: row.accountCode,
+        name: row.accountName,
+        nameAr: row.accountNameAr,
+        type: row.accountType,
+      });
+    }
+  }
+
+  // --- Period entries: entries in date range ---
+  const periodMatch: Record<string, unknown> = {
+    tenantId: tenantOid,
+    status: periodStatusFilter,
+  };
+  if (range.fromDate || range.toDate) {
+    periodMatch.entryDate = {};
+    if (range.fromDate) (periodMatch.entryDate as Record<string, Date>).$gte = range.fromDate;
+    if (range.toDate) (periodMatch.entryDate as Record<string, Date>).$lte = range.toDate;
+  }
+
+  const periodRows = await AccountingEntry.aggregate([
+    { $match: periodMatch },
+    ...buildLookup(),
     {
       $group: {
         _id: "$account._id",
         accountCode: { $first: "$account.code" },
         accountName: { $first: "$account.name" },
+        accountNameAr: { $first: { $ifNull: ["$account.nameAr", ""] } },
         accountType: { $first: "$account.type" },
         total: { $sum: "$amount" },
       },
@@ -956,6 +1037,7 @@ export async function getTrialBalanceReport(tenantId: string, filters: ReportFil
         accountId: "$_id",
         accountCode: 1,
         accountName: 1,
+        accountNameAr: 1,
         accountType: 1,
         debit: {
           $cond: [{ $in: ["$accountType", DEBIT_NORMAL_ACCOUNT_TYPES] }, "$total", 0],
@@ -972,6 +1054,49 @@ export async function getTrialBalanceReport(tenantId: string, filters: ReportFil
     },
     { $sort: { accountCode: 1 } },
   ]);
+
+  // --- Merge opening balances with period rows ---
+  const seenAccountIds = new Set<string>();
+  const rows: TrialBalanceRow[] = [];
+
+  for (const row of periodRows) {
+    const accountIdStr = row.accountId.toString();
+    seenAccountIds.add(accountIdStr);
+    const opening = openingByAccount.get(accountIdStr);
+    const openingBalance = opening?.balance ?? 0;
+    rows.push({
+      accountId: row.accountId,
+      accountCode: row.accountCode,
+      accountName: row.accountName,
+      accountNameAr: row.accountNameAr,
+      accountType: row.accountType,
+      openingBalance,
+      debit: row.debit,
+      credit: row.credit,
+      balance: row.balance,
+      closingBalance: openingBalance + row.balance,
+    });
+  }
+
+  // Add accounts that only have opening balance (no period activity)
+  for (const [accountIdStr, opening] of openingByAccount) {
+    if (!seenAccountIds.has(accountIdStr)) {
+      rows.push({
+        accountId: new mongoose.Types.ObjectId(accountIdStr),
+        accountCode: opening.code,
+        accountName: opening.name,
+        accountNameAr: opening.nameAr,
+        accountType: opening.type,
+        openingBalance: opening.balance,
+        debit: 0,
+        credit: 0,
+        balance: 0,
+        closingBalance: opening.balance,
+      });
+    }
+  }
+
+  rows.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
 
   const totalDebit = rows.reduce((sum, row) => sum + row.debit, 0);
   const totalCredit = rows.reduce((sum, row) => sum + row.credit, 0);
