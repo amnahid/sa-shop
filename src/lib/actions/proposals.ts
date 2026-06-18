@@ -5,6 +5,7 @@ import { Branch, Customer, Proposal } from "@/models";
 import type { ProposalStatus } from "@/models/sales/Proposal";
 import { getAuthorizedSessionMembership } from "@/lib/utils/server-authorization";
 import { buildLifecycleTransitionMetadata, createAuditEntry } from "@/lib/audit-trail";
+import { sendProposalViaWhatsApp } from "@/lib/actions/proposal-whatsapp";
 
 type ParsedProposalLine = {
   productId: mongoose.Types.ObjectId;
@@ -255,6 +256,13 @@ export async function transitionProposalStatus(proposalId: string, nextStatus: P
       ...buildLifecycleTransitionMetadata("proposal", previousStatus, nextStatus, ["status"]),
     },
   });
+
+  if (nextStatus === "sent") {
+    const waResult = await sendProposalViaWhatsApp(proposalId);
+    if (waResult.error) {
+      console.error("Failed to send proposal via WhatsApp:", waResult.error);
+    }
+  }
 
   return { success: true };
 }

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSession } from "@/lib/auth-utils";
 import { Membership, Tenant } from "@/models";
+import { ensureDefaultWhatsAppTemplates } from "./seed-whatsapp-templates";
 import { type BusinessActionState } from "./onboarding.types";
 
 const businessSchema = z.object({
@@ -77,6 +78,8 @@ export async function businessAction(
       email: payload.email || undefined,
       vatRegistered: !!payload.vatNumber,
     });
+
+    await ensureDefaultWhatsAppTemplates(membership.tenantId);
   } catch (error) {
     console.error("Business onboarding error:", error);
     return {

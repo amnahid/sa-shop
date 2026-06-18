@@ -48,6 +48,17 @@ export {
   type INotificationTemplate,
   type NotificationChannel,
 } from "./operations/NotificationTemplate";
+export {
+  WhatsAppConfig,
+  type IWhatsAppConfig,
+} from "./operations/WhatsAppConfig";
+export {
+  OutboundMessage,
+  type IOutboundMessage,
+  type OutboundChannel,
+  type OutboundMessageStatus,
+  type OutboundReferenceType,
+} from "./operations/OutboundMessage";
 
 export { AuditLog, logAudit, type IAuditLog } from './plugins/auditLog';
 export { softDeletePlugin, type ISoftDelete } from './plugins/softDelete';

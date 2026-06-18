@@ -124,6 +124,7 @@ export function POSClient({
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [emailReceipt, setEmailReceipt] = useState(false);
   const [receiptEmail, setReceiptEmail] = useState("");
+  const [whatsappReceipt, setWhatsappReceipt] = useState(false);
   const [shippingAmount, setShippingAmount] = useState<string>("0");
   const [discountAmount, setDiscountAmount] = useState<string>("0");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -221,6 +222,9 @@ export function POSClient({
     if (emailReceipt && receiptEmail) {
       fd.set("emailReceipt", "true");
       fd.set("receiptEmail", receiptEmail);
+    }
+    if (whatsappReceipt && selectedCustomer?.phone) {
+      fd.set("whatsappReceipt", "true");
     }
     const result = await processSale(fd);
     if (result.error) {
@@ -677,6 +681,30 @@ export function POSClient({
                     className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
                   />
                 </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="whatsappReceipt"
+                  checked={whatsappReceipt}
+                  onChange={e => setWhatsappReceipt(e.target.checked)}
+                  disabled={!selectedCustomer?.phone}
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
+                />
+                <label htmlFor="whatsappReceipt" className={`text-sm font-medium ${selectedCustomer?.phone ? "text-gray-600" : "text-gray-400"}`}>
+                  Send receipt via WhatsApp
+                </label>
+              </div>
+              {whatsappReceipt && selectedCustomer?.phone && (
+                <p className="text-xs text-green-600">
+                  Will send to {selectedCustomer.phone}
+                </p>
+              )}
+              {!selectedCustomer?.phone && (
+                <p className="text-xs text-gray-400">
+                  Add a phone number to the customer to enable WhatsApp receipts.
+                </p>
               )}
 
               <div className="flex gap-3 pt-2">

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/app/FormField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, ShieldCheck, Mail, Bell, Image as ImageIcon } from "lucide-react";
+import { Building2, ShieldCheck, Mail, Bell, Image as ImageIcon, MessageCircle } from "lucide-react";
 import { BusinessLogoField } from "@/components/settings/BusinessLogoField";
 
 interface SettingsPageProps {
@@ -82,7 +82,19 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       ) : null}
 
       <div className="grid gap-6">
-        {(canViewMediaLibrary || canViewEmailTemplates || canViewNotificationTemplates) && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Link href="/settings/whatsapp">
+            <Card className="hover:border-primary/40 transition-colors h-full">
+              <CardContent className="pt-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-soft-success text-success mb-3">
+                  <MessageCircle className="size-5" />
+                </div>
+                <p className="font-black text-gray-900 uppercase text-[11px] tracking-widest">WhatsApp</p>
+                <p className="mt-1 text-xs text-gray-500 font-medium">Send invoices & proposals via WhatsApp.</p>
+              </CardContent>
+            </Card>
+          </Link>
+          {(canViewMediaLibrary || canViewEmailTemplates || canViewNotificationTemplates) && (
           <div className="grid gap-4 md:grid-cols-3">
             {canViewMediaLibrary && (
               <Link href="/settings/media-library">
@@ -125,6 +137,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             )}
           </div>
         )}
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center gap-2 py-4 border-b border-gray-50">

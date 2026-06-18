@@ -10,6 +10,7 @@ import { ZatcaClient } from "@/integration/zatca/ZatcaClient";
 import { ZatcaInvoiceData, ZATCA_INITIAL_PIH } from "@/integration/zatca/types";
 import { sendInvoiceReceipt } from "@/lib/email";
 import { reportCriticalFailure } from "@/lib/ops-monitoring";
+import { sendInvoiceViaWhatsApp } from "@/lib/actions/invoice-whatsapp";
 import mongoose from "mongoose";
 
 function round2(n: number) {
@@ -357,6 +358,23 @@ export async function processSale(formData: FormData) {
       tenantId,
       actorTenantId: membership.tenantId,
     });
+  }
+
+  const whatsappReceipt = formData.get("whatsappReceipt") === "true";
+  if (whatsappReceipt) {
+    const waResult = await sendInvoiceViaWhatsApp(invoiceId.toString());
+    if (waResult.error) {
+      await reportCriticalFailure({
+        domain: "pos-checkout",
+        operation: "process-sale-whatsapp",
+        error: new Error(waResult.error),
+        tenantId,
+        actorTenantId: membership.tenantId,
+        branchId: (formData.get("branchId") as string) || undefined,
+        route: "/pos",
+        metadata: { invoiceId: invoiceId.toString() },
+      });
+    }
   }
 
     return { invoiceId: invoiceId.toString() };

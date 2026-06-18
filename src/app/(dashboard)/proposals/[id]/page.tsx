@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Branch, Proposal } from "@/models";
+import { Branch, Customer, Proposal } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import {
   startProposalInvoiceConversion,
@@ -9,6 +9,7 @@ import {
 import { loadEntityAuditTimeline } from "@/lib/actions/audit-trail";
 import type { AuditTimelineEntry } from "@/lib/audit-trail";
 import type { ProposalStatus } from "@/models/sales/Proposal";
+import { ProposalWhatsAppShareButton } from "@/components/proposals/ProposalWhatsAppShareButton";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -42,6 +43,9 @@ export default async function ProposalDetailPage({ params }: Props) {
 
   const branch = await Branch.findById(proposal.branchId);
   const status = proposal.status as ProposalStatus;
+  const customer = proposal.customerId
+    ? await Customer.findById(proposal.customerId).select({ phone: 1, name: 1 }).lean()
+    : null;
   const auditResult = await loadEntityAuditTimeline("proposal", id, "sales.proposals:view");
   const auditTimeline: AuditTimelineEntry[] =
     "timeline" in auditResult && Array.isArray(auditResult.timeline) ? auditResult.timeline : [];
@@ -169,6 +173,16 @@ export default async function ProposalDetailPage({ params }: Props) {
           </ul>
         )}
       </div>
+
+      {customer?.phone ? (
+        <div className="mb-6 rounded-lg border bg-card p-4">
+          <h2 className="mb-3 font-semibold">Share via WhatsApp</h2>
+          <ProposalWhatsAppShareButton
+            proposalId={id}
+            phone={customer.phone}
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-4">
           {status === "draft" && (

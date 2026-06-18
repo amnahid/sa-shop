@@ -1,5 +1,5 @@
 
-import { Invoice, Branch, Tenant } from "@/models";
+import { Invoice, Branch, Tenant, Customer } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { ReceiptActions } from "@/components/pos/ReceiptActions";
 import Image from "next/image";
@@ -27,6 +27,9 @@ export default async function ReceiptPage({ params }: Props) {
 
   const branch = await Branch.findById(invoice.branchId);
   const tenant = await Tenant.findById(invoice.tenantId);
+  const customer = invoice.customerId
+    ? await Customer.findById(invoice.customerId).select({ phone: 1, name: 1 }).lean()
+    : null;
 
   const subtotal = parseFloat(invoice.subtotal.toString());
   const discountTotal = parseFloat(invoice.discountTotal.toString());
@@ -150,7 +153,10 @@ export default async function ReceiptPage({ params }: Props) {
           )}
         </div>
 
-        <ReceiptActions />
+        <ReceiptActions
+          invoiceId={invoiceId}
+          customerPhone={customer?.phone || null}
+        />
       </div>
     </div>
   );
