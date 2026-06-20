@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { WhatsAppShareButton } from "@/components/pos/WhatsAppShareButton";
+import { PrintFormatSelector } from "@/components/printing/PrintFormatSelector";
 
 interface Props {
   invoiceId: string;
+  invoiceType: "simplified" | "standard";
   customerPhone: string | null;
 }
 
-export function ReceiptActions({ invoiceId, customerPhone }: Props) {
+export function ReceiptActions({ invoiceId, invoiceType, customerPhone }: Props) {
   return (
     <div className="p-4 border-t flex flex-col gap-2 no-print">
       <div className="flex gap-2">
@@ -18,12 +20,10 @@ export function ReceiptActions({ invoiceId, customerPhone }: Props) {
         >
           New Sale
         </Link>
-        <button
-          onClick={() => window.print()}
-          className="flex-1 py-2 rounded-md border border-input text-sm font-medium"
-        >
-          Print
-        </button>
+        <PrintFormatSelector
+          invoiceId={invoiceId}
+          invoiceType={invoiceType}
+        />
       </div>
 
       {customerPhone && (

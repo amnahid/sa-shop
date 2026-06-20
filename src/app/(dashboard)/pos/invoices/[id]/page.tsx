@@ -220,10 +220,22 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
         <div className="flex gap-3">
           <Link
-            href={`/pos/receipt/${invoice._id}`}
+            href={`/pos/receipt/${invoice._id}?format=a4`}
             className="flex-1 text-center py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent"
           >
-            Print Receipt
+            Print A4
+          </Link>
+          <Link
+            href={`/pos/receipt/${invoice._id}?format=thermal-80`}
+            className="flex-1 text-center py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent"
+          >
+            Print 80mm
+          </Link>
+          <Link
+            href={`/pos/receipt/${invoice._id}?format=thermal-58`}
+            className="flex-1 text-center py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent"
+          >
+            Print 58mm
           </Link>
         </div>
       </div>

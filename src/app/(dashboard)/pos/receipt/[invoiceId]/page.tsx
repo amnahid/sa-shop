@@ -2,14 +2,20 @@
 import { Invoice, Branch, Tenant, Customer } from "@/models";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { ReceiptActions } from "@/components/pos/ReceiptActions";
+import { PrintPage } from "@/components/printing/PrintPage";
+import { A4Invoice } from "@/components/printing/A4Invoice";
+import { ThermalReceipt } from "@/components/printing/ThermalReceipt";
+import { DirectPrint } from "@/components/printing/escpos/DirectPrint";
 import Image from "next/image";
 
 interface Props {
   params: Promise<{ invoiceId: string }>;
+  searchParams: Promise<{ format?: string }>;
 }
 
-export default async function ReceiptPage({ params }: Props) {
+export default async function ReceiptPage({ params, searchParams }: Props) {
   const { invoiceId } = await params;
+  const { format } = await searchParams;
 
   const membership = await getCurrentMembership();
   if (!membership) {
@@ -51,6 +57,27 @@ export default async function ReceiptPage({ params }: Props) {
     store_credit: "Store Credit",
   };
 
+  // If format is specified, render the dedicated print view
+  if (format === "a4" || format === "thermal-80" || format === "thermal-58") {
+    const backUrl = `/pos/receipt/${invoiceId}`;
+    return (
+      <PrintPage format={format} backUrl={backUrl}>
+        {format === "a4" ? (
+          <A4Invoice invoice={invoice} tenant={tenant} branch={branch} customer={customer} />
+        ) : (
+          <ThermalReceipt
+            invoice={invoice}
+            tenant={tenant}
+            branch={branch}
+            customer={customer}
+            width={format === "thermal-80" ? "80mm" : "58mm"}
+          />
+        )}
+      </PrintPage>
+    );
+  }
+
+  // Default receipt view
   return (
     <div className="receipt-page-shell flex min-h-0 h-full bg-background items-start justify-center p-4">
       <div className="bg-white text-black w-full max-w-sm rounded-lg border shadow-sm overflow-hidden">
@@ -155,8 +182,36 @@ export default async function ReceiptPage({ params }: Props) {
 
         <ReceiptActions
           invoiceId={invoiceId}
+          invoiceType={invoice.invoiceType}
           customerPhone={customer?.phone || null}
         />
+
+        <div className="px-4 pb-4 no-print">
+          <DirectPrint
+            invoiceNumber={invoice.invoiceNumber}
+            issuedAt={invoice.issuedAt}
+            businessName={tenant?.name || "Shop"}
+            businessNameAr={tenant?.nameAr}
+            vatNumber={tenant?.vatNumber}
+            address={tenant?.address}
+            phone={tenant?.phone}
+            lines={invoice.lines.map(l => ({
+              name: l.name,
+              nameAr: l.nameAr,
+              sku: l.sku,
+              price: parseFloat(l.unitPrice.toString()),
+              qty: parseFloat(l.quantity.toString()),
+              discount: parseFloat(l.discountAmount.toString()),
+              total: parseFloat(l.totalAmount.toString()),
+            }))}
+            subtotal={subtotal}
+            discountTotal={discountTotal}
+            vatTotal={vatTotal}
+            grandTotal={grandTotal}
+            paymentMethod={invoice.payments[0]?.method || "cash"}
+            qrData={invoice.qrCode ? invoice.invoiceNumber : undefined}
+          />
+        </div>
       </div>
     </div>
   );
