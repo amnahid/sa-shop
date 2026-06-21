@@ -109,7 +109,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "sales",
     label: "Sales",
     collapsible: true,
-    defaultExpanded: true,
+    defaultExpanded: false,
     items: [
       {
         id: "pos",
@@ -157,7 +157,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "inventory",
     label: "Inventory",
     collapsible: true,
-    defaultExpanded: true,
+    defaultExpanded: false,
     items: [
       {
         id: "products",
@@ -227,7 +227,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "insights",
     label: "Insights",
     collapsible: true,
-    defaultExpanded: true,
+    defaultExpanded: false,
     items: [
       {
         id: "reports",
@@ -279,7 +279,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "finance",
     label: "Finance",
     collapsible: true,
-    defaultExpanded: true,
+    defaultExpanded: false,
     items: [
       {
         id: "accounting",
@@ -330,7 +330,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "hrm",
     label: "Human Resources",
     collapsible: true,
-    defaultExpanded: true,
+    defaultExpanded: false,
     items: [
       {
         id: "hr-payroll",

@@ -154,38 +154,46 @@ export function Sidebar({
 
     return (
       <section key={group.id} className="space-y-1">
-        <div className="flex items-center justify-between px-3 mb-1">
-          <p
-            className={cn(
-              "text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/50",
-              groupActive && "text-primary/80"
-            )}
+        {group.collapsible ? (
+          <button
+            type="button"
+            onClick={() =>
+              setExpandedGroups((previous) => ({
+                ...previous,
+                [group.id]: !(previous[group.id] ?? false),
+              }))
+            }
+            aria-expanded={groupExpanded}
+            aria-controls={groupPanelId}
+            className="flex items-center justify-between w-full px-3 mb-1 group"
           >
-            {group.label}
-          </p>
-          {group.collapsible ? (
-            <button
-              type="button"
-              aria-label={`${groupExpanded ? "Collapse" : "Expand"} ${group.label}`}
-              aria-expanded={groupExpanded}
-              aria-controls={groupPanelId}
-              onClick={() =>
-                setExpandedGroups((previous) => ({
-                  ...previous,
-                  [group.id]: !(previous[group.id] ?? false),
-                }))
-              }
+            <span
               className={cn(
-                "rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                groupActive && "text-primary/60"
+                "text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/70 group-hover:text-sidebar-foreground transition-colors",
+                groupActive && "text-primary/90"
               )}
             >
-              <ChevronDown
-                className={cn("size-3 transition-transform", groupExpanded && "rotate-180")}
-              />
-            </button>
-          ) : null}
-        </div>
+              {group.label}
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-3.5 text-sidebar-foreground/50 group-hover:text-sidebar-foreground transition-all",
+                groupExpanded && "rotate-180"
+              )}
+            />
+          </button>
+        ) : (
+          <div className="flex items-center justify-between px-3 mb-1">
+            <span
+              className={cn(
+                "text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/70",
+                groupActive && "text-primary/90"
+              )}
+            >
+              {group.label}
+            </span>
+          </div>
+        )}
         {groupExpanded ? (
           <ul id={groupPanelId} className="space-y-1">
             {group.items.map((item) => renderNavigationItem(item))}
