@@ -72,9 +72,9 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
           <thead>
             <tr className="thermal-items-header">
               <th className="thermal-th-item">Item</th>
-              <th className="thermal-th-price">Price</th>
+              {!isNarrow && <th className="thermal-th-price">Price</th>}
               <th className="thermal-th-qty">Qty</th>
-              <th className="thermal-th-disc">Disc</th>
+              {!isNarrow && <th className="thermal-th-disc">Disc</th>}
               <th className="thermal-th-total">Total</th>
             </tr>
           </thead>
@@ -91,10 +91,10 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
                     {line.nameAr && <span className="thermal-item-name-ar">{line.nameAr}</span>}
                     <span className="thermal-item-sku">{line.sku}</span>
                   </td>
-                  <td className="thermal-td-price">{formatSAR(unitPrice)}</td>
+                  {!isNarrow && <td className="thermal-td-price">{unitPrice.toFixed(2)}</td>}
                   <td className="thermal-td-qty">{qty}</td>
-                  <td className="thermal-td-disc">{discount > 0 ? formatSAR(discount) : "-"}</td>
-                  <td className="thermal-td-total">{formatSAR(total)}</td>
+                  {!isNarrow && <td className="thermal-td-disc">{discount > 0 ? discount.toFixed(2) : "-"}</td>}
+                  <td className="thermal-td-total">{total.toFixed(2)}</td>
                 </tr>
               );
             })}

@@ -31,16 +31,6 @@ export function PrintPage({ children, format, backUrl }: PrintPageProps) {
     triggerPrint();
   }, [triggerPrint]);
 
-  useEffect(() => {
-    const onAfterPrint = () => {
-      if (backUrl) {
-        router.push(backUrl);
-      }
-    };
-    window.addEventListener("afterprint", onAfterPrint);
-    return () => window.removeEventListener("afterprint", onAfterPrint);
-  }, [router, backUrl]);
-
   const formatClass =
     format === "a4" ? "print-a4" :
     format === "thermal-80" ? "print-thermal-80" :

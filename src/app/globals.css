@@ -274,15 +274,6 @@ body[data-dashboard-shell="true"] {
   box-sizing: border-box;
 }
 
-.print-thermal .thermal-page {
-  margin: 0 auto;
-  padding: 0;
-  background: white;
-  color: black;
-  font-family: 'Inter', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
-  box-sizing: border-box;
-}
-
 @media print {
   .print-a4 {
     @page { size: A4; margin: 0; }
@@ -632,7 +623,7 @@ body[data-dashboard-shell="true"] {
 /* ===== Thermal Receipt Template Styles ===== */
 .thermal-page {
   margin: 0 auto;
-  padding: 3mm 2mm;
+  padding: 3mm 4mm;
   background: white;
   color: #111;
 }
@@ -699,7 +690,7 @@ body[data-dashboard-shell="true"] {
 .thermal-items {
   width: 100%;
   border-collapse: collapse;
-  font-size: 9pt;
+  font-size: 8pt;
 }
 
 .thermal-items-header th {
@@ -708,7 +699,7 @@ body[data-dashboard-shell="true"] {
   font-weight: 700;
   text-transform: uppercase;
   color: #555;
-  padding: 1mm 0.5mm;
+  padding: 0.5mm 0.5mm;
   border-bottom: 1px solid #ddd;
   white-space: nowrap;
 }
@@ -720,7 +711,7 @@ body[data-dashboard-shell="true"] {
 .thermal-th-total { text-align: right; }
 
 .thermal-item-row td {
-  padding: 0.8mm 0.5mm;
+  padding: 0.3mm 0.5mm;
   border-bottom: 1px dotted #eee;
   vertical-align: top;
 }
@@ -745,13 +736,14 @@ body[data-dashboard-shell="true"] {
 }
 
 .thermal-td-price { text-align: right; white-space: nowrap; }
-.thermal-td-qty { text-align: center; }
+.thermal-td-qty { text-align: center; white-space: nowrap; }
 .thermal-td-disc { text-align: right; white-space: nowrap; }
 .thermal-td-total { text-align: right; white-space: nowrap; font-weight: 600; }
 
 /* Totals */
 .thermal-totals {
   font-size: 9pt;
+  word-break: break-all;
 }
 
 .thermal-total-row {
@@ -765,7 +757,6 @@ body[data-dashboard-shell="true"] {
   margin-top: 0.5mm;
   padding-top: 1mm;
   font-weight: 700;
-  font-size: 10pt;
 }
 
 /* Payment */

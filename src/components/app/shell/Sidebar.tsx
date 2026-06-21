@@ -212,14 +212,16 @@ export function Sidebar({
     >
       <div className="flex-none p-4 pb-0">
         <div className="flex h-12 items-center px-2 mb-6 mt-2">
-          {logoUrl ? (
-            <Image src={logoUrl} alt="Logo" width={180} height={40} unoptimized className="max-h-10 max-w-[180px] object-contain" />
-          ) : (
-            <h1 className="text-2xl font-bold tracking-tight">
-              <span className="text-primary">e</span>
-              <span className="text-white">Shop</span>
-            </h1>
-          )}
+          <Link href="/" onClick={onNavigate} className="flex items-center">
+            {logoUrl ? (
+              <Image src={logoUrl} alt="Logo" width={180} height={40} unoptimized className="max-h-10 max-w-[180px] object-contain" />
+            ) : (
+              <h1 className="text-2xl font-bold tracking-tight">
+                <span className="text-primary">e</span>
+                <span className="text-white">Shop</span>
+              </h1>
+            )}
+          </Link>
         </div>
       </div>
 

@@ -109,7 +109,7 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
     id: "sales",
     label: "Sales",
     collapsible: true,
-    defaultExpanded: false,
+    defaultExpanded: true,
     items: [
       {
         id: "pos",
