@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DollarSign, Package, Users, AlertTriangle, BarChart3 } from "lucide-react";
+import { DollarSign, Package, Users, AlertTriangle, BarChart3, TrendingUp, CalendarRange } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getDashboardMetrics } from "@/lib/actions/invoices";
 import { getCurrentMembership } from "@/lib/utils/membership";
@@ -20,6 +20,12 @@ interface RecentInvoice {
   status: string;
 }
 
+function pctChange(current: number, previous: number): string {
+  if (previous === 0) return current > 0 ? "+100%" : "0%";
+  const change = ((current - previous) / previous) * 100;
+  return `${change >= 0 ? "+" : ""}${change.toFixed(1)}%`;
+}
+
 export default async function DashboardPage() {
   const session = await auth();
   const membership = await getCurrentMembership();
@@ -28,8 +34,10 @@ export default async function DashboardPage() {
   }
 
   await Branch.find({ tenantId: membership.tenantId, active: true }).sort({ name: 1 });
-  const metrics = await getDashboardMetrics(membership.tenantId.toString());
-  const maxWeekly = Math.max(...metrics.weeklySales.map(w => w.total), 1);
+  const m = await getDashboardMetrics(membership.tenantId.toString());
+  const maxDaily = Math.max(...m.dailySales.map(w => w.total), 1);
+  const maxMonthly = Math.max(...m.monthlyTrend.map(t => t.total), 1);
+  const avgOrderValue = m.monthCount > 0 ? m.monthSales / m.monthCount : 0;
 
   const columns: DataTableColumn<RecentInvoice>[] = [
     { key: "invoice", header: "Invoice", render: (r) => r.invoiceNumber },
@@ -63,51 +71,56 @@ export default async function DashboardPage() {
         description={`Welcome back${session?.user?.name ? `, ${session.user.name}` : ""}`}
       />
 
+      {/* Row 1: Time-period sales cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           variant="success"
-          label="Today's Sales"
-          value={`SAR ${metrics.todaySales.toFixed(2)}`}
-          subLabel={`${metrics.todayCount} transactions`}
+          label="Today"
+          value={`SAR ${m.todaySales.toFixed(2)}`}
+          subLabel={`${m.todayCount} transactions · vs yesterday ${pctChange(m.todaySales, m.yesterdaySales)}`}
           icon={DollarSign}
         />
         <StatCard
           variant="info"
-          label="Products"
-          value={metrics.productCount}
-          icon={Package}
+          label="This Week"
+          value={`SAR ${m.weekSales.toFixed(2)}`}
+          subLabel={`${m.weekCount} transactions (7 days)`}
+          icon={TrendingUp}
         />
         <StatCard
           variant="primary"
-          label="Customers"
-          value={metrics.customerCount}
-          icon={Users}
+          label="This Month"
+          value={`SAR ${m.monthSales.toFixed(2)}`}
+          subLabel={`${m.monthCount} transactions`}
+          icon={CalendarRange}
         />
         <StatCard
-          variant="danger"
-          label="Low Stock Alerts"
-          value={metrics.lowStockCount}
-          icon={AlertTriangle}
-          href={metrics.lowStockCount > 0 ? "/inventory/stock" : undefined}
+          variant="warning"
+          label="This Year"
+          value={`SAR ${m.yearSales.toFixed(2)}`}
+          subLabel={`${m.yearCount} transactions`}
+          icon={BarChart3}
         />
       </div>
 
+      {/* Row 2: Charts + Quick Actions */}
       <div className="grid gap-6 lg:grid-cols-3 mt-8">
+        {/* Daily Sales Chart */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center gap-2 py-4 border-b border-gray-50">
             <BarChart3 className="size-4 text-primary" />
-            <CardTitle className="text-sm font-bold uppercase tracking-tight">Weekly Sales Trend</CardTitle>
+            <CardTitle className="text-sm font-bold uppercase tracking-tight">Daily Sales (7 Days)</CardTitle>
           </CardHeader>
           <CardContent className="pt-10 pb-6">
             <div className="flex items-end gap-3 h-48 px-2">
-              {metrics.weeklySales.map((w, idx) => (
+              {m.dailySales.map((w, idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-3 group relative">
                   <div className="absolute -top-8 start-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                     SAR {w.total.toFixed(2)}
                   </div>
                   <div
                     className="w-full bg-soft-primary group-hover:bg-primary/30 transition-colors rounded-t-sm"
-                    style={{ height: `${Math.max((w.total / maxWeekly) * 100, 2)}%` }}
+                    style={{ height: `${Math.max((w.total / maxDaily) * 100, 2)}%` }}
                   />
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{w.label}</span>
                 </div>
@@ -116,6 +129,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Quick Actions */}
         <Card>
           <CardHeader className="py-4 border-b border-gray-50">
             <CardTitle className="text-sm font-bold uppercase tracking-tight">Quick Actions</CardTitle>
@@ -137,7 +151,64 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {metrics.recentInvoices.length > 0 && (
+      {/* Row 3: Monthly Trend */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 py-4 border-b border-gray-50">
+            <TrendingUp className="size-4 text-primary" />
+            <CardTitle className="text-sm font-bold uppercase tracking-tight">Monthly Sales Trend</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-10 pb-6">
+            <div className="flex items-end gap-2 h-48 px-2">
+              {m.monthlyTrend.map((t, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
+                  <div className="absolute -top-8 start-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                    SAR {t.total.toFixed(2)} ({t.count} inv.)
+                  </div>
+                  <div
+                    className="w-full bg-soft-success group-hover:bg-success/30 transition-colors rounded-t-sm"
+                    style={{ height: `${Math.max((t.total / maxMonthly) * 100, 2)}%` }}
+                  />
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{t.label}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row 4: Business Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-8">
+        <StatCard
+          variant="info"
+          label="Products"
+          value={m.productCount}
+          icon={Package}
+        />
+        <StatCard
+          variant="primary"
+          label="Customers"
+          value={m.customerCount}
+          icon={Users}
+        />
+        <StatCard
+          variant="danger"
+          label="Low Stock Alerts"
+          value={m.lowStockCount}
+          icon={AlertTriangle}
+          href={m.lowStockCount > 0 ? "/inventory/stock" : undefined}
+        />
+        <StatCard
+          variant="success"
+          label="Avg Order Value"
+          value={`SAR ${avgOrderValue.toFixed(2)}`}
+          subLabel="this month"
+          icon={DollarSign}
+        />
+      </div>
+
+      {/* Row 5: Recent Invoices */}
+      {m.recentInvoices.length > 0 && (
         <div className="mt-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -152,7 +223,7 @@ export default async function DashboardPage() {
             <CardContent className="p-0">
               <DataTable
                 columns={columns}
-                rows={metrics.recentInvoices as unknown as RecentInvoice[]}
+                rows={m.recentInvoices as unknown as RecentInvoice[]}
                 rowKey={(r) => r._id.toString()}
                 noCard
               />

@@ -212,76 +212,58 @@ export async function getDashboardMetrics(tenantId: string, branchId?: string) {
   const branchFilter: Record<string, unknown> = { tenantId: tenantOid };
   if (branchId) branchFilter.branchId = new mongoose.Types.ObjectId(branchId);
 
-  const todayInvoices = await Invoice.aggregate([
-    {
-      $match: {
-        ...branchFilter,
-        status: "completed",
-        issuedAt: { $gte: today, $lt: tomorrow },
+  async function aggregatePeriod(gte: Date, lt: Date) {
+    const result = await Invoice.aggregate([
+      {
+        $match: {
+          ...branchFilter,
+          status: "completed",
+          issuedAt: { $gte: gte, $lt: lt },
+        },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        totalSales: { $sum: { $toDouble: "$grandTotal" } },
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-
-  const productCount = await Product.countDocuments({
-    tenantId: tenantOid,
-    deletedAt: null,
-    active: true,
-  });
-
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-
-  const weeklySalesRaw = await Invoice.aggregate([
-    {
-      $match: {
-        ...branchFilter,
-        status: "completed",
-        issuedAt: { $gte: sevenDaysAgo, $lt: tomorrow },
-      },
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$issuedAt" } },
-        total: { $sum: { $toDouble: "$grandTotal" } },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);
-
-  const weeklySales = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
-    const iso = d.toISOString().split("T")[0];
-    const found = weeklySalesRaw.find(w => w._id === iso);
-    weeklySales.push({
-      date: iso,
-      label: d.toLocaleDateString(undefined, { weekday: 'short' }),
-      total: found ? found.total : 0,
-    });
+      { $group: { _id: null, totalSales: { $sum: { $toDouble: "$grandTotal" } }, count: { $sum: 1 } } },
+    ]);
+    return { totalSales: result[0]?.totalSales || 0, count: result[0]?.count || 0 };
   }
 
-  const customerCount = await Customer.countDocuments({
-    tenantId: tenantOid,
-    deletedAt: null,
+  // Today
+  const todayResult = await aggregatePeriod(today, tomorrow);
+
+  // Yesterday
+  const yesterdayStart = new Date(today);
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  const yesterdayResult = await aggregatePeriod(yesterdayStart, today);
+
+  // Last 7 rolling days (includes today)
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 6);
+  const weekResult = await aggregatePeriod(weekAgo, tomorrow);
+
+  // This calendar month
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const monthResult = await aggregatePeriod(monthStart, nextMonth);
+
+  // This calendar year
+  const yearStart = new Date(today.getFullYear(), 0, 1);
+  const nextYear = new Date(today.getFullYear() + 1, 0, 1);
+  const yearResult = await aggregatePeriod(yearStart, nextYear);
+
+  // Product count
+  const productCount = await Product.countDocuments({
+    tenantId: tenantOid, deletedAt: null, active: true,
   });
 
+  // Customer count
+  const customerCount = await Customer.countDocuments({
+    tenantId: tenantOid, deletedAt: null,
+  });
+
+  // Low stock
   const lowStock = await StockLevel.aggregate([
     { $match: { tenantId: tenantOid } },
     {
-      $lookup: {
-        from: "products",
-        localField: "productId",
-        foreignField: "_id",
-        as: "product",
-      },
+      $lookup: { from: "products", localField: "productId", foreignField: "_id", as: "product" },
     },
     { $unwind: "$product" },
     {
@@ -294,6 +276,75 @@ export async function getDashboardMetrics(tenantId: string, branchId?: string) {
     { $count: "count" },
   ]);
 
+  // Daily chart (last 7 days)
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  const dailySalesRaw = await Invoice.aggregate([
+    {
+      $match: {
+        ...branchFilter, status: "completed",
+        issuedAt: { $gte: sevenDaysAgo, $lt: tomorrow },
+      },
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$issuedAt" } },
+        total: { $sum: { $toDouble: "$grandTotal" } },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  const dailySales = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(sevenDaysAgo);
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().split("T")[0];
+    const found = dailySalesRaw.find(w => w._id === iso);
+    dailySales.push({
+      date: iso,
+      label: d.toLocaleDateString(undefined, { weekday: 'short' }),
+      total: found ? found.total : 0,
+    });
+  }
+
+  // Monthly trend (last 12 months)
+  const twelveMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+  const monthlyTrendRaw = await Invoice.aggregate([
+    {
+      $match: {
+        ...branchFilter, status: "completed",
+        issuedAt: { $gte: twelveMonthsAgo, $lt: nextMonth },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: { $year: "$issuedAt" },
+          month: { $month: "$issuedAt" },
+        },
+        total: { $sum: { $toDouble: "$grandTotal" } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1 } },
+  ]);
+
+  const monthlyTrend = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - 11 + i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const found = monthlyTrendRaw.find(r => r._id.year === year && r._id.month === month);
+    monthlyTrend.push({
+      month: `${year}-${String(month).padStart(2, "0")}`,
+      label: d.toLocaleDateString(undefined, { month: "short", year: "2-digit" }),
+      total: found ? found.total : 0,
+      count: found ? found.count : 0,
+    });
+  }
+
+  // Recent invoices
   const recentInvoices = await Invoice.aggregate([
     {
       $match: {
@@ -304,32 +355,32 @@ export async function getDashboardMetrics(tenantId: string, branchId?: string) {
     { $sort: { issuedAt: -1 } },
     { $limit: 5 },
     {
-      $lookup: {
-        from: "branches",
-        localField: "branchId",
-        foreignField: "_id",
-        as: "branch",
-      },
+      $lookup: { from: "branches", localField: "branchId", foreignField: "_id", as: "branch" },
     },
     { $unwind: "$branch" },
     {
       $project: {
-        invoiceNumber: 1,
-        issuedAt: 1,
-        status: 1,
-        grandTotal: 1,
-        "branch.name": 1,
+        invoiceNumber: 1, issuedAt: 1, status: 1, grandTotal: 1, "branch.name": 1,
       },
     },
   ]);
 
   return {
-    todaySales: todayInvoices[0]?.totalSales || 0,
-    todayCount: todayInvoices[0]?.count || 0,
+    todaySales: todayResult.totalSales,
+    todayCount: todayResult.count,
+    yesterdaySales: yesterdayResult.totalSales,
+    yesterdayCount: yesterdayResult.count,
+    weekSales: weekResult.totalSales,
+    weekCount: weekResult.count,
+    monthSales: monthResult.totalSales,
+    monthCount: monthResult.count,
+    yearSales: yearResult.totalSales,
+    yearCount: yearResult.count,
     productCount,
     customerCount,
     lowStockCount: lowStock[0]?.count || 0,
-    weeklySales,
+    dailySales,
+    monthlyTrend,
     recentInvoices,
   };
 }
