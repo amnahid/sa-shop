@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { usePathname } from "next/navigation";
@@ -29,7 +29,6 @@ export function AppShell({
   unreadNotificationsCount = 0,
 }: AppShellProps) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isPosPage = pathname === "/pos";
 
   useEffect(() => {
@@ -53,24 +52,19 @@ export function AppShell({
   return (
     <div className="flex h-dvh min-h-0 overflow-hidden bg-background" style={customStyle}>
       <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
         membershipRole={membershipRole}
         membershipPermissionOverrides={membershipPermissionOverrides}
         logoUrl={logoUrl}
       />
-
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           userName={userName}
           userEmail={userEmail}
           membershipRole={membershipRole}
           membershipPermissionOverrides={membershipPermissionOverrides}
           unreadNotificationsCount={unreadNotificationsCount}
         />
-
-        <main
+        <main 
           className={cn(
             "flex-1 min-h-0",
             isPosPage ? "p-0 overflow-hidden" : "overflow-x-hidden overflow-y-auto overscroll-contain p-6"
