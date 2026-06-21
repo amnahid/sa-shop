@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
+import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   filterSidebarNavigationByRole,
@@ -36,33 +36,28 @@ function isItemNavigable(status: NavigationAvailabilityStatus) {
 }
 
 function getStatusLabel(status: NavigationAvailabilityStatus) {
-  if (status === "coming_soon") {
-    return "Soon";
-  }
-
-  if (status === "disabled") {
-    return "Disabled";
-  }
-
+  if (status === "coming_soon") return "Soon";
+  if (status === "disabled") return "Disabled";
   return null;
 }
 
 interface SidebarProps {
-  mobile?: boolean;
-  onNavigate?: () => void;
+  open: boolean;
+  onClose: () => void;
   membershipRole?: SidebarMembershipRole | null;
   membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
   logoUrl?: string | null;
 }
 
 export function Sidebar({
-  mobile = false,
-  onNavigate,
+  open,
+  onClose,
   membershipRole = null,
   membershipPermissionOverrides,
   logoUrl,
 }: SidebarProps) {
   const pathname = usePathname() ?? "";
+
   const filteredNavigationConfig = useMemo(
     () =>
       filterSidebarNavigationByRole(
@@ -71,26 +66,6 @@ export function Sidebar({
         membershipPermissionOverrides
       ),
     [membershipRole, membershipPermissionOverrides]
-  );
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    () =>
-      filteredNavigationConfig.reduce<Record<string, boolean>>((acc, group) => {
-        if (group.collapsible) {
-          acc[group.id] = group.defaultExpanded ?? false;
-        }
-
-        return acc;
-      }, {})
-  );
-  
-  const activeGroupIds = useMemo(
-    () =>
-      new Set(
-        filteredNavigationConfig
-          .filter((group) => group.items.some((item) => isRouteActive(pathname, item.route)))
-          .map((group) => group.id)
-      ),
-    [filteredNavigationConfig, pathname]
   );
 
   function renderNavigationItem(item: SidebarNavigationItem) {
@@ -107,7 +82,7 @@ export function Sidebar({
           {navigable ? (
             <Link
               href={item.route}
-              onClick={onNavigate}
+              onClick={onClose}
               aria-current={hasExactMatch ? "page" : undefined}
               className={cn(
                 "flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
@@ -115,7 +90,7 @@ export function Sidebar({
                   ? "bg-primary text-primary-foreground font-semibold"
                   : itemActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground font-normal hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground font-normal hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
@@ -146,11 +121,7 @@ export function Sidebar({
   }
 
   function renderGroup(group: SidebarNavigationGroup) {
-    const groupActive = activeGroupIds.has(group.id);
-    const groupExpanded = group.collapsible
-      ? groupActive || (expandedGroups[group.id] ?? false)
-      : true;
-    const groupPanelId = `${group.id}-group-items`;
+    const groupActive = group.items.some((item) => isRouteActive(pathname, item.route));
 
     return (
       <section key={group.id} className="space-y-1">
@@ -163,64 +134,59 @@ export function Sidebar({
           >
             {group.label}
           </p>
-          {group.collapsible ? (
-            <button
-              type="button"
-              aria-label={`${groupExpanded ? "Collapse" : "Expand"} ${group.label}`}
-              aria-expanded={groupExpanded}
-              aria-controls={groupPanelId}
-              onClick={() =>
-                setExpandedGroups((previous) => ({
-                  ...previous,
-                  [group.id]: !(previous[group.id] ?? false),
-                }))
-              }
-              className={cn(
-                "rounded-md p-1 text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                groupActive && "text-primary/60"
-              )}
-            >
-              <ChevronDown
-                className={cn("size-3 transition-transform", groupExpanded && "rotate-180")}
-              />
-            </button>
-          ) : null}
         </div>
-        {groupExpanded ? (
-          <ul id={groupPanelId} className="space-y-1">
-            {group.items.map((item) => renderNavigationItem(item))}
-          </ul>
-        ) : null}
+        <ul className="space-y-1">
+          {group.items.map((item) => renderNavigationItem(item))}
+        </ul>
       </section>
     );
   }
 
   return (
-    <aside
-      className={cn(
-        "h-full min-h-0 overflow-hidden flex-col bg-sidebar-background",
-        mobile ? "flex w-60" : "hidden w-60 max-h-full shrink-0 border-r border-sidebar-border lg:flex"
+    <>
+      {/* Mobile backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
       )}
-    >
-      <div className="flex-none p-4 pb-0">
-        <div className="flex h-12 items-center px-2 mb-6 mt-2">
-          {logoUrl ? (
-            <Image src={logoUrl} alt="Logo" width={180} height={40} unoptimized className="max-h-10 max-w-[180px] object-contain" />
-          ) : (
-            <h1 className="text-2xl font-bold tracking-tight">
-              <span className="text-primary">e</span>
-              <span className="text-white">Shop</span>
-            </h1>
-          )}
-        </div>
-      </div>
 
-      <nav
-        aria-label="Primary navigation"
-        className="flex-1 min-h-0 space-y-6 overflow-x-hidden overflow-y-auto overscroll-contain p-4 pt-2"
+      <aside
+        className={cn(
+          "fixed left-0 top-14 bottom-0 z-40 w-60 flex flex-col bg-sidebar-background border-r border-sidebar-border",
+          "transform transition-transform duration-200 ease-in-out",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
       >
-        {filteredNavigationConfig.map((group) => renderGroup(group))}
-      </nav>
-    </aside>
+        <div className="flex-none p-4 pb-0">
+          <div className="flex h-12 items-center justify-between px-2 mb-6 mt-2">
+            {logoUrl ? (
+              <Image src={logoUrl} alt="Logo" width={180} height={40} unoptimized className="max-h-10 max-w-[180px] object-contain" />
+            ) : (
+              <h1 className="text-2xl font-bold tracking-tight">
+                <span className="text-primary">e</span>
+                <span className="text-white">Shop</span>
+              </h1>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Close sidebar"
+              className="rounded-md p-1 text-sidebar-foreground/40 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        <nav
+          aria-label="Primary navigation"
+          className="flex-1 min-h-0 space-y-6 overflow-x-hidden overflow-y-auto overscroll-contain p-4 pt-2"
+        >
+          {filteredNavigationConfig.map((group) => renderGroup(group))}
+        </nav>
+      </aside>
+    </>
   );
 }
