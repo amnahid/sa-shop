@@ -15,6 +15,7 @@ interface InvoiceRow {
   items: number;
   total: number;
   status: string;
+  zatcaStatus: string;
 }
 
 export default async function InvoicesPage() {
@@ -35,6 +36,7 @@ export default async function InvoicesPage() {
     items: inv.itemCount,
     total: parseFloat(inv.grandTotal.toString()),
     status: inv.status,
+    zatcaStatus: inv.zatcaStatus || "Pending",
   }));
 
   const columns: DataTableColumn<InvoiceRow>[] = [
@@ -85,6 +87,12 @@ export default async function InvoicesPage() {
       header: "Status",
       align: "center",
       render: (r) => <StatusBadge status={r.status} />,
+    },
+    {
+      key: "zatcaStatus",
+      header: "ZATCA Status",
+      align: "center",
+      render: (r) => <StatusBadge status={r.zatcaStatus} />,
     },
     {
       key: "actions",

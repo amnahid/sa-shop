@@ -59,6 +59,7 @@ export async function loadInvoices(
         invoiceNumber: 1,
         issuedAt: 1,
         status: 1,
+        zatcaStatus: 1,
         grandTotal: 1,
         "branch.name": 1,
         "cashier.name": 1,

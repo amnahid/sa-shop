@@ -294,6 +294,7 @@ export async function processSale(formData: FormData) {
       invoiceNumber,
       invoiceType: invoiceType.toLowerCase(),
       status: "completed",
+      zatcaStatus: zatcaResult.status,
       uuid: invoiceId.toString(),
       issuedAt: now,
       previousHash,

@@ -102,6 +102,7 @@ export interface IInvoice extends Document {
   invoiceNumber: string;
   invoiceType: 'simplified' | 'standard';
   status: 'draft' | 'completed' | 'voided' | 'refunded';
+  zatcaStatus?: 'Pending' | 'Cleared' | 'Reported' | 'Failed' | 'NotRequired';
   uuid: string;
   issuedAt: Date;
   previousHash: string;
@@ -160,6 +161,11 @@ const invoiceSchema = new Schema<IInvoice>(
       type: String,
       enum: ['draft', 'completed', 'voided', 'refunded'],
       default: 'completed',
+    },
+    zatcaStatus: {
+      type: String,
+      enum: ['Pending', 'Cleared', 'Reported', 'Failed', 'NotRequired'],
+      default: 'Pending',
     },
     uuid: {
       type: String,

@@ -11,6 +11,9 @@ const VARIANT_CLASSES: Record<StatusVariant, string> = {
 };
 
 const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
+  cleared: "success",
+  reported: "info",
+  notrequired: "neutral",
   completed: "success",
   active: "success",
   ready: "success",
