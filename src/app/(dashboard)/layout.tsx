@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app/shell/AppShell";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { isMembershipRole } from "@/lib/utils/membership-roles";
 import { serializePermissionOverrides } from "@/lib/utils/permissions";
-import { Tenant } from "@/models";
+import { Tenant, User } from "@/models";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 export default async function DashboardLayout({
@@ -26,10 +26,15 @@ export default async function DashboardLayout({
   const membershipRole = membership.role;
   const membershipPermissionOverrides = serializePermissionOverrides(membership.permissionOverrides);
 
-  const [tenant, unreadNotificationsResult] = await Promise.all([
+  const [tenant, unreadNotificationsResult, userDoc] = await Promise.all([
     Tenant.findById(membership.tenantId),
     getUnreadNotificationCount(),
+    User.findById(session.user?.id),
   ]);
+
+  const systemAdminEmails = (process.env.SYSTEM_ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+  const isSuperAdmin = userDoc?.isSuperAdmin || (userDoc?.email && systemAdminEmails.includes(userDoc.email.toLowerCase()));
+
   const unreadNotificationsCount =
     "error" in unreadNotificationsResult ? 0 : unreadNotificationsResult.unreadCount;
 
@@ -42,6 +47,7 @@ export default async function DashboardLayout({
       primaryColor={tenant?.primaryColor}
       logoUrl={tenant?.logoUrl}
       unreadNotificationsCount={unreadNotificationsCount}
+      isSuperAdmin={!!isSuperAdmin}
     >
       {children}
     </AppShell>

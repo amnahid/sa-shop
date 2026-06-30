@@ -44,7 +44,9 @@
     "categories": "Categories",
     "accounting-trial-balance": "Trial Balance",
     "hr-employees": "Employees",
-    "hr-salary-payments": "Salary Payments"
+    "hr-salary-payments": "Salary Payments",
+    "system-admin": "System Admin",
+    "tenant-management": "Manage Tenants"
   },
   "pos": {
     "noProductsFound": "No Products Found",

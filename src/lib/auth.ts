@@ -42,6 +42,7 @@ export const authOptions: NextAuthConfig = {
           email: user.email,
           name: user.name,
           image: user.avatarUrl,
+          isSuperAdmin: user.isSuperAdmin === true,
         };
       },
     }),
@@ -55,6 +56,7 @@ export const authOptions: NextAuthConfig = {
     async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
+        token.isSuperAdmin = user.isSuperAdmin;
       }
       return token;
     },
@@ -62,6 +64,7 @@ export const authOptions: NextAuthConfig = {
     async session({ session, token }: any) {
       if (session.user && token.id) {
         session.user.id = token.id;
+        session.user.isSuperAdmin = token.isSuperAdmin;
       }
       return session;
     },

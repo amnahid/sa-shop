@@ -54,6 +54,7 @@ interface SidebarProps {
   membershipRole?: SidebarMembershipRole | null;
   membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
   logoUrl?: string | null;
+  isSuperAdmin?: boolean;
 }
 
 export function Sidebar({
@@ -62,18 +63,29 @@ export function Sidebar({
   membershipRole = null,
   membershipPermissionOverrides,
   logoUrl,
+  isSuperAdmin = false,
 }: SidebarProps) {
   const pathname = usePathname() ?? "";
   const { t } = useTranslation();
-  const filteredNavigationConfig = useMemo(
-    () =>
-      filterSidebarNavigationByRole(
-        sidebarNavigationConfig,
-        membershipRole,
-        membershipPermissionOverrides
-      ),
-    [membershipRole, membershipPermissionOverrides]
-  );
+  const filteredNavigationConfig = useMemo(() => {
+    const roleFiltered = filterSidebarNavigationByRole(
+      sidebarNavigationConfig,
+      membershipRole,
+      membershipPermissionOverrides
+    );
+
+    return roleFiltered
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          if (item.id === "tenant-management" && !isSuperAdmin) {
+            return false;
+          }
+          return true;
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [membershipRole, membershipPermissionOverrides, isSuperAdmin]);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     () =>
       filteredNavigationConfig.reduce<Record<string, boolean>>((acc, group) => {

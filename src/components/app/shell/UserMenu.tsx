@@ -32,9 +32,10 @@ interface UserMenuProps {
   email?: string | null;
   role?: SidebarMembershipRole | null;
   permissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
+  isSuperAdmin?: boolean;
 }
 
-export function UserMenu({ name, email, role, permissionOverrides }: UserMenuProps) {
+export function UserMenu({ name, email, role, permissionOverrides, isSuperAdmin = false }: UserMenuProps) {
   const canViewSettings = canAccessSidebarPermission("settings:view", role, permissionOverrides);
   const canViewProfile = canAccessSidebarPermission("settings.profile:view", role, permissionOverrides);
   const canViewTeam = canAccessSidebarPermission("settings.team:view", role, permissionOverrides);
@@ -95,7 +96,7 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
           </DropdownMenuItem>
         )}
 
-        {(canViewAdmin || canViewBranches || canViewMedia || canViewEmail || canViewNotification) && (
+        {(canViewAdmin || canViewBranches || canViewMedia || canViewEmail || canViewNotification || isSuperAdmin) && (
           <>
             <DropdownMenuSeparator className="bg-gray-50" />
             <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-400">Administration</DropdownMenuLabel>
@@ -105,6 +106,15 @@ export function UserMenu({ name, email, role, permissionOverrides }: UserMenuPro
                 <Link href="/settings/admin">
                   <ShieldCheck className="me-3 size-4" />
                   <span className="text-[13px] font-bold">Security & Admin</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+
+            {isSuperAdmin && (
+              <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
+                <Link href="/settings/tenants">
+                  <Building2 className="me-3 size-4" />
+                  <span className="text-[13px] font-bold">Manage Tenants</span>
                 </Link>
               </DropdownMenuItem>
             )}

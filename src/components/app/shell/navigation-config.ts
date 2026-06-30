@@ -306,6 +306,21 @@ export const sidebarNavigationConfig: SidebarNavigationGroup[] = [
       },
     ],
   },
+  {
+    id: "system-admin",
+    label: "System Admin",
+    collapsible: true,
+    defaultExpanded: false,
+    items: [
+      {
+        id: "tenant-management",
+        label: "Manage Tenants",
+        route: "/settings/tenants",
+        icon: "branches",
+        status: "ready",
+      },
+    ],
+  },
 ];
 
 export function resolveSidebarIcon(icon?: SidebarIconValue): LucideIcon | undefined {

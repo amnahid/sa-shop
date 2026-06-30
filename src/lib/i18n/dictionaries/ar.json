@@ -44,7 +44,9 @@
     "categories": "الفئات",
     "accounting-trial-balance": "ميزان المراجعة",
     "hr-employees": "الموظفين",
-    "hr-salary-payments": "سجل الرواتب"
+    "hr-salary-payments": "سجل الرواتب",
+    "system-admin": "إدارة النظام",
+    "tenant-management": "إدارة الاشتراكات"
   },
   "pos": {
     "noProductsFound": "لم يتم العثور على منتجات",

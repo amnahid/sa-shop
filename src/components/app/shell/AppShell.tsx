@@ -16,6 +16,7 @@ interface AppShellProps {
   primaryColor?: string | null;
   logoUrl?: string | null;
   unreadNotificationsCount?: number;
+  isSuperAdmin?: boolean;
 }
 
 export function AppShell({
@@ -27,6 +28,7 @@ export function AppShell({
   primaryColor,
   logoUrl,
   unreadNotificationsCount = 0,
+  isSuperAdmin = false,
 }: AppShellProps) {
   const pathname = usePathname();
   const isPosPage = pathname === "/pos";
@@ -55,6 +57,7 @@ export function AppShell({
         membershipRole={membershipRole}
         membershipPermissionOverrides={membershipPermissionOverrides}
         logoUrl={logoUrl}
+        isSuperAdmin={isSuperAdmin}
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
@@ -63,6 +66,7 @@ export function AppShell({
           membershipRole={membershipRole}
           membershipPermissionOverrides={membershipPermissionOverrides}
           unreadNotificationsCount={unreadNotificationsCount}
+          isSuperAdmin={isSuperAdmin}
         />
         <main 
           className={cn(

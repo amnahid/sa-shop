@@ -12,6 +12,7 @@ export interface IUser extends Document {
   mfaEnabled: boolean;
   mfaSecret?: string;
   lastLoginAt?: Date;
+  isSuperAdmin?: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -46,6 +47,10 @@ const userSchema = new Schema<IUser>(
     },
     mfaSecret: String,
     lastLoginAt: Date,
+    isSuperAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

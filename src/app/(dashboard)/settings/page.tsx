@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentMembership } from "@/lib/utils/membership";
-import { Tenant } from "@/models";
+import { Tenant, User } from "@/models";
 import { updateTenantSettings } from "@/lib/actions/team";
 import { PageHeader } from "@/components/app/PageHeader";
 import { canAccessPermission } from "@/lib/utils/permissions";
@@ -53,10 +53,17 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     membership.permissionOverrides
   );
 
-  const tenant = await Tenant.findById(membership.tenantId);
+  const [tenant, userDoc] = await Promise.all([
+    Tenant.findById(membership.tenantId),
+    User.findById(membership.userId),
+  ]);
+
   if (!tenant) {
     return <div>Tenant not found</div>;
   }
+
+  const systemAdminEmails = (process.env.SYSTEM_ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+  const isSuperAdmin = userDoc?.isSuperAdmin || (userDoc?.email && systemAdminEmails.includes(userDoc.email.toLowerCase()));
 
   const { error, success, form } = await searchParams;
   const feedbackPrefix = form ? `${formLabelByKey[form] ?? "Settings"}: ` : "";
@@ -94,6 +101,19 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               </CardContent>
             </Card>
           </Link>
+          {isSuperAdmin && (
+            <Link href="/settings/tenants">
+              <Card className="hover:border-primary/40 transition-colors h-full">
+                <CardContent className="pt-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-soft-primary text-primary mb-3">
+                    <Building2 className="size-5" />
+                  </div>
+                  <p className="font-black text-gray-900 uppercase text-[11px] tracking-widest">Manage Tenants</p>
+                  <p className="mt-1 text-xs text-gray-500 font-medium">Manage multi-tenant subscriptions and limits.</p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
           {(canViewMediaLibrary || canViewEmailTemplates || canViewNotificationTemplates) && (
           <div className="grid gap-4 md:grid-cols-3">
             {canViewMediaLibrary && (

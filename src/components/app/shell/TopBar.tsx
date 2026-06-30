@@ -18,6 +18,7 @@ interface TopBarProps {
   membershipRole?: SidebarMembershipRole | null;
   membershipPermissionOverrides?: Partial<Record<NavigationPermissionKey, boolean>>;
   unreadNotificationsCount?: number;
+  isSuperAdmin?: boolean;
 }
 
 export function TopBar({
@@ -26,6 +27,7 @@ export function TopBar({
   membershipRole = null,
   membershipPermissionOverrides,
   unreadNotificationsCount = 0,
+  isSuperAdmin = false,
 }: TopBarProps) {
   const { showToast } = useToast();
 
@@ -79,6 +81,7 @@ export function TopBar({
           email={userEmail}
           role={membershipRole}
           permissionOverrides={membershipPermissionOverrides}
+          isSuperAdmin={isSuperAdmin}
         />
       </div>
     </header>
