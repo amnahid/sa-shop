@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { Branch, Membership } from "@/models";
 import { ensureDefaultWhatsAppTemplates } from "./seed-whatsapp-templates";
+import connectDB from "@/lib/mongodb";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function skipOnboarding(formData: FormData) {
+  await connectDB();
   const allowSkip =
     String(
       process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING ||

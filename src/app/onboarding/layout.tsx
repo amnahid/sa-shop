@@ -1,4 +1,4 @@
-import { skipOnboarding } from "@/lib/actions/onboarding-skip";
+import { SkipOnboardingButton } from "@/components/onboarding/SkipOnboardingButton";
 
 export const dynamic = "force-dynamic";
 
@@ -86,14 +86,7 @@ export default function OnboardingLayout({
 
         {allowSkip && (
           <div className="mt-4 flex justify-center">
-            <form action={skipOnboarding}>
-              <button
-                type="submit"
-                className="text-xs text-muted-foreground hover:text-foreground font-medium underline cursor-pointer"
-              >
-                Skip Onboarding
-              </button>
-            </form>
+            <SkipOnboardingButton />
           </div>
         )}
       </div>
