@@ -27,6 +27,8 @@ export { Supplier } from './suppliers/Supplier';
 export { PurchaseOrder } from './suppliers/PurchaseOrder';
 
 export { EmployeeProfile } from './hr/EmployeeProfile';
+export { Employee } from './hr/Employee';
+export { SalaryPayment } from './hr/SalaryPayment';
 export { Attendance } from './hr/Attendance';
 export { Payroll } from './hr/Payroll';
 
