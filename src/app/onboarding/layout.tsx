@@ -1,5 +1,7 @@
 import { skipOnboarding } from "@/lib/actions/onboarding-skip";
 
+export const dynamic = "force-dynamic";
+
 const steps = [
   { number: 1, label: "Business", href: "/onboarding/business" },
   { number: 2, label: "Branch", href: "/onboarding/branch" },
@@ -15,8 +17,13 @@ export default function OnboardingLayout({
   const currentStep = 1; // TODO: Determine current step
 
   const allowSkip =
-    process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING === "true" ||
-    process.env.ALLOW_SKIP_ONBOARDING === "true";
+    String(
+      process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING ||
+        process.env.ALLOW_SKIP_ONBOARDING ||
+        ""
+    )
+      .trim()
+      .toLowerCase() === "true";
 
   return (
     <div className="min-h-screen bg-background">

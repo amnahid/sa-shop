@@ -5,10 +5,16 @@ import { getSession } from "@/lib/auth-utils";
 import { Branch, Membership } from "@/models";
 import { ensureDefaultWhatsAppTemplates } from "./seed-whatsapp-templates";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function skipOnboarding(formData: FormData) {
   const allowSkip =
-    process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING === "true" ||
-    process.env.ALLOW_SKIP_ONBOARDING === "true";
+    String(
+      process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING ||
+        process.env.ALLOW_SKIP_ONBOARDING ||
+        ""
+    )
+      .trim()
+      .toLowerCase() === "true";
 
   if (!allowSkip) {
     redirect("/onboarding/business?error=Skipping%20onboarding%20is%20not%20allowed");
