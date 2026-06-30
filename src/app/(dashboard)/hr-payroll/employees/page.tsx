@@ -463,6 +463,14 @@ export default function EmployeesPage() {
                     <span className="font-mono font-bold text-foreground block mt-1">{selectedEmployee.iqamaNumber || "-"}</span>
                   </div>
                   <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Iqama Expiry Date</span>
+                    <span className="font-semibold text-foreground block mt-1">
+                      {selectedEmployee.iqamaExpiryDate
+                        ? new Date(selectedEmployee.iqamaExpiryDate).toLocaleDateString()
+                        : "-"}
+                    </span>
+                  </div>
+                  <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Passport Number</span>
                     <span className="font-mono font-bold text-foreground block mt-1">{selectedEmployee.passportNumber || "-"}</span>
                   </div>

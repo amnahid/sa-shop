@@ -13,6 +13,7 @@ export interface IEmployeeDocument extends Document {
   email?: string;
   passportNumber?: string;
   iqamaNumber?: string;
+  iqamaExpiryDate?: Date;
   designation: string;
   department: string;
   baseSalary: number;
@@ -33,6 +34,7 @@ const EmployeeSchema = new Schema<IEmployeeDocument>(
     email: { type: String, trim: true },
     passportNumber: { type: String, trim: true },
     iqamaNumber: { type: String, trim: true },
+    iqamaExpiryDate: { type: Date },
     designation: { type: String, required: true, trim: true },
     department: { type: String, required: true, trim: true },
     baseSalary: { type: Number, required: true, min: 0 },

@@ -22,6 +22,7 @@ export interface Employee {
   email?: string;
   passportNumber?: string;
   iqamaNumber?: string;
+  iqamaExpiryDate?: string;
   designation: string;
   department: string;
   baseSalary: number;
@@ -52,6 +53,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
     email: employee?.email || "",
     passportNumber: employee?.passportNumber || "",
     iqamaNumber: employee?.iqamaNumber || "",
+    iqamaExpiryDate: employee?.iqamaExpiryDate ? employee.iqamaExpiryDate.split("T")[0] : "",
     designation: employee?.designation || "",
     department: employee?.department || "Sales",
     baseSalary: employee?.baseSalary || 0,
@@ -255,6 +257,15 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
                 value={form.iqamaNumber}
                 onChange={(e) => setForm((prev) => ({ ...prev, iqamaNumber: e.target.value }))}
                 placeholder="2000000000"
+              />
+            </FormField>
+
+            <FormField label="Iqama Expiry Date" htmlFor="iqamaExpiryDate">
+              <Input
+                id="iqamaExpiryDate"
+                type="date"
+                value={form.iqamaExpiryDate}
+                onChange={(e) => setForm((prev) => ({ ...prev, iqamaExpiryDate: e.target.value }))}
               />
             </FormField>
 
