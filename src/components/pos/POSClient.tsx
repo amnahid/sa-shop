@@ -283,37 +283,23 @@ export function POSClient({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-hidden bg-[#f2f3f8]">
+    <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-hidden bg-muted/10">
       {/* LEFT: Products Area */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="p-4 flex items-center gap-4">
-          <div className="flex-1">
+        <div className="p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search by Product Name/Barcode"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full h-11 rounded-md border border-input bg-white px-4 text-sm text-gray-700 focus:border-primary outline-none shadow-sm"
+              className="w-full h-11 rounded-lg border border-border bg-card pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring outline-none shadow-sm transition-all"
             />
           </div>
-          <div className="w-64">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c._id} value={c._id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 bg-card border-border">
                 <SelectValue placeholder="Select Branch" />
               </SelectTrigger>
               <SelectContent>
@@ -327,59 +313,96 @@ export function POSClient({
           </div>
         </div>
 
+        {/* Categories Bar */}
+        <div className="px-4 pb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter("all")}
+            className={cn(
+              "px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border",
+              !categoryFilter || categoryFilter === "all"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+            )}
+          >
+            All Categories
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c._id}
+              type="button"
+              onClick={() => setCategoryFilter(c._id)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border",
+                categoryFilter === c._id
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+
         {sourceProposal && (
-          <div className="mx-4 mb-2 rounded-md border border-info/20 bg-soft-info px-4 py-2 text-sm flex items-center justify-between shadow-sm">
+          <div className="mx-4 mb-2 rounded-lg border border-blue-200 bg-blue-50/50 px-4 py-2.5 text-sm flex items-center justify-between shadow-sm shrink-0">
             <span>
               <strong>Proposal {sourceProposal.proposalNumber}</strong> • {sourceProposal.customerName}
             </span>
-            <span className="font-semibold">SAR {sourceProposal.grandTotal.toFixed(2)}</span>
+            <span className="font-semibold text-blue-700">SAR {sourceProposal.grandTotal.toFixed(2)}</span>
           </div>
         )}
         {sourceRetainer && (
-          <div className="mx-4 mb-2 rounded-md border border-success/20 bg-soft-success px-4 py-2 text-sm flex items-center justify-between shadow-sm">
+          <div className="mx-4 mb-2 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-2.5 text-sm flex items-center justify-between shadow-sm shrink-0">
             <span>
               <strong>Retainer {sourceRetainer.retainerNumber}</strong>
             </span>
-            <span className="font-semibold">Remaining: SAR {sourceRetainer.remainingAmount.toFixed(2)}</span>
+            <span className="font-semibold text-emerald-700">Remaining: SAR {sourceRetainer.remainingAmount.toFixed(2)}</span>
           </div>
         )}
 
         <div className="flex-1 overflow-auto px-4 pb-4">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-               <p>No Product Added / Found</p>
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+               <Package className="size-10 mb-2 opacity-50" />
+               <p className="text-sm font-medium">No Products Found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filtered.map(p => {
                 const inStock = p.stock > 0;
-                const stockBadgeClass = inStock ? "bg-[#0abb75] text-white" : "bg-[#ef486a] text-white";
-                const stockText = inStock ? `In stock : ${p.stock}` : `Out of Stock : ${p.stock}`;
+                const stockBadgeClass = inStock 
+                  ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20" 
+                  : "bg-destructive/10 text-destructive border border-destructive/20";
+                const stockText = inStock ? `In stock: ${p.stock}` : `Out of Stock: ${p.stock}`;
 
                 return (
                   <button
                     key={p._id}
                     onClick={() => addToCart(p)}
-                    className="group flex flex-col bg-white border border-gray-100 rounded-md overflow-hidden hover:shadow-md transition-all text-start h-[300px] shadow-sm"
+                    className="group flex flex-col bg-card border border-border/80 rounded-xl overflow-hidden hover:shadow-md hover:border-primary/20 transition-all text-start h-[260px] shadow-sm relative cursor-pointer"
                   >
-                    <div className="relative w-full h-[180px] p-4 bg-white flex items-center justify-center">
-                      <span className={cn("absolute top-2 start-2 text-[10px] font-medium px-2 py-0.5 rounded-[3px]", stockBadgeClass)}>
+                    <div className="relative w-full h-[140px] p-3 bg-muted/10 flex items-center justify-center border-b border-border/30">
+                      <span className={cn("absolute top-2 start-2 text-[9px] font-semibold px-2 py-0.5 rounded border", stockBadgeClass)}>
                         {stockText}
                       </span>
                       {p.imageUrls[0] ? (
-                        <Image src={p.imageUrls[0]} alt={p.name} width={200} height={200} unoptimized className="max-w-full max-h-full object-contain" />
+                        <Image src={p.imageUrls[0]} alt={p.name} width={120} height={120} unoptimized className="max-w-full max-h-full object-contain mix-blend-multiply" />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 font-bold text-xl">
+                        <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-muted-foreground font-bold text-lg">
                           {p.name.charAt(0)}
                         </div>
                       )}
-                      <span className="absolute bottom-2 start-2 bg-[#ffc519] text-[#111723] text-[10px] font-semibold px-2 py-0.5 rounded-[3px]">
-                        Default
+                      <span className="absolute bottom-2 start-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                        Default Price
                       </span>
                     </div>
-                    <div className="p-4 pt-2 flex flex-col justify-between flex-1 w-full bg-white">
-                      <h3 className="text-sm font-bold text-[#111723] leading-snug line-clamp-2">{p.name}</h3>
-                      <p className="text-[13px] text-gray-600 mt-2">SAR {p.sellingPrice.toFixed(2)}</p>
+                    <div className="p-3 pt-2 flex flex-col justify-between flex-1 w-full bg-card">
+                      <div className="flex flex-col gap-0.5">
+                        <h3 className="text-xs font-semibold text-foreground leading-snug line-clamp-2">{p.name}</h3>
+                        <span className="text-[10px] text-muted-foreground truncate">{p.sku}</span>
+                      </div>
+                      <p className="text-xs font-bold text-primary mt-2">SAR {p.sellingPrice.toFixed(2)}</p>
                     </div>
                   </button>
                 );
@@ -400,14 +423,14 @@ export function POSClient({
       {/* RIGHT: Cart Area */}
       <div 
         className={cn(
-          "fixed inset-y-0 end-0 z-30 w-full max-w-[400px] bg-white border-s border-gray-200 flex flex-col min-h-0 shadow-lg transition-transform duration-300 lg:static lg:translate-x-0 lg:z-10",
+          "fixed inset-y-0 end-0 z-30 w-full max-w-[380px] bg-card border-s border-border flex flex-col min-h-0 shadow-lg transition-transform duration-300 lg:static lg:translate-x-0 lg:z-10",
           isCartDrawerOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
-        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+        <div className="p-4 border-b border-border flex items-center gap-3">
           <button
             onClick={() => setIsCartDrawerOpen(false)}
-            className="lg:hidden p-2 -ms-1 hover:bg-gray-100 rounded-md text-gray-500 transition-colors"
+            className="lg:hidden p-2 -ms-1 hover:bg-muted rounded-lg text-muted-foreground transition-colors"
             aria-label="Close cart"
           >
             <X className="size-5" />
@@ -421,34 +444,34 @@ export function POSClient({
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full h-11 justify-between bg-white border-gray-400 text-gray-700 font-bold hover:bg-white hover:border-gray-500"
+                  className="w-full h-11 justify-between bg-card border-border text-foreground font-semibold hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <User className="size-4 text-gray-400 shrink-0" />
+                    <User className="size-4 text-muted-foreground shrink-0" />
                     <span className="truncate">
                       {selectedCustomer ? selectedCustomer.name : "Walk In Customer"}
                     </span>
                   </div>
-                  <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-55" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[320px] p-0 shadow-xl" align="start" sideOffset={8}>
                 <div className="flex flex-col min-h-0 max-h-[400px]">
-                  <div className="flex items-center border-b border-gray-100 px-3 sticky top-0 bg-white z-10">
-                    <Search className="me-2 size-4 shrink-0 text-gray-400" />
+                  <div className="flex items-center border-b border-border px-3 sticky top-0 bg-popover z-10">
+                    <Search className="me-2 size-4 shrink-0 text-muted-foreground" />
                     <input
-                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400"
+                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground text-foreground"
                       placeholder="Search customers..."
                       value={customerSearch}
                       onChange={(e) => searchCustomers(e.target.value)}
                     />
                   </div>
-                  <div className="flex-1 overflow-y-auto p-1">
+                  <div className="flex-1 overflow-y-auto p-1 bg-popover">
                     <button
                       type="button"
                       className={cn(
-                        "relative flex w-full cursor-default select-none items-center rounded-sm py-2.5 px-3 text-[13px] font-bold outline-none transition-colors hover:bg-soft-primary hover:text-primary",
-                        !selectedCustomer || selectedCustomer._id === "walk-in" ? "bg-soft-primary text-primary" : "text-gray-700"
+                        "relative flex w-full cursor-default select-none items-center rounded-lg py-2.5 px-3 text-[13px] font-semibold outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
+                        !selectedCustomer || selectedCustomer._id === "walk-in" ? "bg-accent text-accent-foreground" : "text-foreground"
                       )}
                       onClick={() => {
                         setSelectedCustomer(null);
@@ -465,14 +488,14 @@ export function POSClient({
                     </button>
                     
                     {customerResults.length > 0 && (
-                      <div className="mt-1 border-t border-gray-50 pt-1">
+                      <div className="mt-1 border-t border-border pt-1">
                         {customerResults.map((customer) => (
                           <button
                             key={customer._id}
                             type="button"
                             className={cn(
-                              "relative flex w-full cursor-default select-none items-center rounded-sm py-2.5 px-3 text-[13px] font-bold outline-none transition-colors hover:bg-soft-primary hover:text-primary",
-                              selectedCustomer?._id === customer._id ? "bg-soft-primary text-primary" : "text-gray-700"
+                              "relative flex w-full cursor-default select-none items-center rounded-lg py-2.5 px-3 text-[13px] font-semibold outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
+                              selectedCustomer?._id === customer._id ? "bg-accent text-accent-foreground" : "text-foreground"
                             )}
                             onClick={() => {
                               setSelectedCustomer(customer);
@@ -484,7 +507,7 @@ export function POSClient({
                             <div className="flex flex-col items-start truncate flex-1">
                               <span className="truncate w-full text-start">{customer.name}</span>
                               {customer.phone && (
-                                <span className="text-[10px] font-medium text-gray-400">{customer.phone}</span>
+                                <span className="text-[10px] font-medium text-muted-foreground">{customer.phone}</span>
                               )}
                             </div>
                             {selectedCustomer?._id === customer._id && (
@@ -496,12 +519,12 @@ export function POSClient({
                     )}
                     
                     {customerSearch.length >= 2 && customerResults.length === 0 && (
-                      <p className="py-6 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">
+                      <p className="py-6 text-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         No customers found
                       </p>
                     )}
                   </div>
-                  <div className="p-2 border-t border-gray-100 bg-gray-50/50">
+                  <div className="p-2 border-t border-border bg-muted/40">
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -518,46 +541,46 @@ export function POSClient({
           </div>
           <Popover open={showParkedSales} onOpenChange={setShowParkedSales}>
             <PopoverTrigger asChild>
-              <button className="w-11 h-11 rounded-md bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors shrink-0">
+              <button className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors shrink-0 border border-border">
                 <Package width="20" height="20" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-[320px] p-0 shadow-xl" align="end" sideOffset={8}>
               <div className="flex flex-col min-h-0 max-h-[400px]">
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                  <h3 className="text-sm font-bold uppercase tracking-tight">Parked Sales</h3>
+                <div className="p-4 border-b border-border flex items-center justify-between bg-popover sticky top-0 z-10">
+                  <h3 className="text-sm font-bold uppercase tracking-tight text-foreground">Parked Sales</h3>
                   <Button 
-                    variant="soft" 
+                    variant="secondary" 
                     size="xs" 
                     disabled={cart.length === 0} 
                     onClick={handleHold}
-                    className="font-bold uppercase tracking-widest text-[9px] px-2"
+                    className="font-bold uppercase tracking-widest text-[9px] px-2 h-7"
                   >
                     Park Current
                   </Button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-2 bg-popover">
                   {parkedSales.length === 0 ? (
                     <div className="py-12 text-center">
-                      <Package className="size-8 text-gray-200 mx-auto mb-2" />
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No Parked Sales</p>
+                      <Package className="size-8 text-muted/30 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No Parked Sales</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {parkedSales.map((sale) => (
-                        <div key={sale._id} className="p-3 bg-gray-50 rounded-md border border-gray-100 hover:border-primary/30 transition-colors group">
+                        <div key={sale._id} className="p-3 bg-muted/40 rounded-lg border border-border hover:border-primary/30 transition-all group">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="text-[13px] font-bold text-gray-800 truncate pe-2">{sale.customerName}</span>
+                            <span className="text-[13px] font-bold text-foreground truncate pe-2">{sale.customerName}</span>
                             <span className="text-[11px] font-black text-primary shrink-0">SAR {sale.totalAmount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center mt-2">
-                            <span className="text-[10px] font-medium text-gray-400">
+                            <span className="text-[10px] font-medium text-muted-foreground">
                               {sale.itemCount} items • {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             <Button 
                               size="xs" 
                               variant="outline" 
-                              className="h-7 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white"
+                              className="h-7 px-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-white"
                               onClick={() => {
                                 handleRecall(sale._id);
                                 setShowParkedSales(false);
@@ -567,7 +590,7 @@ export function POSClient({
                             </Button>
                           </div>
                           {sale.note && (
-                            <p className="text-[10px] italic text-gray-500 mt-2 truncate">{sale.note}</p>
+                            <p className="text-[10px] italic text-muted-foreground mt-2 truncate">{sale.note}</p>
                           )}
                         </div>
                       ))}
@@ -579,31 +602,31 @@ export function POSClient({
           </Popover>
         </div>
 
-        <div className="flex-1 overflow-auto bg-[#f9fafb]">
+        <div className="flex-1 overflow-auto bg-muted/20">
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-              <p className="text-sm font-medium text-gray-600">No Product Added</p>
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-3">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+              <p className="text-xs font-semibold text-muted-foreground">No Products Added</p>
             </div>
           ) : (
             <div className="p-4 space-y-3">
               {cart.map(item => (
-                <div key={item.productId} className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-100 shadow-sm">
+                <div key={item.productId} className="flex items-center justify-between p-3.5 bg-card rounded-lg border border-border shadow-sm hover:border-border transition-all">
                   <div className="flex-1 min-w-0 pe-3">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">SAR {item.unitPrice.toFixed(2)}</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{item.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">SAR {item.unitPrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-gray-50 rounded border border-input">
-                      <button onClick={() => updateQty(item.productId, -1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200">−</button>
-                      <span className="w-8 text-center text-sm font-medium text-gray-800">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.productId, 1)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-200">+</button>
+                    <div className="flex items-center bg-muted/40 rounded-lg border border-border">
+                      <button onClick={() => updateQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center text-foreground hover:bg-muted font-bold transition-all">−</button>
+                      <span className="w-7 text-center text-xs font-bold text-foreground">{item.quantity}</span>
+                      <button onClick={() => updateQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center text-foreground hover:bg-muted font-bold transition-all">+</button>
                     </div>
-                    <button onClick={() => removeItem(item.productId)} className="w-8 h-8 rounded-md flex items-center justify-center text-red-500 hover:bg-red-50 ms-1">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    <button onClick={() => removeItem(item.productId)} className="w-7 h-7 rounded-lg flex items-center justify-center text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors ms-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                   </div>
-                  <div className="text-sm font-bold text-gray-800 text-end w-20">
+                  <div className="text-xs font-bold text-foreground text-end w-16">
                     SAR {item.totalAmount.toFixed(2)}
                   </div>
                 </div>
@@ -613,39 +636,39 @@ export function POSClient({
         </div>
 
         {/* Totals & Actions */}
-        <div className="bg-white border-t border-gray-100">
-          <div className="p-5 space-y-3 text-[13px] text-gray-600">
+        <div className="bg-card border-t border-border">
+          <div className="p-4 space-y-2.5 text-xs text-muted-foreground">
             <div className="flex justify-between items-center">
               <span className="font-medium">Sub Total</span>
-              <span className="font-bold text-gray-900">SAR {subtotal.toFixed(2)}</span>
+              <span className="font-bold text-foreground">SAR {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Tax</span>
-              <span className="font-bold text-gray-900">SAR {vatTotal.toFixed(2)}</span>
+              <span className="font-bold text-foreground">SAR {vatTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Shipping</span>
-              <span className="font-bold text-gray-900">SAR {(parseFloat(shippingAmount) || 0).toFixed(2)}</span>
+              <span className="font-bold text-foreground">SAR {(parseFloat(shippingAmount) || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Discount</span>
-              <span className="font-bold text-gray-900">SAR {(parseFloat(discountAmount) || 0).toFixed(2)}</span>
+              <span className="font-bold text-foreground">SAR {(parseFloat(discountAmount) || 0).toFixed(2)}</span>
             </div>
           </div>
           
-          <div className="px-5 py-4 border-t border-gray-100 bg-[#f8f9fa]">
+          <div className="px-4 py-3 border-t border-border bg-muted/20">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-extrabold text-[#111723]">Total</span>
-              <span className="text-lg font-extrabold text-[#111723]">SAR {grandTotal.toFixed(2)}</span>
+              <span className="text-sm font-extrabold text-foreground">Total</span>
+              <span className="text-base font-black text-primary">SAR {grandTotal.toFixed(2)}</span>
             </div>
           </div>
 
           {showCheckout ? (
-            <div className="p-5 space-y-4 border-t border-gray-100 bg-white">
+            <div className="p-4 space-y-4 border-t border-border bg-card">
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Payment Method</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Payment Method</label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className="h-11 bg-white">
+                  <SelectTrigger className="h-11 bg-card border-border">
                     <SelectValue placeholder="Select Payment Method" />
                   </SelectTrigger>
                   <SelectContent>
@@ -660,16 +683,16 @@ export function POSClient({
 
               {paymentMethod === "cash" && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Cash Received</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Cash Received</label>
                   <input
                     type="number"
                     value={cashReceived}
                     onChange={e => setCashReceived(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
+                    className="w-full h-11 rounded-lg border border-border bg-card px-3 text-sm focus:border-primary outline-none"
                   />
                   {cashReceived && parseFloat(cashReceived) >= grandTotal && (
-                    <p className="text-[13px] text-[#0abb75] mt-1.5 font-medium">Change: SAR {changeAmount.toFixed(2)}</p>
+                    <p className="text-xs text-emerald-600 mt-1.5 font-semibold">Change: SAR {changeAmount.toFixed(2)}</p>
                   )}
                 </div>
               )}
@@ -685,21 +708,21 @@ export function POSClient({
                       setReceiptEmail(selectedCustomer.email);
                     }
                   }}
-                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary bg-card"
                 />
-                <label htmlFor="emailReceipt" className="text-sm font-medium text-gray-600">Email receipt</label>
+                <label htmlFor="emailReceipt" className="text-xs font-semibold text-muted-foreground">Email receipt</label>
               </div>
 
               {emailReceipt && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Email address</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email address</label>
                   <input
                     type="email"
                     value={receiptEmail}
                     onChange={e => setReceiptEmail(e.target.value)}
                     placeholder="customer@example.com"
                     required
-                    className="w-full h-11 rounded-md border border-input bg-white px-3 text-sm focus:border-primary outline-none"
+                    className="w-full h-11 rounded-lg border border-border bg-card px-3 text-sm focus:border-primary outline-none text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               )}
@@ -711,19 +734,19 @@ export function POSClient({
                   checked={whatsappReceipt}
                   onChange={e => setWhatsappReceipt(e.target.checked)}
                   disabled={!selectedCustomer?.phone}
-                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary disabled:opacity-50"
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary disabled:opacity-50 bg-card"
                 />
-                <label htmlFor="whatsappReceipt" className={`text-sm font-medium ${selectedCustomer?.phone ? "text-gray-600" : "text-gray-400"}`}>
+                <label htmlFor="whatsappReceipt" className={`text-xs font-semibold ${selectedCustomer?.phone ? "text-muted-foreground" : "text-muted/40"}`}>
                   Send receipt via WhatsApp
                 </label>
               </div>
               {whatsappReceipt && selectedCustomer?.phone && (
-                <p className="text-xs text-green-600">
+                <p className="text-[10px] font-semibold text-emerald-600">
                   Will send to {selectedCustomer.phone}
                 </p>
               )}
               {!selectedCustomer?.phone && (
-                <p className="text-xs text-gray-400">
+                <p className="text-[10px] text-muted-foreground/60 leading-normal">
                   Add a phone number to the customer to enable WhatsApp receipts.
                 </p>
               )}
@@ -731,38 +754,38 @@ export function POSClient({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowCheckout(false)}
-                  className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+                  className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleCheckout}
                   disabled={loading}
-                  className="flex-[2] h-11 rounded-md bg-[#377dff] text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  className="flex-[2] h-11 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/95 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Processing..." : "Confirm & Pay"}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-5 flex items-center gap-3">
+            <div className="p-4 flex items-center gap-3">
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
-                    Shipping <Truck className="size-3.5" />
+                  <button className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-muted/50 transition-colors shadow-sm">
+                    Shipping <Truck className="size-3.5 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-4 shadow-xl">
+                <PopoverContent className="w-64 p-4 shadow-xl border-border" align="center" sideOffset={8}>
                   <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Shipping Amount</h4>
-                    <p className="text-sm text-muted-foreground">Add shipping/delivery charges.</p>
+                    <h4 className="font-semibold text-sm text-foreground">Shipping Amount</h4>
+                    <p className="text-xs text-muted-foreground">Add shipping/delivery charges.</p>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
                         value={shippingAmount}
                         onChange={(e) => setShippingAmount(e.target.value)}
                         placeholder="0.00"
-                        className="h-9"
+                        className="h-9 border-border bg-card text-foreground"
                       />
                     </div>
                   </div>
@@ -771,21 +794,21 @@ export function POSClient({
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex-1 h-11 rounded-md border border-input bg-white text-gray-700 text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors">
-                    Discount <Percent className="size-3.5" />
+                  <button className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-muted/50 transition-colors shadow-sm">
+                    Discount <Percent className="size-3.5 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-4 shadow-xl">
+                <PopoverContent className="w-64 p-4 shadow-xl border-border" align="center" sideOffset={8}>
                   <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Global Discount</h4>
-                    <p className="text-sm text-muted-foreground">Apply a fixed discount to the total.</p>
+                    <h4 className="font-semibold text-sm text-foreground">Global Discount</h4>
+                    <p className="text-xs text-muted-foreground">Apply a fixed discount to the total.</p>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
                         value={discountAmount}
                         onChange={(e) => setDiscountAmount(e.target.value)}
                         placeholder="0.00"
-                        className="h-9"
+                        className="h-9 border-border bg-card text-foreground"
                       />
                     </div>
                   </div>
@@ -795,7 +818,7 @@ export function POSClient({
               <button 
                 onClick={() => setShowCheckout(true)}
                 disabled={cart.length === 0}
-                className="flex-[1.5] h-11 rounded-md bg-[#377dff] text-white text-[13px] font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50"
+                className="flex-[1.5] h-11 rounded-lg bg-primary text-primary-foreground text-[13px] font-bold hover:bg-primary/95 transition-colors disabled:opacity-50 shadow-sm"
               >
                 Place Order
               </button>
@@ -805,18 +828,18 @@ export function POSClient({
       </div>
 
       {/* Bottom Floating Bar for Mobile/Tablet */}
-      <div className="lg:hidden bg-white border-t border-gray-200 p-4 flex items-center justify-between shrink-0 shadow-md z-15">
+      <div className="lg:hidden bg-card border-t border-border p-4 flex items-center justify-between shrink-0 shadow-md z-15">
         <div className="flex flex-col">
-          <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
             {cart.reduce((s, i) => s + i.quantity, 0)} items
           </span>
-          <span className="text-lg font-extrabold text-[#111723]">
+          <span className="text-base font-extrabold text-foreground">
             SAR {grandTotal.toFixed(2)}
           </span>
         </div>
         <button
           onClick={() => setIsCartDrawerOpen(true)}
-          className="h-11 px-6 rounded-md bg-[#377dff] text-white text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm"
+          className="h-11 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/95 transition-colors shadow-sm"
         >
           View Cart
         </button>

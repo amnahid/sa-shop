@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { Product, StockLevel, Branch, Category, Customer, Proposal, Retainer } from "@/models";
-import { PageHeader } from "@/components/app/PageHeader";
 import { POSClient } from "@/components/pos/POSClient";
 import Link from "next/link";
 
@@ -79,14 +78,8 @@ export default async function POSPage({ searchParams }: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader
-        title="Point of Sale"
-        section="Sales"
-        breadcrumbs={[{ label: "Point of Sale" }]}
-        description="Create and complete sales transactions."
-      />
       {sourceProposal && (
-        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <div className="mx-4 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm shrink-0">
           <p className="font-medium">
             Invoice handoff from proposal {sourceProposal.proposalNumber}
           </p>
@@ -103,7 +96,7 @@ export default async function POSPage({ searchParams }: Props) {
         </div>
       )}
       {sourceRetainer && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <div className="mx-4 mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm shrink-0">
           <p className="font-medium">Retainer consumption {sourceRetainer.retainerNumber}</p>
           <p>
             Customer: {retainerCustomer?.name || "Not set"} • Remaining balance: SAR{" "}
