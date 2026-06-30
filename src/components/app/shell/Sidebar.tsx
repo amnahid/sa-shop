@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import {
   filterSidebarNavigationByRole,
   resolveSidebarIcon,
@@ -63,6 +64,7 @@ export function Sidebar({
   logoUrl,
 }: SidebarProps) {
   const pathname = usePathname() ?? "";
+  const { t } = useTranslation();
   const filteredNavigationConfig = useMemo(
     () =>
       filterSidebarNavigationByRole(
@@ -101,6 +103,9 @@ export function Sidebar({
     const navigable = isItemNavigable(item.status);
     const statusLabel = getStatusLabel(item.status);
 
+    const translated = t("common." + item.id);
+    const displayLabel = translated === "common." + item.id ? item.label : translated;
+
     return (
       <li key={item.id}>
         <div className="flex items-center gap-1">
@@ -119,7 +124,7 @@ export function Sidebar({
               )}
             >
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{displayLabel}</span>
               {statusLabel ? (
                 <span className="ms-auto rounded border border-white/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/60">
                   {statusLabel}
@@ -132,7 +137,7 @@ export function Sidebar({
               className="flex min-w-0 flex-1 cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/40"
             >
               {Icon ? <Icon className="size-4 shrink-0" /> : null}
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{displayLabel}</span>
               {statusLabel ? (
                 <span className="ms-auto rounded border border-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/30">
                   {statusLabel}
@@ -151,6 +156,9 @@ export function Sidebar({
       ? groupActive || (expandedGroups[group.id] ?? false)
       : true;
     const groupPanelId = `${group.id}-group-items`;
+
+    const translatedGroup = t("common." + group.id);
+    const displayGroupLabel = translatedGroup === "common." + group.id ? group.label : translatedGroup;
 
     return (
       <section key={group.id} className="space-y-1">
@@ -173,7 +181,7 @@ export function Sidebar({
                 groupActive && "text-primary/90"
               )}
             >
-              {group.label}
+              {displayGroupLabel}
             </span>
             <ChevronDown
               className={cn(
@@ -190,7 +198,7 @@ export function Sidebar({
                 groupActive && "text-primary/90"
               )}
             >
-              {group.label}
+              {displayGroupLabel}
             </span>
           </div>
         )}
