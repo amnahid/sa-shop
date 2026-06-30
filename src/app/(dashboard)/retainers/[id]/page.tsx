@@ -132,38 +132,40 @@ export default async function RetainerDetailPage({ params }: Props) {
         {retainer.consumptions.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground">No invoices consumed from this retainer yet.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-start font-medium">Invoice #</th>
-                <th className="p-3 text-start font-medium">Consumed At</th>
-                <th className="p-3 text-end font-medium">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {retainer.consumptions.map((consumption) => (
-                <tr
-                  key={`${consumption.invoiceId.toString()}-${consumption.consumedAt.toISOString()}`}
-                  className="border-t"
-                >
-                  <td className="p-3">
-                    <Link
-                      href={`/pos/invoices/${consumption.invoiceId.toString()}`}
-                      className="text-primary hover:underline"
-                    >
-                      {consumption.invoiceNumber}
-                    </Link>
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {consumption.consumedAt.toLocaleDateString("en-SA")}
-                  </td>
-                  <td className="p-3 text-end font-medium">
-                    SAR {parseFloat(consumption.amount.toString()).toFixed(2)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="p-3 text-start font-medium">Invoice #</th>
+                  <th className="p-3 text-start font-medium">Consumed At</th>
+                  <th className="p-3 text-end font-medium">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {retainer.consumptions.map((consumption) => (
+                  <tr
+                    key={`${consumption.invoiceId.toString()}-${consumption.consumedAt.toISOString()}`}
+                    className="border-t"
+                  >
+                    <td className="p-3">
+                      <Link
+                        href={`/pos/invoices/${consumption.invoiceId.toString()}`}
+                        className="text-primary hover:underline"
+                      >
+                        {consumption.invoiceNumber}
+                      </Link>
+                    </td>
+                    <td className="p-3 text-muted-foreground">
+                      {consumption.consumedAt.toLocaleDateString("en-SA")}
+                    </td>
+                    <td className="p-3 text-end font-medium">
+                      SAR {parseFloat(consumption.amount.toString()).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

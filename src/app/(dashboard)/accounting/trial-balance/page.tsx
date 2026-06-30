@@ -110,6 +110,7 @@ export default async function TrialBalancePage({ searchParams }: Props) {
           </div>
 
           <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -164,6 +165,7 @@ export default async function TrialBalancePage({ searchParams }: Props) {
                 </tr>
               </tfoot>
             </table>
+          </div>
           </div>
         </>
       ) : null}

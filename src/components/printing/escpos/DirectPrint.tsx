@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { buildThermalReceipt } from "@/lib/printing/escpos";
-import { Printer, Usb, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Usb, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface DirectPrintProps {
   invoiceNumber: string;

@@ -152,40 +152,42 @@ export default async function StockMovementsPage({ searchParams }: Props) {
              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">No movements found for the selected filters</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
-              <tr>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Date</th>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Product</th>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Branch</th>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Type</th>
-                <th className="text-end px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Qty</th>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Reason</th>
-                <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">User</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {data.movements.map((m, i) => {
-                const qty = parseFloat(m.quantityDelta.toString());
-                return (
-                  <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-4 text-gray-500 font-medium tabular-nums">{m.createdAt.toLocaleDateString()}</td>
-                    <td className="px-4 py-4">
-                      <div className="font-bold text-gray-900">{m.product?.name || "-"}</div>
-                      {m.product?.sku && <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-tight">{m.product.sku}</span>}
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-gray-600">{m.branch?.name || "-"}</td>
-                    <td className="px-4 py-4 font-bold text-gray-600 uppercase text-[11px] tracking-tight">{typeLabels[m.type] || m.type}</td>
-                    <td className={`px-4 py-4 text-end font-black tabular-nums ${qty > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                      {qty > 0 ? "+" : ""}{qty}
-                    </td>
-                    <td className="px-4 py-4 text-gray-500 font-medium">{m.reason || "-"}</td>
-                    <td className="px-4 py-4 text-gray-900 font-bold">{m.user?.name || "-"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-b">
+                <tr>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Date</th>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Product</th>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Branch</th>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Type</th>
+                  <th className="text-end px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Qty</th>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Reason</th>
+                  <th className="text-start px-4 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500">User</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {data.movements.map((m, i) => {
+                  const qty = parseFloat(m.quantityDelta.toString());
+                  return (
+                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-4 text-gray-500 font-medium tabular-nums">{m.createdAt.toLocaleDateString()}</td>
+                      <td className="px-4 py-4">
+                        <div className="font-bold text-gray-900">{m.product?.name || "-"}</div>
+                        {m.product?.sku && <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-tight">{m.product.sku}</span>}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-gray-600">{m.branch?.name || "-"}</td>
+                      <td className="px-4 py-4 font-bold text-gray-600 uppercase text-[11px] tracking-tight">{typeLabels[m.type] || m.type}</td>
+                      <td className={`px-4 py-4 text-end font-black tabular-nums ${qty > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        {qty > 0 ? "+" : ""}{qty}
+                      </td>
+                      <td className="px-4 py-4 text-gray-500 font-medium">{m.reason || "-"}</td>
+                      <td className="px-4 py-4 text-gray-900 font-bold">{m.user?.name || "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

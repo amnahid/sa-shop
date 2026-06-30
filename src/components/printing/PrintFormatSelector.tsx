@@ -17,7 +17,7 @@ const formatInfo: Record<PrintFormat, { label: string; icon: typeof FileText }> 
   "thermal-58": { label: "58mm Receipt", icon: Receipt },
 };
 
-export function PrintFormatSelector({ invoiceId, invoiceType }: PrintFormatSelectorProps) {
+export function PrintFormatSelector({ invoiceType }: PrintFormatSelectorProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);

@@ -127,38 +127,40 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <div className="p-4 border-b">
             <h2 className="font-semibold">Line Items</h2>
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-start p-3 font-medium">Product</th>
-                <th className="text-end p-3 font-medium">Unit Price</th>
-                <th className="text-center p-3 font-medium">Qty</th>
-                <th className="text-end p-3 font-medium">Net</th>
-                <th className="text-end p-3 font-medium">VAT</th>
-                <th className="text-end p-3 font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.lines.map((line, i) => {
-                const total = parseFloat(line.totalAmount.toString());
-                return (
-                  <tr key={i} className="border-t">
-                    <td className="p-3">
-                      <span className="font-medium">{line.name}</span>
-                      <span className="block text-xs text-muted-foreground">{line.sku}</span>
-                    </td>
-                    <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
-                    <td className="p-3 text-center">{parseFloat(line.quantity.toString())}</td>
-                    <td className="p-3 text-end">SAR {parseFloat(line.netAmount.toString()).toFixed(2)}</td>
-                    <td className="p-3 text-end">SAR {parseFloat(line.vatAmount.toString()).toFixed(2)}</td>
-                    <td className={`p-3 text-end font-medium ${total < 0 ? "text-red-500" : ""}`}>
-                      SAR {total.toFixed(2)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-start p-3 font-medium">Product</th>
+                  <th className="text-end p-3 font-medium">Unit Price</th>
+                  <th className="text-center p-3 font-medium">Qty</th>
+                  <th className="text-end p-3 font-medium">Net</th>
+                  <th className="text-end p-3 font-medium">VAT</th>
+                  <th className="text-end p-3 font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.lines.map((line, i) => {
+                  const total = parseFloat(line.totalAmount.toString());
+                  return (
+                    <tr key={i} className="border-t">
+                      <td className="p-3">
+                        <span className="font-medium">{line.name}</span>
+                        <span className="block text-xs text-muted-foreground">{line.sku}</span>
+                      </td>
+                      <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
+                      <td className="p-3 text-center">{parseFloat(line.quantity.toString())}</td>
+                      <td className="p-3 text-end">SAR {parseFloat(line.netAmount.toString()).toFixed(2)}</td>
+                      <td className="p-3 text-end">SAR {parseFloat(line.vatAmount.toString()).toFixed(2)}</td>
+                      <td className={`p-3 text-end font-medium ${total < 0 ? "text-red-500" : ""}`}>
+                        SAR {total.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <div className="p-4 border-t space-y-2 text-sm">
             <div className="flex justify-between">

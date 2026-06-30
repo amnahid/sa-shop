@@ -99,48 +99,50 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
       <FormFeedback status="success" message={success} />
 
       <div className="bg-card border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-start p-3 font-medium">Name</th>
-              <th className="text-start p-3 font-medium">Email</th>
-              <th className="text-center p-3 font-medium">Role</th>
-              <th className="text-center p-3 font-medium">Status</th>
-              <th className="text-center p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => {
-              const user = member.userId;
-              const isOwner = member.role === "owner";
-              const isCurrentUser = user._id.toString() === membership.userId.toString();
-              const canManage = canManageAdmin && !isCurrentUser && !isOwner;
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-start p-3 font-medium">Name</th>
+                <th className="text-start p-3 font-medium">Email</th>
+                <th className="text-center p-3 font-medium">Role</th>
+                <th className="text-center p-3 font-medium">Status</th>
+                <th className="text-center p-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((member) => {
+                const user = member.userId;
+                const isOwner = member.role === "owner";
+                const isCurrentUser = user._id.toString() === membership.userId.toString();
+                const canManage = canManageAdmin && !isCurrentUser && !isOwner;
 
-              return (
-                <tr key={member._id.toString()} className="border-t">
-                  <td className="p-3 font-medium">
-                    {user.name}
-                    {isCurrentUser && <span className="ms-2 text-xs text-muted-foreground">(you)</span>}
-                  </td>
-                  <td className="p-3 text-muted-foreground">{user.email}</td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-1 rounded ${roleColors[member.role] || ""}`}>
-                      {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-1 rounded ${statusColors[member.status] || ""}`}>
-                      {member.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center text-xs text-muted-foreground">
-                    {canManage ? "Manage from Admin Access page" : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={member._id.toString()} className="border-t">
+                    <td className="p-3 font-medium">
+                      {user.name}
+                      {isCurrentUser && <span className="ms-2 text-xs text-muted-foreground">(you)</span>}
+                    </td>
+                    <td className="p-3 text-muted-foreground">{user.email}</td>
+                    <td className="p-3 text-center">
+                      <span className={`text-xs px-2 py-1 rounded ${roleColors[member.role] || ""}`}>
+                        {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className={`text-xs px-2 py-1 rounded ${statusColors[member.status] || ""}`}>
+                        {member.status}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center text-xs text-muted-foreground">
+                      {canManage ? "Manage from Admin Access page" : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-6 rounded-lg border bg-card p-4">
@@ -187,84 +189,86 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
         <div className="border-b bg-muted px-4 py-3">
           <h2 className="text-sm font-medium">Invitations</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40">
-            <tr>
-              <th className="text-start p-3 font-medium">Email</th>
-              <th className="text-center p-3 font-medium">Role</th>
-              <th className="text-center p-3 font-medium">Status</th>
-              <th className="text-center p-3 font-medium">Sent</th>
-              <th className="text-center p-3 font-medium">Expires</th>
-              <th className="text-center p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invitations.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
               <tr>
-                <td colSpan={6} className="p-4 text-center text-muted-foreground">
-                  No invitations yet.
-                </td>
+                <th className="text-start p-3 font-medium">Email</th>
+                <th className="text-center p-3 font-medium">Role</th>
+                <th className="text-center p-3 font-medium">Status</th>
+                <th className="text-center p-3 font-medium">Sent</th>
+                <th className="text-center p-3 font-medium">Expires</th>
+                <th className="text-center p-3 font-medium">Actions</th>
               </tr>
-            ) : (
-              invitations.map((invitation) => {
-                const isPending = invitation.status === "pending";
-                const canManageOwnerInvite = invitation.role !== "owner" || canManageAdmin;
+            </thead>
+            <tbody>
+              {invitations.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-muted-foreground">
+                    No invitations yet.
+                  </td>
+                </tr>
+              ) : (
+                invitations.map((invitation) => {
+                  const isPending = invitation.status === "pending";
+                  const canManageOwnerInvite = invitation.role !== "owner" || canManageAdmin;
 
-                return (
-                  <tr key={invitation.id} className="border-t">
-                    <td className="p-3">{invitation.email}</td>
-                    <td className="p-3 text-center capitalize">{invitation.role}</td>
-                    <td className="p-3 text-center">
-                      <span className={`text-xs px-2 py-1 rounded ${invitationStatusBadge[invitation.status] || ""}`}>
-                        {invitation.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center text-muted-foreground">
-                      {invitation.createdAt ? new Date(invitation.createdAt).toLocaleDateString() : "—"}
-                    </td>
-                    <td className="p-3 text-center text-muted-foreground">
-                      {new Date(invitation.expiresAt).toLocaleDateString()}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center justify-center gap-3 text-xs">
-                        {isPending && canManageOwnerInvite ? (
-                          <>
-                            <form
-                              action={async (formData) => {
-                                "use server";
-                                const result = await resendInvite(formData);
-                                redirectWithFeedback("/settings/team", result);
-                              }}
-                            >
-                              <input type="hidden" name="invitationId" value={invitation.id} />
-                              <button type="submit" className="text-primary hover:underline">
-                                Resend
-                              </button>
-                            </form>
-                            <form
-                              action={async (formData) => {
-                                "use server";
-                                const result = await revokeInvite(formData);
-                                redirectWithFeedback("/settings/team", result);
-                              }}
-                            >
-                              <input type="hidden" name="invitationId" value={invitation.id} />
-                              <button type="submit" className="text-red-600 hover:underline">
-                                Revoke
-                              </button>
-                            </form>
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                  return (
+                    <tr key={invitation.id} className="border-t">
+                      <td className="p-3">{invitation.email}</td>
+                      <td className="p-3 text-center capitalize">{invitation.role}</td>
+                      <td className="p-3 text-center">
+                        <span className={`text-xs px-2 py-1 rounded ${invitationStatusBadge[invitation.status] || ""}`}>
+                          {invitation.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center text-muted-foreground">
+                        {invitation.createdAt ? new Date(invitation.createdAt).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="p-3 text-center text-muted-foreground">
+                        {new Date(invitation.expiresAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-center gap-3 text-xs">
+                          {isPending && canManageOwnerInvite ? (
+                            <>
+                              <form
+                                action={async (formData) => {
+                                  "use server";
+                                  const result = await resendInvite(formData);
+                                  redirectWithFeedback("/settings/team", result);
+                                }}
+                              >
+                                <input type="hidden" name="invitationId" value={invitation.id} />
+                                <button type="submit" className="text-primary hover:underline">
+                                  Resend
+                                </button>
+                              </form>
+                              <form
+                                action={async (formData) => {
+                                  "use server";
+                                  const result = await revokeInvite(formData);
+                                  redirectWithFeedback("/settings/team", result);
+                                }}
+                              >
+                                <input type="hidden" name="invitationId" value={invitation.id} />
+                                <button type="submit" className="text-red-600 hover:underline">
+                                  Revoke
+                                </button>
+                              </form>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-4">

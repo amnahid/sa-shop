@@ -4,7 +4,8 @@ import { v4 as uuidv4 } from "uuid";
 import { 
   User, Tenant, Membership, Branch, Category, Product, 
   StockLevel, Customer, InvoiceCounter, Invoice, 
-  Supplier, PurchaseOrder, StockBatch, StockMovement 
+  Supplier, PurchaseOrder, StockBatch, StockMovement,
+  TenantZatcaConfig
 } from "../src/models";
 
 // ── DB Connection ─────────────────────────────────────────────────────────────
@@ -192,6 +193,7 @@ async function seed() {
     Product, Category,
     Branch,
     Membership,
+    TenantZatcaConfig,
     Tenant,
     User,
   ];
@@ -242,6 +244,25 @@ async function seed() {
   });
   const tenantId = tenant._id;
   console.log(`   Tenant: Al Nakheel Grocery (Riyadh)`);
+
+  await TenantZatcaConfig.create({
+    tenantId,
+    sellerName: "Al Nakheel Grocery",
+    sellerNameAr: "بقالة النخيل",
+    trn: "310987654321003",
+    address: {
+      buildingNumber: "1234",
+      streetName: "King Fahd Road",
+      district: "Al Nakheel District",
+      city: "Riyadh",
+      postalCode: "12345",
+      countryCode: "SA"
+    },
+    environment: "sandbox",
+    isActive: true,
+    updatedBy: user._id,
+  });
+  console.log(`   Tenant ZATCA Configuration created`);
 
   await Membership.create({
     userId: user._id,

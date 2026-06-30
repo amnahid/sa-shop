@@ -28,7 +28,10 @@ export function PrintPage({ children, format, backUrl }: PrintPageProps) {
   }, [printTriggered]);
 
   useEffect(() => {
-    triggerPrint();
+    const timer = setTimeout(() => {
+      triggerPrint();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [triggerPrint]);
 
   const formatClass =

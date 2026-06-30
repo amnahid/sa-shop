@@ -11,6 +11,7 @@ import { ZatcaInvoiceData, ZATCA_INITIAL_PIH } from "@/integration/zatca/types";
 import { sendInvoiceReceipt } from "@/lib/email";
 import { reportCriticalFailure } from "@/lib/ops-monitoring";
 import { sendInvoiceViaWhatsApp } from "@/lib/actions/invoice-whatsapp";
+import { generateQrCodePng, generateInvoiceHash } from "@/lib/utils/zatca-qr";
 import mongoose from "mongoose";
 
 function round2(n: number) {
@@ -166,59 +167,97 @@ export async function processSale(formData: FormData) {
     const previousHash = counter.previousInvoiceHash || ZATCA_INITIAL_PIH;
 
     // 2. Prepare ZATCA signing
-    const zatcaConfig = await TenantZatcaConfig.findOne({ tenantId }).session(mongoSession);
     const tenant = await Tenant.findById(tenantId).session(mongoSession);
-    const customer = resolvedCustomerId ? await Customer.findById(resolvedCustomerId).session(mongoSession) : null;
-
-    if (!zatcaConfig || !tenant) {
-      throw new Error("Tenant ZATCA configuration is missing");
+    if (!tenant) {
+      return { error: "Tenant not found" };
     }
 
-    const zatcaClient = new ZatcaClient(zatcaConfig);
+    const zatcaConfig = await TenantZatcaConfig.findOne({ tenantId }).session(mongoSession);
+    const customer = resolvedCustomerId ? await Customer.findById(resolvedCustomerId).session(mongoSession) : null;
     const invoiceType: "Simplified" | "Standard" = (grandTotal >= 1000 && customer?.vatNumber) ? "Standard" : "Simplified";
 
-    const zatcaData: ZatcaInvoiceData = {
-      uuid: invoiceId.toString(),
-      invoiceNumber,
-      invoiceType,
-      issueDate: now,
-      pih: previousHash,
-      currency: "SAR",
-      subtotal,
-      vatTotal,
-      totalWithVat: grandTotal,
-      seller: {
-        name: zatcaConfig.sellerName,
-        nameAr: zatcaConfig.sellerNameAr,
-        trn: zatcaConfig.trn,
-        buildingNumber: zatcaConfig.address.buildingNumber,
-        streetName: zatcaConfig.address.streetName,
-        district: zatcaConfig.address.district,
-        city: zatcaConfig.address.city,
-        postalCode: zatcaConfig.address.postalCode,
-        countryCode: "SA",
-      },
-      buyer: {
-        name: customer?.name || "Walk-in Customer",
-        trn: customer?.vatNumber || undefined,
-        // Simplified invoices can omit buyer details, but standard needs them
-        buildingNumber: "1234", 
-        streetName: "Street",
-        district: "District",
-        city: "City",
-        postalCode: "12345",
-      },
-      lineItems: lines.map(l => ({
-        name: l.name,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        vatRate: l.vatRate * 100,
-        vatAmount: l.vatAmount,
-        totalAmount: l.totalAmount,
-      })),
-    };
+    let zatcaResult;
+    const canSubmit = zatcaConfig && (zatcaConfig.productionCsid || zatcaConfig.complianceCsid);
 
-    const zatcaResult = await zatcaClient.processInvoice(zatcaData);
+    if (canSubmit) {
+      try {
+        const zatcaClient = new ZatcaClient(zatcaConfig);
+        const zatcaData: ZatcaInvoiceData = {
+          uuid: invoiceId.toString(),
+          invoiceNumber,
+          invoiceType,
+          issueDate: now,
+          pih: previousHash,
+          currency: "SAR",
+          subtotal,
+          vatTotal,
+          totalWithVat: grandTotal,
+          seller: {
+            name: zatcaConfig.sellerName,
+            nameAr: zatcaConfig.sellerNameAr,
+            trn: zatcaConfig.trn,
+            buildingNumber: zatcaConfig.address.buildingNumber,
+            streetName: zatcaConfig.address.streetName,
+            district: zatcaConfig.address.district,
+            city: zatcaConfig.address.city,
+            postalCode: zatcaConfig.address.postalCode,
+            countryCode: "SA",
+          },
+          buyer: {
+            name: customer?.name || "Walk-in Customer",
+            trn: customer?.vatNumber || undefined,
+            buildingNumber: "1234", 
+            streetName: "Street",
+            district: "District",
+            city: "City",
+            postalCode: "12345",
+          },
+          lineItems: lines.map(l => ({
+            name: l.name,
+            quantity: l.quantity,
+            unitPrice: l.unitPrice,
+            vatRate: l.vatRate * 100,
+            vatAmount: l.vatAmount,
+            totalAmount: l.totalAmount,
+          })),
+        };
+        zatcaResult = await zatcaClient.processInvoice(zatcaData);
+      } catch (zatcaError) {
+        console.error("ZATCA signing failed, falling back to Phase 1:", zatcaError);
+      }
+    }
+
+    if (!zatcaResult) {
+      // Fallback: Generate a standard Phase 1 compliant QR code and mock invoice hash
+      const mockQrCode = await generateQrCodePng({
+        sellerName: tenant.name || "SA Shop",
+        sellerVatNumber: tenant.vatNumber || "310987654321003",
+        timestamp: now.toISOString(),
+        invoiceTotal: grandTotal,
+        vatTotal: vatTotal,
+      });
+
+      const mockHash = await generateInvoiceHash({
+        invoiceNumber,
+        issuedAt: now,
+        grandTotal,
+        vatTotal,
+        lines: lines.map(l => ({
+          name: l.name,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          totalAmount: l.totalAmount,
+        })),
+      });
+
+      zatcaResult = {
+        uuid: invoiceId.toString(),
+        qrCode: mockQrCode,
+        xml: "N/A",
+        xmlHash: mockHash,
+        status: "failed", // Set status to failed as in car-dealership, but allow checkout to succeed
+      };
+    }
 
     // 3. Update PIH for next invoice
     await InvoiceCounter.updateOne(

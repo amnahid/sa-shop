@@ -109,6 +109,7 @@ export default async function EmailTemplatesPage() {
           <p className="text-sm text-muted-foreground">No email templates created yet.</p>
         ) : (
           <div className="overflow-hidden rounded-md border">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
@@ -147,6 +148,7 @@ export default async function EmailTemplatesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
           </div>
         )}
       </section>

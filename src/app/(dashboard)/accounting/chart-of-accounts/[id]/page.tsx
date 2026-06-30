@@ -127,26 +127,28 @@ export default async function AccountDetailPage({ params }: Props) {
         {recentEntries.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground">No entries posted to this account yet.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-start font-medium">Date</th>
-                <th className="p-3 text-start font-medium">Type</th>
-                <th className="p-3 text-start font-medium">Counterparty</th>
-                <th className="p-3 text-end font-medium">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentEntries.map((entry) => (
-                <tr key={entry._id.toString()} className="border-t">
-                  <td className="p-3 text-muted-foreground">{entry.entryDate.toLocaleDateString()}</td>
-                  <td className="p-3 capitalize">{entry.kind}</td>
-                  <td className="p-3 text-muted-foreground">{entry.counterpartyName || "-"}</td>
-                  <td className="p-3 text-end font-medium">SAR {entry.amount.toFixed(2)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="p-3 text-start font-medium">Date</th>
+                  <th className="p-3 text-start font-medium">Type</th>
+                  <th className="p-3 text-start font-medium">Counterparty</th>
+                  <th className="p-3 text-end font-medium">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentEntries.map((entry) => (
+                  <tr key={entry._id.toString()} className="border-t">
+                    <td className="p-3 text-muted-foreground">{entry.entryDate.toLocaleDateString()}</td>
+                    <td className="p-3 capitalize">{entry.kind}</td>
+                    <td className="p-3 text-muted-foreground">{entry.counterpartyName || "-"}</td>
+                    <td className="p-3 text-end font-medium">SAR {entry.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

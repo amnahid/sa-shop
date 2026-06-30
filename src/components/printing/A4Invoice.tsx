@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { formatSAR, formatDateShort, numberToWords, getPaymentMethodLabel, getPaymentMethodLabelAr } from "@/lib/printing/format";
-import type { IInvoice, IInvoiceLine, IInvoicePayment } from "@/models/sales/Invoice";
+import type { IInvoice } from "@/models/sales/Invoice";
 import type { ITenant } from "@/models/tenancy/Tenant";
 import type { IBranch } from "@/models/tenancy/Branch";
 

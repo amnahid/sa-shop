@@ -48,39 +48,41 @@ export default async function ProductStockPage({ params }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-card border rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-4">Stock by Branch</h2>
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-start p-2 text-sm font-medium">Branch</th>
-                <th className="text-end p-2 text-sm font-medium">Quantity</th>
-                <th className="text-end p-2 text-sm font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {branches.map(branch => {
-                const stock = stockLevels.find(s => s.branchId.toString() === branch._id.toString());
-                const qty = stock ? parseFloat(stock.quantity.toString()) : 0;
-                const isLow = qty > 0 && qty <= product.lowStockThreshold;
-                const isZero = qty === 0;
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-start p-2 text-sm font-medium">Branch</th>
+                  <th className="text-end p-2 text-sm font-medium">Quantity</th>
+                  <th className="text-end p-2 text-sm font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {branches.map(branch => {
+                  const stock = stockLevels.find(s => s.branchId.toString() === branch._id.toString());
+                  const qty = stock ? parseFloat(stock.quantity.toString()) : 0;
+                  const isLow = qty > 0 && qty <= product.lowStockThreshold;
+                  const isZero = qty === 0;
 
-                return (
-                  <tr key={branch._id.toString()} className="border-t">
-                    <td className="p-2">{branch.name}</td>
-                    <td className="p-2 text-end font-medium">{qty}</td>
-                    <td className="p-2 text-end">
-                      {isZero ? (
-                        <span className="text-red-600 text-sm">Out of stock</span>
-                      ) : isLow ? (
-                        <span className="text-yellow-600 text-sm">Low</span>
-                      ) : (
-                        <span className="text-green-600 text-sm">OK</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={branch._id.toString()} className="border-t">
+                      <td className="p-2">{branch.name}</td>
+                      <td className="p-2 text-end font-medium">{qty}</td>
+                      <td className="p-2 text-end">
+                        {isZero ? (
+                          <span className="text-red-600 text-sm">Out of stock</span>
+                        ) : isLow ? (
+                          <span className="text-yellow-600 text-sm">Low</span>
+                        ) : (
+                          <span className="text-green-600 text-sm">OK</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="bg-card border rounded-lg p-4">
@@ -119,45 +121,47 @@ export default async function ProductStockPage({ params }: Props) {
         {movements.length === 0 ? (
           <p className="text-muted-foreground text-sm">No movements yet</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-start p-2">Date</th>
-                <th className="text-start p-2">Branch</th>
-                <th className="text-start p-2">Type</th>
-                <th className="text-end p-2">Qty</th>
-                <th className="text-start p-2">Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map(m => {
-                const branch = branches.find(b => b._id.toString() === m.branchId?.toString());
-                const typeLabels: Record<string, string> = {
-                  sale: "Sale",
-                  refund: "Refund",
-                  purchase: "Purchase",
-                  adjustment: "Adjustment",
-                  transfer_out: "Transfer Out",
-                  transfer_in: "Transfer In",
-                  waste: "Waste",
-                  expired: "Expired",
-                };
-                const qty = parseFloat(m.quantityDelta.toString());
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-start p-2">Date</th>
+                  <th className="text-start p-2">Branch</th>
+                  <th className="text-start p-2">Type</th>
+                  <th className="text-end p-2">Qty</th>
+                  <th className="text-start p-2">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.map(m => {
+                  const branch = branches.find(b => b._id.toString() === m.branchId?.toString());
+                  const typeLabels: Record<string, string> = {
+                    sale: "Sale",
+                    refund: "Refund",
+                    purchase: "Purchase",
+                    adjustment: "Adjustment",
+                    transfer_out: "Transfer Out",
+                    transfer_in: "Transfer In",
+                    waste: "Waste",
+                    expired: "Expired",
+                  };
+                  const qty = parseFloat(m.quantityDelta.toString());
 
-                return (
-                  <tr key={m._id.toString()} className="border-t">
-                    <td className="p-2">{m.createdAt.toLocaleDateString()}</td>
-                    <td className="p-2">{branch?.name || "-"}</td>
-                    <td className="p-2">{typeLabels[m.type] || m.type}</td>
-                    <td className={`p-2 text-end ${qty > 0 ? "text-green-600" : "text-red-600"}`}>
-                      {qty > 0 ? "+" : ""}{qty}
-                    </td>
-                    <td className="p-2 text-muted-foreground">{m.reason || "-"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={m._id.toString()} className="border-t">
+                      <td className="p-2">{m.createdAt.toLocaleDateString()}</td>
+                      <td className="p-2">{branch?.name || "-"}</td>
+                      <td className="p-2">{typeLabels[m.type] || m.type}</td>
+                      <td className={`p-2 text-end ${qty > 0 ? "text-green-600" : "text-red-600"}`}>
+                        {qty > 0 ? "+" : ""}{qty}
+                      </td>
+                      <td className="p-2 text-muted-foreground">{m.reason || "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

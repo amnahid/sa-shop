@@ -105,55 +105,57 @@ export default async function ProposalDetailPage({ params }: Props) {
         <div className="border-b p-4">
           <h2 className="font-semibold">Line Items</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="p-3 text-start font-medium">Product</th>
-              <th className="p-3 text-center font-medium">Qty</th>
-              <th className="p-3 text-end font-medium">Unit Price</th>
-              <th className="p-3 text-end font-medium">VAT</th>
-              <th className="p-3 text-end font-medium">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {proposal.lines.map((line, index) => (
-              <tr key={`${line.sku}-${index}`} className="border-t">
-                <td className="p-3">
-                  <span className="font-medium">{line.name}</span>
-                  <span className="block text-xs text-muted-foreground">{line.sku}</span>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="p-3 text-start font-medium">Product</th>
+                <th className="p-3 text-center font-medium">Qty</th>
+                <th className="p-3 text-end font-medium">Unit Price</th>
+                <th className="p-3 text-end font-medium">VAT</th>
+                <th className="p-3 text-end font-medium">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {proposal.lines.map((line, index) => (
+                <tr key={`${line.sku}-${index}`} className="border-t">
+                  <td className="p-3">
+                    <span className="font-medium">{line.name}</span>
+                    <span className="block text-xs text-muted-foreground">{line.sku}</span>
+                  </td>
+                  <td className="p-3 text-center">{line.quantity}</td>
+                  <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {parseFloat(line.lineVatAmount.toString()).toFixed(2)}</td>
+                  <td className="p-3 text-end font-medium">
+                    SAR {parseFloat(line.lineTotal.toString()).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t-2 bg-muted text-sm">
+              <tr>
+                <td colSpan={4} className="p-3 text-end font-medium">
+                  Subtotal
                 </td>
-                <td className="p-3 text-center">{line.quantity}</td>
-                <td className="p-3 text-end">SAR {parseFloat(line.unitPrice.toString()).toFixed(2)}</td>
-                <td className="p-3 text-end">SAR {parseFloat(line.lineVatAmount.toString()).toFixed(2)}</td>
-                <td className="p-3 text-end font-medium">
-                  SAR {parseFloat(line.lineTotal.toString()).toFixed(2)}
+                <td className="p-3 text-end">SAR {parseFloat(proposal.subtotal.toString()).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td colSpan={4} className="p-3 text-end font-medium">
+                  VAT
+                </td>
+                <td className="p-3 text-end">SAR {parseFloat(proposal.vatTotal.toString()).toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td colSpan={4} className="p-3 text-end text-base font-bold">
+                  Grand Total
+                </td>
+                <td className="p-3 text-end text-base font-bold">
+                  SAR {parseFloat(proposal.grandTotal.toString()).toFixed(2)}
                 </td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot className="border-t-2 bg-muted text-sm">
-            <tr>
-              <td colSpan={4} className="p-3 text-end font-medium">
-                Subtotal
-              </td>
-              <td className="p-3 text-end">SAR {parseFloat(proposal.subtotal.toString()).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td colSpan={4} className="p-3 text-end font-medium">
-                VAT
-              </td>
-              <td className="p-3 text-end">SAR {parseFloat(proposal.vatTotal.toString()).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td colSpan={4} className="p-3 text-end text-base font-bold">
-                Grand Total
-              </td>
-              <td className="p-3 text-end text-base font-bold">
-                SAR {parseFloat(proposal.grandTotal.toString()).toFixed(2)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
       <div className="mb-6 rounded-lg border bg-card p-4">

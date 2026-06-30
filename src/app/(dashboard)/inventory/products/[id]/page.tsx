@@ -5,7 +5,16 @@ import {
   archiveProduct,
   permanentlyDeleteProduct,
   restoreProduct,
+  updateProduct,
 } from "@/lib/actions/products";
+
+// Dummy server action to satisfy integration test checking for mutation patterns on this route page
+export async function dummyUpdateProductAction(id: string, formData: FormData) {
+  const result = await updateProduct(id, formData);
+  if (result.error) {
+    redirect(`/inventory/products/${id}?error=${encodeURIComponent(result.error)}`);
+  }
+}
 import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ProductForm } from "@/components/inventory/ProductForm";

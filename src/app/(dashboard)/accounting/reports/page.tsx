@@ -284,42 +284,44 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
         {trialBalance.rows.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground">No posted entries found for this period.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-start font-medium">Account</th>
-                <th className="p-3 text-start font-medium">Type</th>
-                <th className="p-3 text-end font-medium">Debit</th>
-                <th className="p-3 text-end font-medium">Credit</th>
-                <th className="p-3 text-end font-medium">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trialBalance.rows.map((row) => (
-                <tr key={row.accountId.toString()} className="border-t">
-                  <td className="p-3">
-                    {row.accountCode} · {row.accountName}
-                  </td>
-                  <td className="p-3 capitalize text-muted-foreground">{row.accountType}</td>
-                  <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
-                  <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
-                  <td className={`p-3 text-end font-medium ${row.balance >= 0 ? "" : "text-red-600"}`}>
-                    SAR {row.balance.toFixed(2)}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="p-3 text-start font-medium">Account</th>
+                  <th className="p-3 text-start font-medium">Type</th>
+                  <th className="p-3 text-end font-medium">Debit</th>
+                  <th className="p-3 text-end font-medium">Credit</th>
+                  <th className="p-3 text-end font-medium">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trialBalance.rows.map((row) => (
+                  <tr key={row.accountId.toString()} className="border-t">
+                    <td className="p-3">
+                      {row.accountCode} · {row.accountName}
+                    </td>
+                    <td className="p-3 capitalize text-muted-foreground">{row.accountType}</td>
+                    <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
+                    <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
+                    <td className={`p-3 text-end font-medium ${row.balance >= 0 ? "" : "text-red-600"}`}>
+                      SAR {row.balance.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-muted/50 font-medium">
+                <tr>
+                  <td className="p-3" colSpan={2}>Totals</td>
+                  <td className="p-3 text-end">SAR {trialBalance.totalDebit.toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {trialBalance.totalCredit.toFixed(2)}</td>
+                  <td className={`p-3 text-end ${hasTrialImbalance ? "text-red-600" : "text-green-700"}`}>
+                    {hasTrialImbalance ? "Not Balanced" : "Balanced"}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-muted/50 font-medium">
-              <tr>
-                <td className="p-3" colSpan={2}>Totals</td>
-                <td className="p-3 text-end">SAR {trialBalance.totalDebit.toFixed(2)}</td>
-                <td className="p-3 text-end">SAR {trialBalance.totalCredit.toFixed(2)}</td>
-                <td className={`p-3 text-end ${hasTrialImbalance ? "text-red-600" : "text-green-700"}`}>
-                  {hasTrialImbalance ? "Not Balanced" : "Balanced"}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
 
@@ -335,51 +337,53 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
         {ledger.rows.length === 0 ? (
           <div className="p-6 text-sm text-muted-foreground">No ledger entries in this range for the selected account.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="p-3 text-start font-medium">Date</th>
-                <th className="p-3 text-start font-medium">Type</th>
-                <th className="p-3 text-start font-medium">Counterparty / Ref</th>
-                <th className="p-3 text-end font-medium">Debit</th>
-                <th className="p-3 text-end font-medium">Credit</th>
-                <th className="p-3 text-end font-medium">Running Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t bg-muted/40">
-                <td className="p-3" colSpan={5}>Opening Balance</td>
-                <td className={`p-3 text-end font-medium ${ledger.openingBalance < 0 ? "text-red-600" : ""}`}>
-                  SAR {ledger.openingBalance.toFixed(2)}
-                </td>
-              </tr>
-              {ledger.rows.map((row) => (
-                <tr key={row.id} className="border-t">
-                  <td className="p-3 text-muted-foreground">{row.entryDate.toLocaleDateString()}</td>
-                  <td className="p-3 capitalize">{row.kind}</td>
-                  <td className="p-3 text-muted-foreground">
-                    {row.counterpartyName || "-"}
-                    {row.referenceId ? ` · ${row.referenceId}` : ""}
-                  </td>
-                  <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
-                  <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
-                  <td className={`p-3 text-end font-medium ${row.runningBalance < 0 ? "text-red-600" : ""}`}>
-                    SAR {row.runningBalance.toFixed(2)}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="p-3 text-start font-medium">Date</th>
+                  <th className="p-3 text-start font-medium">Type</th>
+                  <th className="p-3 text-start font-medium">Counterparty / Ref</th>
+                  <th className="p-3 text-end font-medium">Debit</th>
+                  <th className="p-3 text-end font-medium">Credit</th>
+                  <th className="p-3 text-end font-medium">Running Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t bg-muted/40">
+                  <td className="p-3" colSpan={5}>Opening Balance</td>
+                  <td className={`p-3 text-end font-medium ${ledger.openingBalance < 0 ? "text-red-600" : ""}`}>
+                    SAR {ledger.openingBalance.toFixed(2)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot className="bg-muted/50 font-medium">
-              <tr>
-                <td className="p-3" colSpan={3}>Period Totals</td>
-                <td className="p-3 text-end">SAR {ledger.periodDebit.toFixed(2)}</td>
-                <td className="p-3 text-end">SAR {ledger.periodCredit.toFixed(2)}</td>
-                <td className={`p-3 text-end ${ledger.closingBalance < 0 ? "text-red-600" : "text-foreground"}`}>
-                  SAR {ledger.closingBalance.toFixed(2)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                {ledger.rows.map((row) => (
+                  <tr key={row.id} className="border-t">
+                    <td className="p-3 text-muted-foreground">{row.entryDate.toLocaleDateString()}</td>
+                    <td className="p-3 capitalize">{row.kind}</td>
+                    <td className="p-3 text-muted-foreground">
+                      {row.counterpartyName || "-"}
+                      {row.referenceId ? ` · ${row.referenceId}` : ""}
+                    </td>
+                    <td className="p-3 text-end">SAR {row.debit.toFixed(2)}</td>
+                    <td className="p-3 text-end">SAR {row.credit.toFixed(2)}</td>
+                    <td className={`p-3 text-end font-medium ${row.runningBalance < 0 ? "text-red-600" : ""}`}>
+                      SAR {row.runningBalance.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="bg-muted/50 font-medium">
+                <tr>
+                  <td className="p-3" colSpan={3}>Period Totals</td>
+                  <td className="p-3 text-end">SAR {ledger.periodDebit.toFixed(2)}</td>
+                  <td className="p-3 text-end">SAR {ledger.periodCredit.toFixed(2)}</td>
+                  <td className={`p-3 text-end ${ledger.closingBalance < 0 ? "text-red-600" : "text-foreground"}`}>
+                    SAR {ledger.closingBalance.toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
 
@@ -391,24 +395,26 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
           {pnl.revenueByAccount.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No revenue entries in this period.</div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-3 text-start font-medium">Account</th>
-                  <th className="p-3 text-end font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pnl.revenueByAccount.map((item) => (
-                  <tr key={item.accountId} className="border-t">
-                    <td className="p-3">
-                      {item.accountCode} · {item.accountName}
-                    </td>
-                    <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-3 text-start font-medium">Account</th>
+                    <th className="p-3 text-end font-medium">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pnl.revenueByAccount.map((item) => (
+                    <tr key={item.accountId} className="border-t">
+                      <td className="p-3">
+                        {item.accountCode} · {item.accountName}
+                      </td>
+                      <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -419,24 +425,26 @@ export default async function AccountingReportsPage({ searchParams }: Props) {
           {pnl.expenseByAccount.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No expense entries in this period.</div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-3 text-start font-medium">Account</th>
-                  <th className="p-3 text-end font-medium">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pnl.expenseByAccount.map((item) => (
-                  <tr key={item.accountId} className="border-t">
-                    <td className="p-3">
-                      {item.accountCode} · {item.accountName}
-                    </td>
-                    <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="p-3 text-start font-medium">Account</th>
+                    <th className="p-3 text-end font-medium">Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pnl.expenseByAccount.map((item) => (
+                    <tr key={item.accountId} className="border-t">
+                      <td className="p-3">
+                        {item.accountCode} · {item.accountName}
+                      </td>
+                      <td className="p-3 text-end font-medium">SAR {item.total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

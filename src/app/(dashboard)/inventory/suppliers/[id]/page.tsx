@@ -98,28 +98,30 @@ export default async function SupplierDetailPage({ params }: Props) {
         {purchaseOrders.length === 0 ? (
           <div className="p-6 text-center text-muted-foreground text-sm">No purchase orders</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-start p-3 font-medium">PO #</th>
-                <th className="text-start p-3 font-medium">Date</th>
-                <th className="text-end p-3 font-medium">Total</th>
-                <th className="text-center p-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchaseOrders.map(po => (
-                <tr key={po._id.toString()} className="border-t">
-                  <td className="p-3 font-medium">{po.poNumber}</td>
-                  <td className="p-3 text-muted-foreground">{po.issuedAt.toLocaleDateString()}</td>
-                  <td className="p-3 text-end">SAR {po.lines.reduce((s: number, l: { totalCost: unknown }) => s + (l.totalCost as number), 0).toFixed(2)}</td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-1 rounded ${statusColors[po.status] || ""}`}>{po.status.replace("_", " ")}</span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-start p-3 font-medium">PO #</th>
+                  <th className="text-start p-3 font-medium">Date</th>
+                  <th className="text-end p-3 font-medium">Total</th>
+                  <th className="text-center p-3 font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {purchaseOrders.map(po => (
+                  <tr key={po._id.toString()} className="border-t">
+                    <td className="p-3 font-medium">{po.poNumber}</td>
+                    <td className="p-3 text-muted-foreground">{po.issuedAt.toLocaleDateString()}</td>
+                    <td className="p-3 text-end">SAR {po.lines.reduce((s: number, l: { totalCost: unknown }) => s + (l.totalCost as number), 0).toFixed(2)}</td>
+                    <td className="p-3 text-center">
+                      <span className={`text-xs px-2 py-1 rounded ${statusColors[po.status] || ""}`}>{po.status.replace("_", " ")}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

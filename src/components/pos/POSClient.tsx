@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, User, Plus, Package, Check, ChevronsUpDown, Percent, Truck } from "lucide-react";
+import { Search, User, Plus, Package, Check, ChevronsUpDown, Percent, Truck, X } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -130,6 +130,7 @@ export function POSClient({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [parkedSales, setParkedSales] = useState<any[]>([]);
   const [showParkedSales, setShowParkedSales] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
 
   const searchCustomers = useCallback(async (query: string) => {
     setCustomerSearch(query);
@@ -282,7 +283,7 @@ export function POSClient({
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-[#f2f3f8]">
+    <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-hidden bg-[#f2f3f8]">
       {/* LEFT: Products Area */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="p-4 flex items-center gap-4">
@@ -388,9 +389,29 @@ export function POSClient({
         </div>
       </div>
 
+      {/* RIGHT: Cart Area Backdrop (mobile only) */}
+      {isCartDrawerOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-20 lg:hidden animate-in fade-in duration-200"
+          onClick={() => setIsCartDrawerOpen(false)}
+        />
+      )}
+
       {/* RIGHT: Cart Area */}
-      <div className="w-[400px] bg-white border-l border-gray-200 flex flex-col min-h-0 shadow-lg z-10 relative">
+      <div 
+        className={cn(
+          "fixed inset-y-0 end-0 z-30 w-full max-w-[400px] bg-white border-s border-gray-200 flex flex-col min-h-0 shadow-lg transition-transform duration-300 lg:static lg:translate-x-0 lg:z-10",
+          isCartDrawerOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
         <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+          <button
+            onClick={() => setIsCartDrawerOpen(false)}
+            className="lg:hidden p-2 -ms-1 hover:bg-gray-100 rounded-md text-gray-500 transition-colors"
+            aria-label="Close cart"
+          >
+            <X className="size-5" />
+          </button>
           <div className="flex-1 relative">
             <Popover open={showCustomerSearch} onOpenChange={(val) => {
               setShowCustomerSearch(val);
@@ -781,6 +802,24 @@ export function POSClient({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Bottom Floating Bar for Mobile/Tablet */}
+      <div className="lg:hidden bg-white border-t border-gray-200 p-4 flex items-center justify-between shrink-0 shadow-md z-15">
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+            {cart.reduce((s, i) => s + i.quantity, 0)} items
+          </span>
+          <span className="text-lg font-extrabold text-[#111723]">
+            SAR {grandTotal.toFixed(2)}
+          </span>
+        </div>
+        <button
+          onClick={() => setIsCartDrawerOpen(true)}
+          className="h-11 px-6 rounded-md bg-[#377dff] text-white text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm"
+        >
+          View Cart
+        </button>
       </div>
     </div>
   );

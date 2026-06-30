@@ -5,6 +5,7 @@ import {
   ZatcaProcessResult, 
   ZATCA_INITIAL_PIH 
 } from './types';
+import QRCode from 'qrcode';
 
 export class ZatcaClient {
   private egs: EGS;
@@ -145,9 +146,16 @@ export class ZatcaClient {
       // We still return the signed XML even if reporting fails, for record keeping
     }
 
+    let visualQrCode = qr;
+    try {
+      visualQrCode = await QRCode.toDataURL(qr);
+    } catch (qrError) {
+      console.error("Failed to convert TLV to visual QR code:", qrError);
+    }
+
     return {
       uuid: data.uuid,
-      qrCode: qr,
+      qrCode: visualQrCode,
       xml: clearedXml || signed_invoice_string,
       xmlHash: invoice_hash,
       status,

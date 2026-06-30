@@ -102,56 +102,58 @@ export default async function PurchaseOrderDetailPage({ params }: Props) {
         <div className="p-4 border-b">
           <h2 className="font-semibold">Line Items</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className="text-start p-3 font-medium">Product</th>
-              <th className="text-end p-3 font-medium">Unit Cost</th>
-              <th className="text-center p-3 font-medium">Ordered</th>
-              <th className="text-center p-3 font-medium">Received</th>
-              <th className="text-end p-3 font-medium">Total</th>
-              <th className="text-center p-3 font-medium">Receive</th>
-            </tr>
-          </thead>
-          <tbody>
-            {po.lines.map((line, i) => {
-              const remaining = line.quantityOrdered - line.quantityReceived;
-              const isFullyReceived = remaining <= 0;
-              return (
-                <tr key={i} className="border-t">
-                  <td className="p-3">
-                    <span className="font-medium">{line.name}</span>
-                    <span className="block text-xs text-muted-foreground">{line.sku}</span>
-                  </td>
-                  <td className="p-3 text-end">SAR {line.unitCost.toFixed(2)}</td>
-                  <td className="p-3 text-center">{line.quantityOrdered}</td>
-                  <td className={`p-3 text-center font-medium ${isFullyReceived ? "text-green-600" : "text-orange-600"}`}>
-                    {line.quantityReceived}
-                  </td>
-                  <td className="p-3 text-end font-medium">SAR {line.totalCost.toFixed(2)}</td>
-                  <td className="p-3 text-center">
-                    {canReceive && !isFullyReceived ? (
-                      <ReceiveLineButton
-                        poId={id}
-                        lineIndex={i}
-                        remaining={remaining}
-                      />
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot className="bg-muted border-t-2">
-            <tr>
-              <td colSpan={4} className="p-3 font-medium text-end">Total</td>
-              <td className="p-3 text-end font-bold">SAR {totalValue.toFixed(2)}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-start p-3 font-medium">Product</th>
+                <th className="text-end p-3 font-medium">Unit Cost</th>
+                <th className="text-center p-3 font-medium">Ordered</th>
+                <th className="text-center p-3 font-medium">Received</th>
+                <th className="text-end p-3 font-medium">Total</th>
+                <th className="text-center p-3 font-medium">Receive</th>
+              </tr>
+            </thead>
+            <tbody>
+              {po.lines.map((line, i) => {
+                const remaining = line.quantityOrdered - line.quantityReceived;
+                const isFullyReceived = remaining <= 0;
+                return (
+                  <tr key={i} className="border-t">
+                    <td className="p-3">
+                      <span className="font-medium">{line.name}</span>
+                      <span className="block text-xs text-muted-foreground">{line.sku}</span>
+                    </td>
+                    <td className="p-3 text-end">SAR {line.unitCost.toFixed(2)}</td>
+                    <td className="p-3 text-center">{line.quantityOrdered}</td>
+                    <td className={`p-3 text-center font-medium ${isFullyReceived ? "text-green-600" : "text-orange-600"}`}>
+                      {line.quantityReceived}
+                    </td>
+                    <td className="p-3 text-end font-medium">SAR {line.totalCost.toFixed(2)}</td>
+                    <td className="p-3 text-center">
+                      {canReceive && !isFullyReceived ? (
+                        <ReceiveLineButton
+                          poId={id}
+                          lineIndex={i}
+                          remaining={remaining}
+                        />
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="bg-muted border-t-2">
+              <tr>
+                <td colSpan={4} className="p-3 font-medium text-end">Total</td>
+                <td className="p-3 text-end font-bold">SAR {totalValue.toFixed(2)}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 text-sm">
