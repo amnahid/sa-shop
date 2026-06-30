@@ -61,13 +61,13 @@ export function useTranslation() {
     throw new Error("useTranslation must be used within a LanguageProvider");
   }
   
-  const t = (path: string): string => {
+  const t = (path: string, fallback?: string): string => {
     const keys = path.split(".");
     let value = context.dictionary;
     for (const key of keys) {
       value = value?.[key];
     }
-    return (value as unknown as string) || path;
+    return (value as unknown as string) || fallback || path;
   };
 
   return { t, locale: context.locale, setLocale: context.setLocale, isPending: context.isPending };

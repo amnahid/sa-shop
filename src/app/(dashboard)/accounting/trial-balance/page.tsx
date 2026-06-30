@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { getCurrentMembership } from "@/lib/utils/membership";
 import { hasAccountingRouteAccess } from "@/lib/utils/accounting-access";
 import { getTrialBalanceReport } from "@/lib/actions/accounting";
+import { cookies } from "next/headers";
+import { getDictionary, Locale } from "@/lib/i18n/get-dictionary";
 
 interface Props {
   searchParams: Promise<{
@@ -17,6 +19,11 @@ export default async function TrialBalancePage({ searchParams }: Props) {
 
   const membership = await getCurrentMembership();
   if (!hasAccountingRouteAccess(membership)) redirect("/dashboard");
+
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("NEXT_LOCALE")?.value as Locale) || "en";
+  const dict = await getDictionary(locale);
+  const t = (key: string, fallback: string) => (dict.trialBalance as any)?.[key] || fallback;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -40,15 +47,18 @@ export default async function TrialBalancePage({ searchParams }: Props) {
   });
 
   return (
-    <>
+    <div dir={locale === "ar" ? "rtl" : "ltr"}>
       <PageHeader
-        title="Trial Balance"
-        section="Accounting"
-        breadcrumbs={[{ label: "Accounting", href: "/accounting" }, { label: "Trial Balance" }]}
-        description="Summarised balances for all accounts — opening, period activity, and closing."
+        title={t("title", "Trial Balance")}
+        section={t("section", "Accounting")}
+        breadcrumbs={[
+          { label: locale === "ar" ? "المحاسبة" : "Accounting", href: "/accounting" },
+          { label: t("title", "Trial Balance") }
+        ]}
+        description={t("description", "Summarised balances for all accounts — opening, period activity, and closing.")}
         actions={
           <Link href="/accounting" className="text-sm text-primary hover:underline">
-            Back to Accounting
+            {t("back", "Back to Accounting")}
           </Link>
         }
       />
@@ -61,50 +71,50 @@ export default async function TrialBalancePage({ searchParams }: Props) {
 
       <form className="mb-4 rounded-lg border bg-card p-4 flex flex-wrap items-end gap-3">
         <div>
-          <label className="mb-1 block text-sm font-medium">From</label>
+          <label className="mb-1 block text-sm font-medium">{t("from", "From")}</label>
           <input
             type="date"
             name="fromDate"
             defaultValue={effectiveFromDate}
-            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm text-foreground"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">To</label>
+          <label className="mb-1 block text-sm font-medium">{t("to", "To")}</label>
           <input
             type="date"
             name="toDate"
             defaultValue={effectiveToDate}
-            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm"
+            className="h-11 rounded-md border border-input bg-white bg-background px-3 text-sm text-foreground"
           />
         </div>
         <button
           type="submit"
-          className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
         >
-          Apply
+          {t("apply", "Apply")}
         </button>
         <a
           href={`/api/reports/export?${exportParams.toString()}`}
-          className="inline-flex h-9 items-center justify-center rounded-md border bg-background px-3 text-sm font-medium hover:bg-accent"
+          className="inline-flex h-11 items-center justify-center rounded-md border bg-background px-3 text-sm font-medium text-foreground hover:bg-accent"
         >
-          Export CSV
+          {t("exportCsv", "Export CSV")}
         </a>
       </form>
 
       {report.rows.length === 0 && !error ? (
         <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-          No posted entries found for this period.
+          {t("noEntries", "No posted entries found for this period.")}
         </div>
       ) : !error ? (
         <>
           <div className="mb-4 grid gap-4 md:grid-cols-3">
-            <SummaryCard label="Total Debit (Period)" value={report.totalDebit} />
-            <SummaryCard label="Total Credit (Period)" value={report.totalCredit} />
+            <SummaryCard label={t("totalDebitPeriod", "Total Debit (Period)")} value={report.totalDebit} />
+            <SummaryCard label={t("totalCreditPeriod", "Total Credit (Period)")} value={report.totalCredit} />
             <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="text-sm text-muted-foreground">{t("status", "Status")}</p>
               <p className={`text-xl font-semibold ${hasImbalance ? "text-red-600" : "text-green-700"}`}>
-                {hasImbalance ? "Not Balanced" : "Balanced"}
+                {hasImbalance ? t("notBalanced", "Not Balanced") : t("balanced", "Balanced")}
               </p>
             </div>
           </div>
@@ -114,13 +124,13 @@ export default async function TrialBalancePage({ searchParams }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-muted">
                 <tr>
-                  <th className="p-3 text-start font-medium">Account</th>
-                  <th className="p-3 text-start font-medium">Arabic Name</th>
-                  <th className="p-3 text-start font-medium">Type</th>
-                  <th className="p-3 text-end font-medium">Opening</th>
-                  <th className="p-3 text-end font-medium">Debit</th>
-                  <th className="p-3 text-end font-medium">Credit</th>
-                  <th className="p-3 text-end font-medium">Closing</th>
+                  <th className="p-3 text-start font-medium">{t("account", "Account")}</th>
+                  <th className="p-3 text-start font-medium">{t("arabicName", "Arabic Name")}</th>
+                  <th className="p-3 text-start font-medium">{t("type", "Type")}</th>
+                  <th className="p-3 text-end font-medium">{t("opening", "Opening")}</th>
+                  <th className="p-3 text-end font-medium">{t("debit", "Debit")}</th>
+                  <th className="p-3 text-end font-medium">{t("credit", "Credit")}</th>
+                  <th className="p-3 text-end font-medium">{t("closing", "Closing")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,7 +162,7 @@ export default async function TrialBalancePage({ searchParams }: Props) {
               <tfoot className="bg-muted/50 font-medium">
                 <tr>
                   <td className="p-3" colSpan={3}>
-                    Total Accounts: {report.rows.length}
+                    {t("totalAccounts", "Total Accounts")}: {report.rows.length}
                   </td>
                   <td className="p-3 text-end">
                     SAR {report.rows.reduce((s, r) => s + r.openingBalance, 0).toFixed(2)}
@@ -169,7 +179,7 @@ export default async function TrialBalancePage({ searchParams }: Props) {
           </div>
         </>
       ) : null}
-    </>
+    </div>
   );
 }
 

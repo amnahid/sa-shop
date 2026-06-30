@@ -23,6 +23,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
+
 interface Product {
   _id: string;
   name: string;
@@ -109,6 +111,7 @@ export function POSClient({
 }: Props) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { t, locale } = useTranslation();
   const [products] = useState(initialProducts);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedBranch, setSelectedBranch] = useState(branches.find(b => b.isHeadOffice)?._id || branches[0]?._id || "");
@@ -291,7 +294,7 @@ export function POSClient({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by Product Name/Barcode"
+              placeholder={t("pos.searchProducts")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full h-11 rounded-lg border border-border bg-card pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring outline-none shadow-sm transition-all"
@@ -300,7 +303,7 @@ export function POSClient({
           <div className="pos-branch-wrapper">
             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
               <SelectTrigger className="h-11 bg-card border-border">
-                <SelectValue placeholder="Select Branch" />
+                <SelectValue placeholder={t("pos.activeBranch")} />
               </SelectTrigger>
               <SelectContent>
                 {branches.map((b) => (
@@ -325,7 +328,7 @@ export function POSClient({
                 : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
             )}
           >
-            All Categories
+            {t("pos.allCategories")}
           </button>
           {categories.map((c) => (
             <button
@@ -347,7 +350,7 @@ export function POSClient({
         {sourceProposal && (
           <div className="mx-4 mb-2 rounded-lg border border-blue-200 bg-blue-50/50 px-4 py-2.5 text-sm flex items-center justify-between shadow-sm shrink-0">
             <span>
-              <strong>Proposal {sourceProposal.proposalNumber}</strong> • {sourceProposal.customerName}
+              <strong>{t("pos.proposalHandoff")} {sourceProposal.proposalNumber}</strong> • {sourceProposal.customerName}
             </span>
             <span className="font-semibold text-blue-700">SAR {sourceProposal.grandTotal.toFixed(2)}</span>
           </div>
@@ -355,9 +358,9 @@ export function POSClient({
         {sourceRetainer && (
           <div className="mx-4 mb-2 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-2.5 text-sm flex items-center justify-between shadow-sm shrink-0">
             <span>
-              <strong>Retainer {sourceRetainer.retainerNumber}</strong>
+              <strong>{t("pos.retainerConsumption")} {sourceRetainer.retainerNumber}</strong>
             </span>
-            <span className="font-semibold text-emerald-700">Remaining: SAR {sourceRetainer.remainingAmount.toFixed(2)}</span>
+            <span className="font-semibold text-emerald-700">{t("pos.remainingBalance")}: SAR {sourceRetainer.remainingAmount.toFixed(2)}</span>
           </div>
         )}
 
@@ -365,7 +368,7 @@ export function POSClient({
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
                <Package className="size-10 mb-2 opacity-50" />
-               <p className="text-sm font-medium">No Products Found</p>
+               <p className="text-sm font-medium">{t("pos.noProductsFound")}</p>
             </div>
           ) : (
             <div className="pos-products-grid">
@@ -374,7 +377,7 @@ export function POSClient({
                 const stockBadgeClass = inStock 
                   ? "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20" 
                   : "bg-destructive/10 text-destructive border border-destructive/20";
-                const stockText = inStock ? `In stock: ${p.stock}` : `Out of Stock: ${p.stock}`;
+                const stockText = inStock ? `${t("pos.inStock")}: ${p.stock}` : `${t("pos.outOfStock")}: ${p.stock}`;
 
                 return (
                   <button
@@ -387,19 +390,21 @@ export function POSClient({
                         {stockText}
                       </span>
                       {p.imageUrls[0] ? (
-                        <Image src={p.imageUrls[0]} alt={p.name} width={120} height={120} unoptimized className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                        <Image src={p.imageUrls[0]} alt={locale === "ar" && p.nameAr ? p.nameAr : p.name} width={120} height={120} unoptimized className="max-w-full max-h-full object-contain mix-blend-multiply" />
                       ) : (
                         <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-muted-foreground font-bold text-lg">
-                          {p.name.charAt(0)}
+                          {(locale === "ar" && p.nameAr ? p.nameAr : p.name).charAt(0)}
                         </div>
                       )}
                       <span className="absolute bottom-2 start-2 bg-amber-500/10 text-amber-800 border border-amber-500/20 text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                        Default Price
+                        {t("pos.defaultPrice")}
                       </span>
                     </div>
                     <div className="p-3 pt-2 flex flex-col justify-between flex-1 w-full bg-card">
                       <div className="flex flex-col gap-0.5">
-                        <h3 className="text-xs font-semibold text-foreground leading-snug line-clamp-2">{p.name}</h3>
+                        <h3 className="text-xs font-semibold text-foreground leading-snug line-clamp-2">
+                          {locale === "ar" && p.nameAr ? p.nameAr : p.name}
+                        </h3>
                         <span className="text-[10px] text-muted-foreground truncate">{p.sku}</span>
                       </div>
                       <p className="text-xs font-bold text-primary mt-2">SAR {p.sellingPrice.toFixed(2)}</p>
@@ -444,7 +449,7 @@ export function POSClient({
                   <div className="flex items-center gap-2 truncate">
                     <User className="size-4 text-muted-foreground shrink-0" />
                     <span className="truncate">
-                      {selectedCustomer ? selectedCustomer.name : "Walk In Customer"}
+                      {selectedCustomer ? (locale === "ar" && selectedCustomer.nameAr ? selectedCustomer.nameAr : selectedCustomer.name) : t("pos.walkInCustomer")}
                     </span>
                   </div>
                   <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-55" />
@@ -456,7 +461,7 @@ export function POSClient({
                     <Search className="me-2 size-4 shrink-0 text-muted-foreground" />
                     <input
                       className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground text-foreground"
-                      placeholder="Search customers..."
+                      placeholder={t("pos.searchCustomers")}
                       value={customerSearch}
                       onChange={(e) => searchCustomers(e.target.value)}
                     />
@@ -476,7 +481,7 @@ export function POSClient({
                       }}
                     >
                       <User className="me-2 size-4 opacity-50" />
-                      <span className="truncate flex-1 text-start">Walk In Customer</span>
+                      <span className="truncate flex-1 text-start">{t("pos.walkInCustomer")}</span>
                       {(!selectedCustomer || selectedCustomer._id === "walk-in") && (
                         <Check className="ms-2 size-4 shrink-0" />
                       )}
@@ -500,7 +505,7 @@ export function POSClient({
                             }}
                           >
                             <div className="flex flex-col items-start truncate flex-1">
-                              <span className="truncate w-full text-start">{customer.name}</span>
+                              <span className="truncate w-full text-start">{locale === "ar" && customer.nameAr ? customer.nameAr : customer.name}</span>
                               {customer.phone && (
                                 <span className="text-[10px] font-medium text-muted-foreground">{customer.phone}</span>
                               )}
@@ -515,7 +520,7 @@ export function POSClient({
                     
                     {customerSearch.length >= 2 && customerResults.length === 0 && (
                       <p className="py-6 text-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        No customers found
+                        {t("pos.noCustomersFound")}
                       </p>
                     )}
                   </div>
@@ -527,7 +532,7 @@ export function POSClient({
                       onClick={() => router.push("/customers/new")}
                     >
                       <Plus className="size-3.5 me-2" />
-                      Add New Customer
+                      {t("pos.addNewCustomer")}
                     </Button>
                   </div>
                 </div>
@@ -543,7 +548,7 @@ export function POSClient({
             <PopoverContent className="w-[320px] p-0 shadow-xl" align="end" sideOffset={8}>
               <div className="flex flex-col min-h-0 max-h-[400px]">
                 <div className="p-4 border-b border-border flex items-center justify-between bg-popover sticky top-0 z-10">
-                  <h3 className="text-sm font-bold uppercase tracking-tight text-foreground">Parked Sales</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-tight text-foreground">{t("pos.parkedSales")}</h3>
                   <Button 
                     variant="secondary" 
                     size="xs" 
@@ -551,14 +556,14 @@ export function POSClient({
                     onClick={handleHold}
                     className="font-bold uppercase tracking-widest text-[9px] px-2 h-7"
                   >
-                    Park Current
+                    {t("pos.parkCurrent")}
                   </Button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 bg-popover">
                   {parkedSales.length === 0 ? (
                     <div className="py-12 text-center">
                       <Package className="size-8 text-muted/30 mx-auto mb-2" />
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No Parked Sales</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("pos.noParkedSales")}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -570,7 +575,7 @@ export function POSClient({
                           </div>
                           <div className="flex justify-between items-center mt-2">
                             <span className="text-[10px] font-medium text-muted-foreground">
-                              {sale.itemCount} items • {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {sale.itemCount} {t("pos.items")} • {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             <Button 
                               size="xs" 
@@ -581,7 +586,7 @@ export function POSClient({
                                 setShowParkedSales(false);
                               }}
                             >
-                              Recall
+                              {t("pos.recall")}
                             </Button>
                           </div>
                           {sale.note && (
@@ -601,14 +606,16 @@ export function POSClient({
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-3">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-              <p className="text-xs font-semibold text-muted-foreground">No Products Added</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("pos.noProductsAdded")}</p>
             </div>
           ) : (
             <div className="p-4 space-y-3">
               {cart.map(item => (
                 <div key={item.productId} className="flex items-center justify-between p-3.5 bg-card rounded-lg border border-border shadow-sm hover:border-border transition-all">
                   <div className="flex-1 min-w-0 pe-3">
-                    <p className="text-xs font-semibold text-foreground truncate">{item.name}</p>
+                    <p className="text-xs font-semibold text-foreground truncate">
+                      {locale === "ar" && item.nameAr ? item.nameAr : item.name}
+                    </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">SAR {item.unitPrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -634,26 +641,26 @@ export function POSClient({
         <div className="bg-card border-t border-border">
           <div className="p-4 space-y-2.5 text-xs text-muted-foreground">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Sub Total</span>
+              <span className="font-medium">{t("pos.subTotal")}</span>
               <span className="font-bold text-foreground">SAR {subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium">Tax</span>
+              <span className="font-medium">{t("pos.tax")}</span>
               <span className="font-bold text-foreground">SAR {vatTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium">Shipping</span>
+              <span className="font-medium">{t("pos.shipping")}</span>
               <span className="font-bold text-foreground">SAR {(parseFloat(shippingAmount) || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium">Discount</span>
+              <span className="font-medium">{t("pos.discount")}</span>
               <span className="font-bold text-foreground">SAR {(parseFloat(discountAmount) || 0).toFixed(2)}</span>
             </div>
           </div>
           
           <div className="px-4 py-3 border-t border-border bg-muted/20">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-extrabold text-foreground">Total</span>
+              <span className="text-sm font-extrabold text-foreground">{t("pos.total")}</span>
               <span className="text-base font-black text-primary">SAR {grandTotal.toFixed(2)}</span>
             </div>
           </div>
@@ -661,10 +668,10 @@ export function POSClient({
           {showCheckout ? (
             <div className="p-4 space-y-4 border-t border-border bg-card">
               <div>
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Payment Method</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t("pos.paymentMethod")}</label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger className="h-11 bg-card border-border">
-                    <SelectValue placeholder="Select Payment Method" />
+                    <SelectValue placeholder={t("pos.paymentMethod")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cash">Cash</SelectItem>
@@ -678,16 +685,16 @@ export function POSClient({
 
               {paymentMethod === "cash" && (
                 <div>
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Cash Received</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t("pos.cashReceived")}</label>
                   <input
                     type="number"
                     value={cashReceived}
                     onChange={e => setCashReceived(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-11 rounded-lg border border-border bg-card px-3 text-sm focus:border-primary outline-none"
+                    className="w-full h-11 rounded-lg border border-border bg-card px-3 text-sm focus:border-primary outline-none text-foreground placeholder:text-muted-foreground"
                   />
                   {cashReceived && parseFloat(cashReceived) >= grandTotal && (
-                    <p className="text-xs text-emerald-600 mt-1.5 font-semibold">Change: SAR {changeAmount.toFixed(2)}</p>
+                    <p className="text-xs text-emerald-600 mt-1.5 font-semibold">{t("pos.change")}: SAR {changeAmount.toFixed(2)}</p>
                   )}
                 </div>
               )}
@@ -705,12 +712,12 @@ export function POSClient({
                   }}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary bg-card"
                 />
-                <label htmlFor="emailReceipt" className="text-xs font-semibold text-muted-foreground">Email receipt</label>
+                <label htmlFor="emailReceipt" className="text-xs font-semibold text-muted-foreground">{t("pos.emailReceipt")}</label>
               </div>
 
               {emailReceipt && (
                 <div>
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email address</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{t("pos.emailAddress")}</label>
                   <input
                     type="email"
                     value={receiptEmail}
@@ -732,17 +739,17 @@ export function POSClient({
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary disabled:opacity-50 bg-card"
                 />
                 <label htmlFor="whatsappReceipt" className={`text-xs font-semibold ${selectedCustomer?.phone ? "text-muted-foreground" : "text-muted/40"}`}>
-                  Send receipt via WhatsApp
+                  {t("pos.sendReceiptWhatsapp")}
                 </label>
               </div>
               {whatsappReceipt && selectedCustomer?.phone && (
                 <p className="text-[10px] font-semibold text-emerald-600">
-                  Will send to {selectedCustomer.phone}
+                  {t("pos.willSendTo")} {selectedCustomer.phone}
                 </p>
               )}
               {!selectedCustomer?.phone && (
                 <p className="text-[10px] text-muted-foreground/60 leading-normal">
-                  Add a phone number to the customer to enable WhatsApp receipts.
+                  {t("pos.addPhoneToEnableWhatsapp")}
                 </p>
               )}
 
@@ -751,14 +758,14 @@ export function POSClient({
                   onClick={() => setShowCheckout(false)}
                   className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors"
                 >
-                  Back
+                  {t("pos.back")}
                 </button>
                 <button
                   onClick={handleCheckout}
                   disabled={loading}
                   className="flex-[2] h-11 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/95 transition-colors disabled:opacity-50"
                 >
-                  {loading ? "Processing..." : "Confirm & Pay"}
+                  {loading ? t("pos.processing") : t("pos.confirmAndPay")}
                 </button>
               </div>
             </div>
@@ -767,13 +774,13 @@ export function POSClient({
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-muted/50 transition-colors shadow-sm">
-                    Shipping <Truck className="size-3.5 text-muted-foreground" />
+                    {t("pos.shipping")} <Truck className="size-3.5 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-4 shadow-xl border-border" align="center" sideOffset={8}>
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-foreground">Shipping Amount</h4>
-                    <p className="text-xs text-muted-foreground">Add shipping/delivery charges.</p>
+                    <h4 className="font-semibold text-sm text-foreground">{t("pos.shippingAmount")}</h4>
+                    <p className="text-xs text-muted-foreground">{t("pos.addShippingCharges")}</p>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
@@ -790,13 +797,13 @@ export function POSClient({
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex-1 h-11 rounded-lg border border-border bg-card text-foreground text-[13px] font-semibold flex items-center justify-center gap-1.5 hover:bg-muted/50 transition-colors shadow-sm">
-                    Discount <Percent className="size-3.5 text-muted-foreground" />
+                    {t("pos.discount")} <Percent className="size-3.5 text-muted-foreground" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-4 shadow-xl border-border" align="center" sideOffset={8}>
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-foreground">Global Discount</h4>
-                    <p className="text-xs text-muted-foreground">Apply a fixed discount to the total.</p>
+                    <h4 className="font-semibold text-sm text-foreground">{t("pos.globalDiscount")}</h4>
+                    <p className="text-xs text-muted-foreground">{t("pos.applyFixedDiscount")}</p>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
@@ -815,7 +822,7 @@ export function POSClient({
                 disabled={cart.length === 0}
                 className="flex-[1.5] h-11 rounded-lg bg-primary text-primary-foreground text-[13px] font-bold hover:bg-primary/95 transition-colors disabled:opacity-50 shadow-sm"
               >
-                Place Order
+                {t("pos.placeOrder")}
               </button>
             </div>
           )}
@@ -826,7 +833,7 @@ export function POSClient({
       <div className="lg:hidden bg-card border-t border-border p-4 flex items-center justify-between shrink-0 shadow-md z-15">
         <div className="flex flex-col">
           <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-            {cart.reduce((s, i) => s + i.quantity, 0)} items
+            {cart.reduce((s, i) => s + i.quantity, 0)} {t("pos.items")}
           </span>
           <span className="text-base font-extrabold text-foreground">
             SAR {grandTotal.toFixed(2)}
@@ -836,7 +843,7 @@ export function POSClient({
           onClick={() => setIsCartDrawerOpen(true)}
           className="h-11 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/95 transition-colors shadow-sm"
         >
-          View Cart
+          {t("pos.viewCart")}
         </button>
       </div>
     </div>

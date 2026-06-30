@@ -1,8 +1,10 @@
 import Image from "next/image";
-import { formatSAR, formatDateShort, getPaymentMethodLabel } from "@/lib/printing/format";
+import { formatSAR, formatDateShort } from "@/lib/printing/format";
 import type { IInvoice } from "@/models/sales/Invoice";
 import type { ITenant } from "@/models/tenancy/Tenant";
 import type { IBranch } from "@/models/tenancy/Branch";
+import arDict from "@/lib/i18n/dictionaries/ar.json";
+import enDict from "@/lib/i18n/dictionaries/en.json";
 
 interface ThermalReceiptProps {
   invoice: IInvoice;
@@ -10,9 +12,10 @@ interface ThermalReceiptProps {
   branch: IBranch | null;
   customer: { phone?: string; name?: string } | null;
   width: "80mm" | "58mm";
+  locale?: string;
 }
 
-export function ThermalReceipt({ invoice, tenant, branch, customer, width }: ThermalReceiptProps) {
+export function ThermalReceipt({ invoice, tenant, branch, customer, width, locale = "en" }: ThermalReceiptProps) {
   const subtotal = parseFloat(invoice.subtotal.toString());
   const discountTotal = parseFloat(invoice.discountTotal.toString());
   const shippingTotal = invoice.shippingTotal ? parseFloat(invoice.shippingTotal.toString()) : 0;
@@ -20,21 +23,38 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
   const grandTotal = parseFloat(invoice.grandTotal.toString());
   const isNarrow = width === "58mm";
 
+  const dict = locale === "ar" ? arDict : enDict;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t = (key: string, fallback: string) => (dict as any).receipt?.[key] || fallback;
+
+  const paymentMethodLabels: Record<string, string> = {
+    cash: locale === "ar" ? "نقداً" : "Cash",
+    mada: locale === "ar" ? "مدى" : "Mada",
+    visa: locale === "ar" ? "فيزا" : "Visa",
+    mastercard: locale === "ar" ? "ماستركارد" : "Mastercard",
+    amex: locale === "ar" ? "أمريكان إكسبريس" : "American Express",
+    stc_pay: locale === "ar" ? "إس تي سي باي" : "STC Pay",
+    apple_pay: locale === "ar" ? "أبل باي" : "Apple Pay",
+    tabby: locale === "ar" ? "تابي" : "Tabby",
+    tamara: locale === "ar" ? "تمارا" : "Tamara",
+    bank_transfer: locale === "ar" ? "تحويل بنكي" : "Bank Transfer",
+    store_credit: locale === "ar" ? "رصيد المتجر" : "Store Credit",
+  };
+
   return (
     <div className={`print-thermal print-thermal-${width === "80mm" ? "80" : "58"}`}>
-      <div className="thermal-page" style={{ width: width === "80mm" ? "80mm" : "58mm" }}>
+      <div className="thermal-page" style={{ width: width === "80mm" ? "80mm" : "58mm" }} dir={locale === "ar" ? "rtl" : "ltr"}>
         {/* Header */}
         <div className="thermal-header">
           {tenant?.logoUrl && (
             <Image src={tenant.logoUrl} alt="logo" width={isNarrow ? 80 : 120} height={isNarrow ? 30 : 40} unoptimized className="thermal-logo" />
           )}
           <h1 className={`thermal-business-name ${isNarrow ? "thermal-business-name-sm" : ""}`}>
-            {tenant?.name || "Shop"}
+            {locale === "ar" && tenant?.nameAr ? tenant.nameAr : (tenant?.name || "Shop")}
           </h1>
-          {tenant?.nameAr && <p className={`thermal-business-name-ar ${isNarrow ? "thermal-text-sm" : ""}`}>{tenant.nameAr}</p>}
           {tenant?.address && <p className={`thermal-address ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>{tenant.address}</p>}
           {tenant?.phone && <p className={`thermal-phone ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>{tenant.phone}</p>}
-          {tenant?.vatNumber && <p className={`thermal-vat ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>VAT: {tenant.vatNumber}</p>}
+          {tenant?.vatNumber && <p className={`thermal-vat ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>VAT / الرقم الضريبي: {tenant.vatNumber}</p>}
         </div>
 
         {/* Divider */}
@@ -43,22 +63,22 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
         {/* Invoice Meta */}
         <div className={`thermal-meta ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>
           <div className="thermal-meta-row">
-            <span>Invoice:</span>
+            <span>{t("invoice", "Invoice")}:</span>
             <span>{invoice.invoiceNumber}</span>
           </div>
           <div className="thermal-meta-row">
-            <span>Date:</span>
+            <span>{t("date", "Date")}:</span>
             <span>{formatDateShort(invoice.issuedAt)}</span>
           </div>
           {branch?.name && (
             <div className="thermal-meta-row">
-              <span>Branch:</span>
+              <span>{t("branch", "Branch")}:</span>
               <span>{branch.name}</span>
             </div>
           )}
           {customer?.name && (
             <div className="thermal-meta-row">
-              <span>Customer:</span>
+              <span>{t("customer", "Customer")}:</span>
               <span>{customer.name}</span>
             </div>
           )}
@@ -71,11 +91,11 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
         <table className={`thermal-items ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>
           <thead>
             <tr className="thermal-items-header">
-              <th className="thermal-th-item">Item</th>
+              <th className="thermal-th-item">{t("item", "Item")}</th>
               {!isNarrow && <th className="thermal-th-price">Price</th>}
-              <th className="thermal-th-qty">Qty</th>
+              <th className="thermal-th-qty">{t("qty", "Qty")}</th>
               {!isNarrow && <th className="thermal-th-disc">Disc</th>}
-              <th className="thermal-th-total">Total</th>
+              <th className="thermal-th-total">{t("total", "Total")}</th>
             </tr>
           </thead>
           <tbody>
@@ -87,8 +107,7 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
               return (
                 <tr key={i} className="thermal-item-row">
                   <td className="thermal-td-item">
-                    <span className="thermal-item-name">{line.name}</span>
-                    {line.nameAr && <span className="thermal-item-name-ar">{line.nameAr}</span>}
+                    <span className="thermal-item-name">{locale === "ar" && line.nameAr ? line.nameAr : line.name}</span>
                     <span className="thermal-item-sku">{line.sku}</span>
                   </td>
                   {!isNarrow && <td className="thermal-td-price">{unitPrice.toFixed(2)}</td>}
@@ -107,27 +126,27 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
         {/* Totals */}
         <div className={`thermal-totals ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>
           <div className="thermal-total-row">
-            <span>Subtotal</span>
+            <span>{t("subtotal", "Subtotal")}</span>
             <span>{formatSAR(subtotal)}</span>
           </div>
           {discountTotal > 0 && (
             <div className="thermal-total-row">
-              <span>Discount</span>
+              <span>{t("discount", "Discount")}</span>
               <span>-{formatSAR(discountTotal)}</span>
             </div>
           )}
           {shippingTotal > 0 && (
             <div className="thermal-total-row">
-              <span>Shipping</span>
+              <span>{t("shipping", "Shipping")}</span>
               <span>{formatSAR(shippingTotal)}</span>
             </div>
           )}
           <div className="thermal-total-row">
-            <span>VAT (15%)</span>
+            <span>{t("vat", "VAT (15%)")}</span>
             <span>{formatSAR(vatTotal)}</span>
           </div>
           <div className="thermal-total-row thermal-total-row-grand">
-            <span>TOTAL</span>
+            <span>{t("total", "TOTAL")}</span>
             <span>{formatSAR(grandTotal)}</span>
           </div>
         </div>
@@ -140,7 +159,7 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
               const amt = parseFloat(p.amount.toString());
               return (
                 <div key={i} className="thermal-payment-row">
-                  <span>Paid by {getPaymentMethodLabel(p.method)}</span>
+                  <span>{t("paidBy", "Paid by")} {paymentMethodLabels[p.method] || p.method}</span>
                   <span>{formatSAR(amt)}</span>
                 </div>
               );
@@ -151,7 +170,7 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
         {/* VAT Notice */}
         {tenant?.vatRegistered && (
           <div className={`thermal-vat-notice ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>
-            VAT collected per ZATCA regulations
+            {t("vatCollected", "VAT collected per ZATCA regulations")}
           </div>
         )}
 
@@ -164,7 +183,7 @@ export function ThermalReceipt({ invoice, tenant, branch, customer, width }: The
 
         {/* Footer */}
         <div className={`thermal-footer ${isNarrow ? "thermal-text-xs" : "thermal-text-sm"}`}>
-          <p>Thank you for your purchase!</p>
+          <p>{t("thankYou", "Thank you for your purchase!")}</p>
           {tenant?.vatRegistered && <p className="thermal-footer-vat">VAT Invoice / فاتورة ضريبية</p>}
         </div>
       </div>

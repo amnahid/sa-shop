@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/app/FormField";
 import { ImageUpload } from "@/components/app/ImageUpload";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { Loader2, Plus, Trash2, FileText, Upload } from "lucide-react";
 
 export interface ICustomDocument {
@@ -44,6 +45,7 @@ interface EmployeeModalProps {
 
 export default function EmployeeModal({ employee, open, onClose, onSave }: EmployeeModalProps) {
   const { showToast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState("");
@@ -69,7 +71,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
     if (!file) return;
 
     if (!newDocTitle.trim()) {
-      showToast("Please enter a custom title for the document first", "error");
+      showToast(t("hr.customTitlePlaceholder", "Please enter a custom title for the document first"), "error");
       return;
     }
 
@@ -91,7 +93,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
           documents: [...prev.documents, { title: newDocTitle.trim(), url: result.asset.url }],
         }));
         setNewDocTitle("");
-        showToast("Document uploaded successfully", "success");
+        showToast(t("hr.fileUploaded", "Document uploaded successfully"), "success");
       } else {
         showToast(result.error?.message || "Failed to upload document", "error");
       }
@@ -130,7 +132,12 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
         return;
       }
 
-      showToast(employee?._id ? "Employee updated successfully" : "Employee created successfully", "success");
+      showToast(
+        employee?._id 
+          ? (locale === "ar" ? "تم تحديث بيانات الموظف بنجاح" : "Employee updated successfully") 
+          : (locale === "ar" ? "تم إنشاء ملف الموظف بنجاح" : "Employee created successfully"), 
+        "success"
+      );
       onSave();
       onClose();
     } catch {
@@ -144,24 +151,24 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{employee?._id ? `Edit Employee: ${employee.name}` : "Add New Employee"}</DialogTitle>
+          <DialogTitle>{employee?._id ? `${t("hr.editEmployee", "Edit Employee")}: ${employee.name}` : t("hr.addEmployee", "Add New Employee")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4" dir={locale === "ar" ? "rtl" : "ltr"}>
           {/* Photo Upload */}
           <div className="flex justify-center">
             <ImageUpload
               value={form.photo ? [form.photo] : []}
               onChange={(urls) => setForm((prev) => ({ ...prev, photo: urls[0] || "" }))}
               maxImages={1}
-              label="Employee Photo"
+              label={locale === "ar" ? "صورة الموظف" : "Employee Photo"}
               previewSize="compact"
               className="w-full max-w-[200px]"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Full Name *" htmlFor="name">
+            <FormField label={`${t("hr.name", "Full Name")} *`} htmlFor="name">
               <Input
                 id="name"
                 required
@@ -171,7 +178,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Phone Number *" htmlFor="phone">
+            <FormField label={`${t("hr.phone", "Phone Number")} *`} htmlFor="phone">
               <Input
                 id="phone"
                 required
@@ -181,7 +188,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Email Address" htmlFor="email">
+            <FormField label={t("hr.email", "Email Address")} htmlFor="email">
               <Input
                 id="email"
                 type="email"
@@ -191,7 +198,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Designation *" htmlFor="designation">
+            <FormField label={`${t("hr.role", "Designation")} *`} htmlFor="designation">
               <Input
                 id="designation"
                 required
@@ -201,7 +208,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Department *" htmlFor="department">
+            <FormField label={`${t("hr.department", "Department")} *`} htmlFor="department">
               <select
                 id="department"
                 required
@@ -217,7 +224,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               </select>
             </FormField>
 
-            <FormField label="Base Salary (SAR) *" htmlFor="baseSalary">
+            <FormField label={`${t("hr.salary", "Base Salary (SAR)")} *`} htmlFor="baseSalary">
               <Input
                 id="baseSalary"
                 required
@@ -229,7 +236,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Commission Rate (%)" htmlFor="commissionRate">
+            <FormField label={locale === "ar" ? "نسبة العمولة (%)" : "Commission Rate (%)"} htmlFor="commissionRate">
               <Input
                 id="commissionRate"
                 type="number"
@@ -241,7 +248,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Joining Date *" htmlFor="joiningDate">
+            <FormField label={`${t("hr.joiningDate", "Joining Date")} *`} htmlFor="joiningDate">
               <Input
                 id="joiningDate"
                 required
@@ -251,7 +258,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Iqama Number" htmlFor="iqamaNumber">
+            <FormField label={t("hr.iqamaNumber", "Iqama Number")} htmlFor="iqamaNumber">
               <Input
                 id="iqamaNumber"
                 value={form.iqamaNumber}
@@ -260,7 +267,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Iqama Expiry Date" htmlFor="iqamaExpiryDate">
+            <FormField label={t("hr.iqamaExpiryDate", "Iqama Expiry Date")} htmlFor="iqamaExpiryDate">
               <Input
                 id="iqamaExpiryDate"
                 type="date"
@@ -269,7 +276,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
               />
             </FormField>
 
-            <FormField label="Passport Number" htmlFor="passportNumber">
+            <FormField label={locale === "ar" ? "رقم جواز السفر" : "Passport Number"} htmlFor="passportNumber">
               <Input
                 id="passportNumber"
                 value={form.passportNumber}
@@ -281,7 +288,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
 
           {/* Custom Document Uploads Section */}
           <div className="space-y-3 border-t border-border pt-4">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Employee Documents</h4>
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">{t("hr.files", "Employee Documents")}</h4>
             
             {/* List of uploaded documents */}
             {form.documents.length > 0 && (
@@ -319,12 +326,12 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
             {/* Document Upload Input */}
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
               <div className="flex-1">
-                <FormField label="Custom Document Title" htmlFor="docTitle">
+                <FormField label={locale === "ar" ? "عنوان المستند المخصص" : "Custom Document Title"} htmlFor="docTitle">
                   <Input
                     id="docTitle"
                     value={newDocTitle}
                     onChange={(e) => setNewDocTitle(e.target.value)}
-                    placeholder="e.g. Contract, Iqama copy, Passport copy"
+                    placeholder={locale === "ar" ? "مثال: عقد العمل، صورة الإقامة، صورة جواز السفر" : "e.g. Contract, Iqama copy, Passport copy"}
                   />
                 </FormField>
               </div>
@@ -349,7 +356,7 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
                   ) : (
                     <Upload className="size-4" />
                   )}
-                  Upload Document
+                  {locale === "ar" ? "رفع المستند" : "Upload Document"}
                 </Button>
               </div>
             </div>
@@ -358,11 +365,11 @@ export default function EmployeeModal({ employee, open, onClose, onSave }: Emplo
           {/* Form Actions */}
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-              Cancel
+              {t("common.cancel", "Cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="size-4 me-2 animate-spin" />}
-              Save Employee
+              {t("common.save", "Save Employee")}
             </Button>
           </div>
         </form>

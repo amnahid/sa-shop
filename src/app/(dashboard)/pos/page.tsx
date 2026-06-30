@@ -3,6 +3,8 @@ import { getCurrentMembership } from "@/lib/utils/membership";
 import { Product, StockLevel, Branch, Category, Customer, Proposal, Retainer } from "@/models";
 import { POSClient } from "@/components/pos/POSClient";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { getDictionary, Locale } from "@/lib/i18n/get-dictionary";
 
 interface Props {
   searchParams: Promise<{ proposalId?: string; retainerId?: string }>;
@@ -15,6 +17,11 @@ export default async function POSPage({ searchParams }: Props) {
   if (!membership || !session?.user?.id) {
     return <div>No active membership</div>;
   }
+
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("NEXT_LOCALE")?.value as Locale) || "en";
+  const dict = await getDictionary(locale);
+  const t = (key: string, fallback: string) => (dict.pos as any)?.[key] || fallback;
 
   const tenantId = membership.tenantId;
   const branches = await Branch.find({ tenantId, active: true }).sort({ name: 1 });
@@ -81,32 +88,34 @@ export default async function POSPage({ searchParams }: Props) {
       {sourceProposal && (
         <div className="mx-4 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm shrink-0">
           <p className="font-medium">
-            Invoice handoff from proposal {sourceProposal.proposalNumber}
+            {t("proposalHandoff", "Invoice handoff from proposal")} {sourceProposal.proposalNumber}
           </p>
           <p>
-            Customer: {sourceProposal.customerName || "Walk-in"} • Proposed total: SAR{" "}
+            {t("customer", "Customer")}: {sourceProposal.customerName || "Walk-in"} • {t("proposedTotal", "Proposed total")}: SAR{" "}
             {parseFloat(sourceProposal.grandTotal.toString()).toFixed(2)}
           </p>
           <Link
             href={`/proposals/${sourceProposal._id.toString()}`}
             className="mt-2 inline-block text-blue-700 underline"
           >
-            View proposal details
+            {t("viewProposalDetails", "View proposal details")}
           </Link>
         </div>
       )}
       {sourceRetainer && (
         <div className="mx-4 mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm shrink-0">
-          <p className="font-medium">Retainer consumption {sourceRetainer.retainerNumber}</p>
+          <p className="font-medium">
+            {t("retainerConsumption", "Retainer consumption")} {sourceRetainer.retainerNumber}
+          </p>
           <p>
-            Customer: {retainerCustomer?.name || "Not set"} • Remaining balance: SAR{" "}
+            {t("customer", "Customer")}: {locale === "ar" && retainerCustomer?.nameAr ? retainerCustomer.nameAr : (retainerCustomer?.name || "Not set")} • {t("remainingBalance", "Remaining balance")}: SAR{" "}
             {retainerRemaining.toFixed(2)}
           </p>
           <Link
             href={`/retainers/${sourceRetainer._id.toString()}`}
             className="mt-2 inline-block text-emerald-700 underline"
           >
-            View retainer details
+            {t("viewRetainerDetails", "View retainer details")}
           </Link>
         </div>
       )}

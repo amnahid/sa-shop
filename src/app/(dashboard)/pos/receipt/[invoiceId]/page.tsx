@@ -7,6 +7,8 @@ import { A4Invoice } from "@/components/printing/A4Invoice";
 import { ThermalReceipt } from "@/components/printing/ThermalReceipt";
 import { DirectPrint } from "@/components/printing/escpos/DirectPrint";
 import Image from "next/image";
+import { cookies } from "next/headers";
+import { getDictionary, Locale } from "@/lib/i18n/get-dictionary";
 
 interface Props {
   params: Promise<{ invoiceId: string }>;
@@ -21,6 +23,11 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
   if (!membership) {
     return <div>No active membership</div>;
   }
+
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("NEXT_LOCALE")?.value as Locale) || "en";
+  const dict = await getDictionary(locale);
+  const t = (key: string, fallback: string) => (dict.receipt as any)?.[key] || fallback;
 
   const invoice = await Invoice.findOne({
     _id: invoiceId,
@@ -44,17 +51,17 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
   const grandTotal = parseFloat(invoice.grandTotal.toString());
 
   const paymentMethodLabels: Record<string, string> = {
-    cash: "Cash",
-    mada: "Mada",
-    visa: "Visa",
-    mastercard: "Mastercard",
-    amex: "American Express",
-    stc_pay: "STC Pay",
-    apple_pay: "Apple Pay",
-    tabby: "Tabby",
-    tamara: "Tamara",
-    bank_transfer: "Bank Transfer",
-    store_credit: "Store Credit",
+    cash: locale === "ar" ? "نقداً" : "Cash",
+    mada: locale === "ar" ? "مدى" : "Mada",
+    visa: locale === "ar" ? "فيزا" : "Visa",
+    mastercard: locale === "ar" ? "ماستركارد" : "Mastercard",
+    amex: locale === "ar" ? "أمريكان إكسبريس" : "American Express",
+    stc_pay: locale === "ar" ? "إس تي سي باي" : "STC Pay",
+    apple_pay: locale === "ar" ? "أبل باي" : "Apple Pay",
+    tabby: locale === "ar" ? "تابي" : "Tabby",
+    tamara: locale === "ar" ? "تمارا" : "Tamara",
+    bank_transfer: locale === "ar" ? "تحويل بنكي" : "Bank Transfer",
+    store_credit: locale === "ar" ? "رصيد المتجر" : "Store Credit",
   };
 
   // If format is specified, render the dedicated print view
@@ -71,6 +78,7 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
             branch={branch}
             customer={customer}
             width={format === "thermal-80" ? "80mm" : "58mm"}
+            locale={locale}
           />
         )}
       </PrintPage>
@@ -81,36 +89,47 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
   return (
     <div className="receipt-page-shell flex min-h-0 h-full bg-background items-start justify-center p-4">
       <div className="bg-white text-black w-full max-w-sm rounded-lg border shadow-sm overflow-hidden">
-        <div className="p-6 text-center border-b">
+        <div className="p-6 text-center border-b" dir={locale === "ar" ? "rtl" : "ltr"}>
           {tenant?.logoUrl && (
             <Image src={tenant.logoUrl} alt="logo" width={200} height={48} unoptimized className="h-12 mx-auto mb-3 object-contain" />
           )}
-          <h1 className="text-lg font-bold">{tenant?.name || "Shop"}</h1>
+          <h1 className="text-lg font-bold">{locale === "ar" && tenant?.nameAr ? tenant.nameAr : (tenant?.name || "Shop")}</h1>
           {tenant?.address && <p className="text-sm text-gray-600">{tenant.address}</p>}
           {tenant?.phone && <p className="text-sm text-gray-600">{tenant.phone}</p>}
-          {tenant?.vatNumber && <p className="text-sm text-gray-600">VAT: {tenant.vatNumber}</p>}
-          <div className="mt-3 border-t pt-3 text-sm text-gray-600">
-            <p><span className="font-medium">Invoice:</span> {invoice.invoiceNumber}</p>
-            <p><span className="font-medium">Branch:</span> {branch?.name || "-"}</p>
-            <p><span className="font-medium">Date:</span> {invoice.issuedAt.toLocaleDateString("en-SA")}</p>
+          {tenant?.vatNumber && <p className="text-sm text-gray-600">VAT / الرقم الضريبي: {tenant.vatNumber}</p>}
+          <div className="mt-3 border-t pt-3 text-sm text-gray-600 space-y-1">
+            <p className="flex justify-between">
+              <span className="font-semibold text-gray-700">{t("invoice", "Invoice")}:</span>
+              <span>{invoice.invoiceNumber}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="font-semibold text-gray-700">{t("branch", "Branch")}:</span>
+              <span>{branch?.name || "-"}</span>
+            </p>
+            <p className="flex justify-between">
+              <span className="font-semibold text-gray-700">{t("date", "Date")}:</span>
+              <span>{invoice.issuedAt.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-SA")}</span>
+            </p>
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-4" dir={locale === "ar" ? "rtl" : "ltr"}>
           {invoice.lines.length > 0 && (
             <table className="w-full text-sm mb-4">
               <thead>
                 <tr className="border-b">
-                  <th className="text-start py-1 text-gray-600 font-medium">Item</th>
-                  <th className="text-center py-1 text-gray-600 font-medium">Qty</th>
-                  <th className="text-end py-1 text-gray-600 font-medium">Total</th>
+                  <th className="text-start py-1 text-gray-600 font-medium">{t("item", "Item")}</th>
+                  <th className="text-center py-1 text-gray-600 font-medium">{t("qty", "Qty")}</th>
+                  <th className="text-end py-1 text-gray-600 font-medium">{t("total", "Total")}</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.lines.map((line, i) => (
                   <tr key={i} className="border-b">
                     <td className="py-1">
-                      <span className="block font-medium">{line.name}</span>
+                      <span className="block font-medium">
+                        {locale === "ar" && line.nameAr ? line.nameAr : line.name}
+                      </span>
                       <span className="text-xs text-gray-500">
                         SAR {parseFloat(line.unitPrice.toString()).toFixed(2)} × {parseFloat(line.quantity.toString())}
                       </span>
@@ -127,27 +146,27 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
 
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
+              <span className="text-gray-600">{t("subtotal", "Subtotal")}</span>
               <span>SAR {subtotal.toFixed(2)}</span>
             </div>
             {discountTotal > 0 && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Discount</span>
+                <span className="text-gray-600">{t("discount", "Discount")}</span>
                 <span>-SAR {discountTotal.toFixed(2)}</span>
               </div>
             )}
             {shippingTotal > 0 && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
+                <span className="text-gray-600">{t("shipping", "Shipping")}</span>
                 <span>SAR {shippingTotal.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-600">VAT (15%)</span>
+              <span className="text-gray-600">{t("vat", "VAT (15%)")}</span>
               <span>SAR {vatTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-base font-bold border-t pt-2 mt-1">
-              <span>TOTAL</span>
+              <span>{t("total", "TOTAL")}</span>
               <span>SAR {grandTotal.toFixed(2)}</span>
             </div>
           </div>
@@ -158,7 +177,7 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
                 const amt = parseFloat(p.amount.toString());
                 return (
                   <div key={i} className="flex justify-between">
-                    <span className="text-gray-600">Paid by {paymentMethodLabels[p.method] || p.method}</span>
+                    <span className="text-gray-600">{t("paidBy", "Paid by")} {paymentMethodLabels[p.method] || p.method}</span>
                     <span>SAR {amt.toFixed(2)}</span>
                   </div>
                 );
@@ -168,9 +187,9 @@ export default async function ReceiptPage({ params, searchParams }: Props) {
 
           <div className="mt-4 pt-3 border-t text-center text-xs text-gray-500">
             {tenant?.vatRegistered && (
-              <p>VAT has been collected per ZATCA regulations</p>
+              <p>{t("vatCollected", "VAT has been collected per ZATCA regulations")}</p>
             )}
-            <p className="mt-1">Thank you for your purchase!</p>
+            <p className="mt-1">{t("thankYou", "Thank you for your purchase!")}</p>
           </div>
 
           {invoice.qrCode && (

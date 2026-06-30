@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import EmployeeModal, { Employee, DEPARTMENTS } from "@/components/forms/EmployeeModal";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import {
   Loader2,
   Search,
@@ -33,6 +34,7 @@ interface SalaryPaymentLog {
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
+  const { t, locale } = useTranslation();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -152,10 +154,10 @@ export default function EmployeesPage() {
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
-        title="Employees Directory"
-        section="Workforce"
-        breadcrumbs={[{ label: "Employees" }]}
-        description="Manage independent employee profiles, files, and salary payments."
+        title={t("hr.employeesDirectory", "Employees Directory")}
+        section={t("hr.workforce", "Workforce")}
+        breadcrumbs={[{ label: t("hr.employees", "Employees") }]}
+        description={t("hr.manageProfiles", "Manage independent employee profiles, files, and salary payments.")}
         actions={
           <Button
             onClick={() => {
@@ -164,7 +166,7 @@ export default function EmployeesPage() {
             }}
             className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] px-5"
           >
-            <Plus className="size-4" /> Add Employee
+            <Plus className="size-4" /> {t("hr.addEmployee", "Add Employee")}
           </Button>
         }
       />
@@ -172,11 +174,11 @@ export default function EmployeesPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card bg-white p-6 border-l-4 border-primary">
-          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Total Employees</p>
+          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">{t("hr.totalEmployees", "Total Employees")}</p>
           <p className="text-3xl font-extrabold text-foreground mt-2">{totalEmployees}</p>
         </div>
         <div className="card bg-white p-6 border-l-4 border-rose-500">
-          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Monthly Base Salary Expenditure</p>
+          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">{t("hr.expenditure", "Monthly Base Salary Expenditure")}</p>
           <p className="text-3xl font-extrabold text-rose-500 mt-2">SAR {totalMonthlySalary.toLocaleString()}</p>
         </div>
       </div>
@@ -188,7 +190,7 @@ export default function EmployeesPage() {
           <Input
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search by Employee Name, Phone or ID..."
+            placeholder={t("hr.searchPlaceholder", "Search by Employee Name, Phone or ID...")}
             className="pl-9 h-11 bg-white border-border"
           />
         </div>
@@ -197,7 +199,7 @@ export default function EmployeesPage() {
           onChange={(e) => handleDeptFilterChange(e.target.value)}
           className="w-full sm:w-60 h-11 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
         >
-          <option value="">All Departments</option>
+          <option value="">{t("hr.allDepartments", "All Departments")}</option>
           {DEPARTMENTS.map((d) => (
             <option key={d} value={d}>
               {d}
@@ -211,7 +213,7 @@ export default function EmployeesPage() {
         <div className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/5 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-xs font-black text-primary uppercase tracking-wider">
-              {selectedIds.size} Employees Selected
+              {selectedIds.size} {t("hr.selected", "Employees Selected")}
             </span>
             <Button
               onClick={handleBulkDelete}
@@ -220,7 +222,7 @@ export default function EmployeesPage() {
               size="sm"
               className="flex items-center gap-1.5 h-8 text-[10px] font-bold uppercase tracking-wider"
             >
-              <Trash2 className="size-3.5" /> Delete Selected
+              <Trash2 className="size-3.5" /> {t("hr.deleteSelected", "Delete Selected")}
             </Button>
           </div>
           <Button
@@ -229,7 +231,7 @@ export default function EmployeesPage() {
             onClick={() => setSelectedIds(new Set())}
             className="text-muted-foreground hover:text-foreground text-xs"
           >
-            Cancel Selection
+            {t("hr.cancelSelection", "Cancel Selection")}
           </Button>
         </div>
       )}
@@ -239,12 +241,12 @@ export default function EmployeesPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-sm font-semibold">
             <Loader2 className="size-8 text-primary animate-spin mb-3" />
-            Loading employees list...
+            {t("hr.loading", "Loading employees list...")}
           </div>
         ) : employees.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <User className="size-12 text-muted/30 mb-3" />
-            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Employees Found</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{t("hr.noEmployees", "No Employees Found")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -265,14 +267,14 @@ export default function EmployeesPage() {
                     />
                   </th>
                   <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">ID</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Photo</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Name</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Phone</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Designation</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Department</th>
-                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">Base Salary</th>
-                  <th className="px-6 py-4 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">Actions</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{locale === "ar" ? "الصورة" : "Photo"}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.name", "Name")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.phone", "Phone")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.role", "Designation")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.department", "Department")}</th>
+                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.salary", "Base Salary")}</th>
+                  <th className="px-6 py-4 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.status", "Status")}</th>
+                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("hr.actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -321,7 +323,7 @@ export default function EmployeesPage() {
                             : "bg-rose-500/10 text-rose-700 border-rose-500/20"
                         }`}
                       >
-                        {emp.isActive ? "Active" : "Inactive"}
+                        {emp.isActive ? t("hr.active", "Active") : t("hr.inactive", "Inactive")}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-end">
@@ -331,7 +333,7 @@ export default function EmployeesPage() {
                           size="icon"
                           onClick={() => openDetails(emp)}
                           className="text-primary hover:bg-primary/10"
-                          title="View Details"
+                          title={t("hr.details", "View Details")}
                         >
                           <Eye className="size-4" />
                         </Button>
@@ -343,7 +345,7 @@ export default function EmployeesPage() {
                             setShowModal(true);
                           }}
                           className="text-amber-500 hover:bg-amber-500/10"
-                          title="Edit Profile"
+                          title={t("common.edit", "Edit Profile")}
                         >
                           <Edit2 className="size-4" />
                         </Button>
@@ -367,10 +369,10 @@ export default function EmployeesPage() {
             disabled={page === 1}
             className="flex items-center gap-1.5"
           >
-            <ChevronLeft className="size-4" /> Previous
+            <ChevronLeft className="size-4" /> {locale === "ar" ? "السابق" : "Previous"}
           </Button>
           <span className="text-xs text-muted-foreground font-semibold px-2">
-            Page {page} of {totalPages}
+            {locale === "ar" ? `الصفحة ${page} من ${totalPages}` : `Page ${page} of ${totalPages}`}
           </span>
           <Button
             variant="outline"
@@ -379,7 +381,7 @@ export default function EmployeesPage() {
             disabled={page === totalPages}
             className="flex items-center gap-1.5"
           >
-            Next <ChevronRight className="size-4" />
+            {locale === "ar" ? "التالي" : "Next"} <ChevronRight className="size-4" />
           </Button>
         </div>
       )}
@@ -402,16 +404,16 @@ export default function EmployeesPage() {
         <Dialog open={showDetailsModal} onOpenChange={(val) => !val && setShowDetailsModal(false)}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Employee File: {selectedEmployee.name}</DialogTitle>
+              <DialogTitle>{t("hr.employees", "Employee File")}: {selectedEmployee.name}</DialogTitle>
             </DialogHeader>
 
             {loadingDetails ? (
               <div className="flex items-center justify-center py-20 text-muted-foreground text-sm font-semibold">
                 <Loader2 className="size-6 text-primary animate-spin me-2" />
-                Loading details...
+                {t("hr.loading", "Loading details...")}
               </div>
             ) : (
-              <div className="space-y-6 pt-4">
+              <div className="space-y-6 pt-4" dir={locale === "ar" ? "rtl" : "ltr"}>
                 {/* Header Information */}
                 <div className="flex flex-col sm:flex-row gap-5 items-center pb-5 border-b border-border">
                   {selectedEmployee.photo ? (
@@ -433,10 +435,10 @@ export default function EmployeesPage() {
                   <div className="text-center sm:text-start flex-1">
                     <h3 className="text-xl font-bold text-foreground">{selectedEmployee.name}</h3>
                     <p className="text-sm font-semibold text-primary">{selectedEmployee.designation}</p>
-                    <p className="text-xs font-semibold text-muted-foreground mt-1">{selectedEmployee.department} Department</p>
+                    <p className="text-xs font-semibold text-muted-foreground mt-1">{selectedEmployee.department}</p>
                   </div>
                   <div className="text-center sm:text-end">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">Employee ID</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block">{locale === "ar" ? "الرقم الوظيفي" : "Employee ID"}</span>
                     <span className="text-lg font-mono font-bold text-primary block mt-0.5">{selectedEmployee.employeeId}</span>
                   </div>
                 </div>
@@ -444,26 +446,26 @@ export default function EmployeesPage() {
                 {/* Grid details */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 text-sm">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Phone</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.phone", "Phone")}</span>
                     <span className="font-semibold text-foreground block mt-1">{selectedEmployee.phone}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Email</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.email", "Email")}</span>
                     <span className="font-semibold text-foreground block mt-1 truncate">{selectedEmployee.email || "-"}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Joining Date</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.joiningDate", "Joining Date")}</span>
                     <span className="font-semibold text-foreground block mt-1 flex items-center gap-1">
                       <Calendar className="size-3.5 text-muted-foreground" />
                       {new Date(selectedEmployee.joiningDate).toLocaleDateString()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Iqama Number</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.iqamaNumber", "Iqama Number")}</span>
                     <span className="font-mono font-bold text-foreground block mt-1">{selectedEmployee.iqamaNumber || "-"}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Iqama Expiry Date</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.iqamaExpiryDate", "Iqama Expiry Date")}</span>
                     <span className="font-semibold text-foreground block mt-1">
                       {selectedEmployee.iqamaExpiryDate
                         ? new Date(selectedEmployee.iqamaExpiryDate).toLocaleDateString()
@@ -471,18 +473,18 @@ export default function EmployeesPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Passport Number</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{locale === "ar" ? "رقم جواز السفر" : "Passport Number"}</span>
                     <span className="font-mono font-bold text-foreground block mt-1">{selectedEmployee.passportNumber || "-"}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">Base Salary</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">{t("hr.salary", "Base Salary")}</span>
                     <span className="font-mono font-bold text-primary block mt-1">SAR {selectedEmployee.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 
                 {/* Custom Documents List */}
                 <div className="border-t border-border pt-4">
-                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Uploaded Documents</h4>
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">{t("hr.files", "Uploaded Documents")}</h4>
                   {selectedEmployee.documents && selectedEmployee.documents.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {selectedEmployee.documents.map((doc, idx) => (
@@ -508,24 +510,24 @@ export default function EmployeesPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs font-semibold text-muted-foreground/60 italic">No custom files uploaded yet.</p>
+                    <p className="text-xs font-semibold text-muted-foreground/60 italic">{t("hr.noFiles", "No custom files uploaded yet.")}</p>
                   )}
                 </div>
 
                 {/* Payments log */}
                 <div className="border-t border-border pt-4">
-                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">Salary Payments Log</h4>
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">{t("hr.paymentsHistory", "Salary Payments Log")}</h4>
                   {employeePayments.length > 0 ? (
                     <div className="overflow-x-auto border border-border rounded-lg">
                       <table className="w-full text-start text-xs">
                         <thead className="bg-[#f9fafb] border-b border-border">
                           <tr>
                             <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">ID</th>
-                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">Period</th>
-                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">Type</th>
-                            <th className="px-4 py-2.5 text-end font-bold uppercase tracking-wider text-muted-foreground">Amount</th>
-                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">Date</th>
-                            <th className="px-4 py-2.5 text-center font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "الفترة" : "Period"}</th>
+                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "النوع" : "Type"}</th>
+                            <th className="px-4 py-2.5 text-end font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "المبلغ" : "Amount"}</th>
+                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "التاريخ" : "Date"}</th>
+                            <th className="px-4 py-2.5 text-center font-bold uppercase tracking-wider text-muted-foreground">{t("hr.status", "Status")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -555,13 +557,13 @@ export default function EmployeesPage() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-xs font-semibold text-muted-foreground/60 italic">No salary payments logged yet.</p>
+                    <p className="text-xs font-semibold text-muted-foreground/60 italic">{t("hr.noPayments", "No salary payments logged yet.")}</p>
                   )}
                 </div>
 
                 <div className="flex justify-end pt-4 border-t border-border">
                   <Button type="button" onClick={() => setShowDetailsModal(false)}>
-                    Close File
+                    {locale === "ar" ? "إغلاق الملف" : "Close File"}
                   </Button>
                 </div>
               </div>
