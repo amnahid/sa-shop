@@ -1,14 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-utils";
-import { Branch, Membership } from "@/models";
+import { Branch } from "@/models";
 import { ensureDefaultWhatsAppTemplates } from "./seed-whatsapp-templates";
-import connectDB from "@/lib/mongodb";
+import { getCurrentMembership } from "@/lib/utils/membership";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function skipOnboarding(formData: FormData) {
-  await connectDB();
   const allowSkip =
     String(
       process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING ||
@@ -22,16 +20,7 @@ export async function skipOnboarding(formData: FormData) {
     redirect("/onboarding/business?error=Skipping%20onboarding%20is%20not%20allowed");
   }
 
-  const session = await getSession();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  const membership = await Membership.findOne({
-    userId: session.user.id,
-    status: "active",
-  });
-
+  const membership = await getCurrentMembership();
   if (!membership) {
     redirect("/onboarding/business?error=No%20active%20membership%20found");
   }
