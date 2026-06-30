@@ -283,11 +283,11 @@ export function POSClient({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full min-h-0 overflow-hidden bg-muted/10">
+    <div className="pos-container">
       {/* LEFT: Products Area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-          <div className="flex-1 relative">
+      <div className="pos-main">
+        <div className="pos-topbar">
+          <div className="pos-search-wrapper">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
@@ -297,7 +297,7 @@ export function POSClient({
               className="w-full h-11 rounded-lg border border-border bg-card pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring outline-none shadow-sm transition-all"
             />
           </div>
-          <div className="w-full sm:w-64">
+          <div className="pos-branch-wrapper">
             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
               <SelectTrigger className="h-11 bg-card border-border">
                 <SelectValue placeholder="Select Branch" />
@@ -314,7 +314,7 @@ export function POSClient({
         </div>
 
         {/* Categories Bar */}
-        <div className="px-4 pb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
+        <div className="pos-categories">
           <button
             type="button"
             onClick={() => setCategoryFilter("all")}
@@ -361,14 +361,14 @@ export function POSClient({
           </div>
         )}
 
-        <div className="flex-1 overflow-auto px-4 pb-4">
+        <div className="flex-1 overflow-auto">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
                <Package className="size-10 mb-2 opacity-50" />
                <p className="text-sm font-medium">No Products Found</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="pos-products-grid">
               {filtered.map(p => {
                 const inStock = p.stock > 0;
                 const stockBadgeClass = inStock 
@@ -421,12 +421,7 @@ export function POSClient({
       )}
 
       {/* RIGHT: Cart Area */}
-      <div 
-        className={cn(
-          "fixed inset-y-0 end-0 z-30 w-full max-w-[380px] bg-card border-s border-border flex flex-col min-h-0 shadow-lg transition-transform duration-300 lg:static lg:translate-x-0 lg:z-10",
-          isCartDrawerOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
+      <div className={cn("pos-cart-sidebar", isCartDrawerOpen && "is-open")}>
         <div className="p-4 border-b border-border flex items-center gap-3">
           <button
             onClick={() => setIsCartDrawerOpen(false)}
