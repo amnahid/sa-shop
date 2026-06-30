@@ -27,7 +27,7 @@ test("accounting menu visibility changes by role and overrides", () => {
   });
 
   assert.equal(hasRoute(ownerMenu, "/accounting"), true);
-  assert.equal(hasRoute(ownerMenu, "/accounting/reports"), true);
+  assert.equal(hasRoute(ownerMenu, "/accounting/trial-balance"), true);
   assert.equal(hasRoute(managerMenu, "/accounting"), false);
   assert.equal(hasRoute(managerWithAccess, "/accounting"), true);
   assert.equal(hasRoute(ownerDenied, "/accounting"), false);
