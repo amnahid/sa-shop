@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { SidebarToggle } from "./SidebarToggle";
 import { UserMenu } from "./UserMenu";
-import { Printer, Layers, Bell } from "lucide-react";
+import { Printer, Bell } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import {
   canAccessSidebarPermission,
@@ -39,16 +39,6 @@ export function TopBar({
     window.print();
   };
 
-  const handleClearCache = () => {
-    // Clear local cache/storage
-    localStorage.clear();
-    sessionStorage.clear();
-    showToast("Application cache cleared. Reloading...", "success");
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  };
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 print:hidden">
       <div className="flex items-center gap-3">
@@ -67,14 +57,6 @@ export function TopBar({
           className="h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors"
         >
           <Printer className="w-4 h-4" />
-        </button>
-
-        <button 
-          onClick={handleClearCache}
-          className="h-9 px-4 ms-1 rounded-md bg-[#e6f0ff] hover:bg-[#d0e1ff] text-[#377dff] text-sm font-medium flex items-center gap-2 transition-colors"
-        >
-          <Layers className="w-4 h-4" />
-          Clear Cache
         </button>
       </div>
 
