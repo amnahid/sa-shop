@@ -1,3 +1,5 @@
+import { skipOnboarding } from "@/lib/actions/onboarding-skip";
+
 const steps = [
   { number: 1, label: "Business", href: "/onboarding/business" },
   { number: 2, label: "Branch", href: "/onboarding/branch" },
@@ -11,6 +13,10 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   const currentStep = 1; // TODO: Determine current step
+
+  const allowSkip =
+    process.env.NEXT_PUBLIC_ALLOW_SKIP_ONBOARDING === "true" ||
+    process.env.ALLOW_SKIP_ONBOARDING === "true";
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,6 +76,19 @@ export default function OnboardingLayout({
         <div className="bg-card border rounded-lg p-6 shadow-sm">
           {children}
         </div>
+
+        {allowSkip && (
+          <div className="mt-4 flex justify-center">
+            <form action={skipOnboarding}>
+              <button
+                type="submit"
+                className="text-xs text-muted-foreground hover:text-foreground font-medium underline cursor-pointer"
+              >
+                Skip Onboarding
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
