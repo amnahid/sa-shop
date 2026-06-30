@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/app/FormField";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { Loader2 } from "lucide-react";
 
 interface EmployeeDetail {
@@ -25,6 +26,7 @@ export const PAYMENT_TYPES = ["Monthly", "Bonus", "Advance", "Deduction"] as con
 
 export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentModalProps) {
   const { showToast } = useToast();
+  const { t, locale } = useTranslation();
   const [employees, setEmployees] = useState<EmployeeDetail[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,13 +48,13 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
           setEmployees(data.employees || []);
         })
         .catch(() => {
-          showToast("Failed to fetch employees list", "error");
+          showToast(locale === "ar" ? "فشل في جلب قائمة الموظفين" : "Failed to fetch employees list", "error");
         })
         .finally(() => {
           setFetchingEmployees(false);
         });
     }
-  }, [open, showToast]);
+  }, [open, showToast, locale]);
 
   const handleEmployeeChange = (empId: string) => {
     const emp = employees.find((e) => e._id === empId) || null;
@@ -67,7 +69,7 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEmployee) {
-      showToast("Please select an employee", "error");
+      showToast(t("salaryPayments.selectEmployeeError", "Please select an employee"), "error");
       return;
     }
 
@@ -92,15 +94,15 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
 
       const data = await res.json();
       if (!res.ok) {
-        showToast(data.error || "Failed to record payment", "error");
+        showToast(data.error || (locale === "ar" ? "فشل في تسجيل دفعة الراتب" : "Failed to record payment"), "error");
         return;
       }
 
-      showToast("Salary payment recorded successfully", "success");
+      showToast(t("salaryPayments.recordSuccess", "Salary payment recorded successfully"), "success");
       onSave();
       onClose();
     } catch {
-      showToast("An error occurred while recording payment", "error");
+      showToast(locale === "ar" ? "حدث خطأ أثناء تسجيل الدفعة" : "An error occurred while recording payment", "error");
     } finally {
       setLoading(false);
     }
@@ -110,17 +112,17 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Record Salary Payment</DialogTitle>
+          <DialogTitle>{t("salaryPayments.recordSalaryPayment", "Record Salary Payment")}</DialogTitle>
         </DialogHeader>
 
         {fetchingEmployees ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm font-semibold">
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm font-semibold" dir={locale === "ar" ? "rtl" : "ltr"}>
             <Loader2 className="size-5 animate-spin me-2" />
-            Loading employees list...
+            {locale === "ar" ? "جاري تحميل قائمة الموظفين..." : "Loading employees list..."}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            <FormField label="Select Employee *" htmlFor="employeeSelect">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4" dir={locale === "ar" ? "rtl" : "ltr"}>
+            <FormField label={`${t("salaryPayments.selectEmployee", "Select Employee")} *`} htmlFor="employeeSelect">
               <select
                 id="employeeSelect"
                 required
@@ -128,7 +130,7 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
                 onChange={(e) => handleEmployeeChange(e.target.value)}
                 className="w-full h-11 rounded-lg border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
               >
-                <option value="">-- Choose Employee --</option>
+                <option value="">{t("salaryPayments.chooseEmployee", "-- Choose Employee --")}</option>
                 {employees.map((e) => (
                   <option key={e._id} value={e._id}>
                     {e.name} ({e.employeeId})
@@ -137,7 +139,7 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
               </select>
             </FormField>
 
-            <FormField label="Amount (SAR) *" htmlFor="amount">
+            <FormField label={`${t("salaryPayments.amount", "Amount")} (SAR) *`} htmlFor="amount">
               <Input
                 id="amount"
                 required
@@ -150,7 +152,7 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
               />
             </FormField>
 
-            <FormField label="Payment Date *" htmlFor="paymentDate">
+            <FormField label={`${t("salaryPayments.paymentDate", "Payment Date")} *`} htmlFor="paymentDate">
               <Input
                 id="paymentDate"
                 required
@@ -160,7 +162,7 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
               />
             </FormField>
 
-            <FormField label="Payment Type *" htmlFor="paymentType">
+            <FormField label={`${t("salaryPayments.type", "Payment Type")} *`} htmlFor="paymentType">
               <select
                 id="paymentType"
                 required
@@ -170,29 +172,29 @@ export default function AddPaymentModal({ open, onClose, onSave }: AddPaymentMod
               >
                 {PAYMENT_TYPES.map((type) => (
                   <option key={type} value={type}>
-                    {type}
+                    {t(`salaryPayments.types.${type}`, type)}
                   </option>
                 ))}
               </select>
             </FormField>
 
-            <FormField label="Notes" htmlFor="notes">
+            <FormField label={t("salaryPayments.notes", "Notes")} htmlFor="notes">
               <textarea
                 id="notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Additional payment details, bonus description, deduction reasons..."
+                placeholder={t("salaryPayments.notesPlaceholder", "Additional payment details, bonus description, deduction reasons...")}
                 className="w-full min-h-20 rounded-lg border border-border bg-card p-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm resize-none"
               />
             </FormField>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-                Cancel
+                {t("common.cancel", "Cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="size-4 me-2 animate-spin" />}
-                Save Payment
+                {t("salaryPayments.savePayment", "Save Payment")}
               </Button>
             </div>
           </form>

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import AddPaymentModal, { PAYMENT_TYPES } from "@/components/forms/AddPaymentModal";
+import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import {
   Loader2,
   Plus,
@@ -45,6 +46,7 @@ const MONTH_NAMES = [
 
 export default function SalaryPaymentsPage() {
   const { showToast } = useToast();
+  const { t, locale } = useTranslation();
   const [payments, setPayments] = useState<SalaryPayment[]>([]);
   const [employees, setEmployees] = useState<EmployeeDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,15 @@ export default function SalaryPaymentsPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
+  const translateMonth = (monthNum: number) => {
+    const monthKeys = [
+      "january", "february", "march", "april", "may", "june",
+      "july", "august", "september", "october", "november", "december"
+    ];
+    const key = monthKeys[monthNum - 1];
+    return t(`salaryPayments.months.${key}`, MONTH_NAMES[monthNum - 1]);
+  };
+
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: page.toString(), limit: "20" });
@@ -83,11 +94,11 @@ export default function SalaryPaymentsPage() {
       setTotalShown(data.totalShown || 0);
       setTotalPayments(data.pagination?.total || 0);
     } catch {
-      showToast("Failed to load salary payments log", "error");
+      showToast(t("salaryPayments.loadingFailed", "Failed to load salary payments log"), "error");
     } finally {
       setLoading(false);
     }
-  }, [page, filterEmployee, filterMonth, filterYear, filterType, showToast]);
+  }, [page, filterEmployee, filterMonth, filterYear, filterType, showToast, t]);
 
   useEffect(() => {
     fetchPayments();
@@ -101,13 +112,13 @@ export default function SalaryPaymentsPage() {
   }, []);
 
   const handleCancelPayment = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this salary payment? This cannot be undone.")) return;
+    if (!confirm(t("salaryPayments.confirmCancel", "Are you sure you want to cancel this salary payment? This cannot be undone."))) return;
 
     try {
       const res = await fetch(`/api/salary-payments/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        showToast("Salary payment cancelled successfully", "success");
+        showToast(locale === "ar" ? "تم إلغاء دفعة الراتب بنجاح" : "Salary payment cancelled successfully", "success");
         fetchPayments();
       } else {
         showToast(data.error || "Failed to cancel salary payment", "error");
@@ -137,7 +148,7 @@ export default function SalaryPaymentsPage() {
   };
 
   const handleBulkCancel = async () => {
-    if (!confirm("Are you sure you want to cancel all selected salary payments?")) return;
+    if (!confirm(t("salaryPayments.confirmCancelBulk", "Are you sure you want to cancel all selected salary payments?"))) return;
 
     setBulkActionLoading(true);
     try {
@@ -149,7 +160,7 @@ export default function SalaryPaymentsPage() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || "Selected payments cancelled successfully", "success");
+        showToast(locale === "ar" ? "تم إلغاء الدفعات المحددة بنجاح" : "Selected payments cancelled successfully", "success");
         setSelectedIds(new Set());
         fetchPayments();
       } else {
@@ -178,18 +189,18 @@ export default function SalaryPaymentsPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12" dir={locale === "ar" ? "rtl" : "ltr"}>
       <PageHeader
-        title="Salary Payments Log"
-        section="Workforce"
-        breadcrumbs={[{ label: "Salary Payments" }]}
-        description="Record and track employee wages, bonus payouts, salary advances, and deductions."
+        title={t("salaryPayments.title", "Salary Payments Log")}
+        section={t("salaryPayments.section", "Workforce")}
+        breadcrumbs={[{ label: t("common.payroll", "Salary Payments") }]}
+        description={t("salaryPayments.description", "Record and track employee wages, bonus payouts, salary advances, and deductions.")}
         actions={
           <Button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] px-5"
           >
-            <Plus className="size-4" /> Record Salary
+            <Plus className="size-4" /> {t("salaryPayments.recordSalary", "Record Salary")}
           </Button>
         }
       />
@@ -197,15 +208,15 @@ export default function SalaryPaymentsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card bg-white p-6 border-l-4 border-rose-500">
-          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Total Paid This Month</p>
+          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">{t("salaryPayments.totalPaidMonth", "Total Paid This Month")}</p>
           <p className="text-2xl font-extrabold text-rose-500 mt-2">SAR {totalThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
         <div className="card bg-white p-6 border-l-4 border-primary">
-          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Active Total Shown</p>
+          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">{t("salaryPayments.activeTotalShown", "Active Total Shown")}</p>
           <p className="text-2xl font-extrabold text-primary mt-2">SAR {totalShown.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
         <div className="card bg-white p-6 border-l-4 border-slate-600">
-          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Total Records</p>
+          <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">{t("salaryPayments.totalRecords", "Total Records")}</p>
           <p className="text-2xl font-extrabold text-foreground mt-2">{totalPayments}</p>
         </div>
       </div>
@@ -220,7 +231,7 @@ export default function SalaryPaymentsPage() {
           }}
           className="h-11 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm min-w-52"
         >
-          <option value="">All Employees</option>
+          <option value="">{t("salaryPayments.allEmployees", "All Employees")}</option>
           {employees.map((e) => (
             <option key={e._id} value={e._id}>
               {e.name}
@@ -236,10 +247,10 @@ export default function SalaryPaymentsPage() {
           }}
           className="h-11 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
         >
-          <option value="">All Months</option>
+          <option value="">{t("salaryPayments.allMonths", "All Months")}</option>
           {MONTH_NAMES.map((m, idx) => (
             <option key={idx} value={idx + 1}>
-              {m}
+              {translateMonth(idx + 1)}
             </option>
           ))}
         </select>
@@ -252,7 +263,7 @@ export default function SalaryPaymentsPage() {
           }}
           className="h-11 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
         >
-          <option value="">All Years</option>
+          <option value="">{t("salaryPayments.allYears", "All Years")}</option>
           {years.map((y) => (
             <option key={y} value={y}>
               {y}
@@ -268,10 +279,10 @@ export default function SalaryPaymentsPage() {
           }}
           className="h-11 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring shadow-sm"
         >
-          <option value="">All Types</option>
+          <option value="">{t("salaryPayments.allTypes", "All Types")}</option>
           {PAYMENT_TYPES.map((type) => (
             <option key={type} value={type}>
-              {type}
+              {t(`salaryPayments.types.${type}`, type)}
             </option>
           ))}
         </select>
@@ -282,7 +293,7 @@ export default function SalaryPaymentsPage() {
             onClick={resetFilters}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs"
           >
-            <FilterX className="size-4" /> Clear Filters
+            <FilterX className="size-4" /> {t("salaryPayments.clearFilters", "Clear Filters")}
           </Button>
         )}
       </div>
@@ -292,7 +303,7 @@ export default function SalaryPaymentsPage() {
         <div className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/5 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-xs font-black text-primary uppercase tracking-wider">
-              {selectedIds.size} Payments Selected
+              {selectedIds.size} {t("salaryPayments.selected", "Payments Selected")}
             </span>
             <Button
               onClick={handleBulkCancel}
@@ -301,7 +312,7 @@ export default function SalaryPaymentsPage() {
               size="sm"
               className="flex items-center gap-1.5 h-8 text-[10px] font-bold uppercase tracking-wider"
             >
-              <XCircle className="size-3.5" /> Cancel Selected Payments
+              <XCircle className="size-3.5" /> {t("salaryPayments.cancelSelected", "Cancel Selected Payments")}
             </Button>
           </div>
           <Button
@@ -310,7 +321,7 @@ export default function SalaryPaymentsPage() {
             onClick={() => setSelectedIds(new Set())}
             className="text-muted-foreground hover:text-foreground text-xs"
           >
-            Cancel Selection
+            {t("salaryPayments.cancelSelection", "Cancel Selection")}
           </Button>
         </div>
       )}
@@ -320,12 +331,12 @@ export default function SalaryPaymentsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground text-sm font-semibold">
             <Loader2 className="size-8 text-primary animate-spin mb-3" />
-            Loading salary payments log...
+            {t("salaryPayments.loading", "Loading salary payments log...")}
           </div>
         ) : payments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Wallet className="size-12 text-muted/30 mb-3" />
-            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Payments Recorded</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{t("salaryPayments.noPayments", "No Payments Recorded")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -351,14 +362,14 @@ export default function SalaryPaymentsPage() {
                       className="h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                     />
                   </th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Payment ID</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Employee</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Period</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Type</th>
-                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">Amount</th>
-                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">Payment Date</th>
-                  <th className="px-6 py-4 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">Actions</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.paymentId", "Payment ID")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.employee", "Employee")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.period", "Period")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.type", "Type")}</th>
+                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.amount", "Amount")}</th>
+                  <th className="px-6 py-4 text-start text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.paymentDate", "Payment Date")}</th>
+                  <th className="px-6 py-4 text-center text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.status", "Status")}</th>
+                  <th className="px-6 py-4 text-end text-[11px] font-black uppercase tracking-widest text-muted-foreground">{t("salaryPayments.actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -387,13 +398,13 @@ export default function SalaryPaymentsPage() {
                         <div className="text-[10px] font-bold font-mono text-muted-foreground tracking-wider mt-0.5">{p.employeeId}</div>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground">
-                        {MONTH_NAMES[p.month - 1]} {p.year}
+                        {translateMonth(p.month)} {p.year}
                       </td>
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${colors.bg} ${colors.color} ${colors.border}`}
                         >
-                          {p.paymentType}
+                          {t(`salaryPayments.types.${p.paymentType}`, p.paymentType)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-end font-mono font-bold text-foreground">
@@ -408,7 +419,7 @@ export default function SalaryPaymentsPage() {
                               : "bg-rose-500/10 text-rose-700 border-rose-500/20"
                           }`}
                         >
-                          {p.status}
+                          {t(`salaryPayments.statuses.${p.status}`, p.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-end">
@@ -419,7 +430,7 @@ export default function SalaryPaymentsPage() {
                             onClick={() => handleCancelPayment(p._id)}
                             className="text-rose-500 hover:bg-rose-500/10 text-xs font-bold uppercase tracking-wider h-8"
                           >
-                            Cancel Payment
+                            {t("salaryPayments.cancelPayment", "Cancel Payment")}
                           </Button>
                         )}
                       </td>
@@ -442,10 +453,10 @@ export default function SalaryPaymentsPage() {
             disabled={page === 1}
             className="flex items-center gap-1.5"
           >
-            <ChevronLeft className="size-4" /> Previous
+            <ChevronLeft className="size-4" /> {locale === "ar" ? "السابق" : "Previous"}
           </Button>
           <span className="text-xs text-muted-foreground font-semibold px-2">
-            Page {page} of {totalPages}
+            {locale === "ar" ? `الصفحة ${page} من ${totalPages}` : `Page ${page} of ${totalPages}`}
           </span>
           <Button
             variant="outline"
@@ -454,7 +465,7 @@ export default function SalaryPaymentsPage() {
             disabled={page === totalPages}
             className="flex items-center gap-1.5"
           >
-            Next <ChevronRight className="size-4" />
+            {locale === "ar" ? "التالي" : "Next"} <ChevronRight className="size-4" />
           </Button>
         </div>
       )}

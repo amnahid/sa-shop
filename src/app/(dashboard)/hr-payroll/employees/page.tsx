@@ -107,7 +107,7 @@ export default function EmployeesPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm("Are you sure you want to delete all selected employees?")) return;
+    if (!confirm(t("hr.bulkDeleteConfirm", "Are you sure you want to delete all selected employees?"))) return;
 
     setBulkActionLoading(true);
     try {
@@ -119,7 +119,7 @@ export default function EmployeesPage() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || "Employees deleted successfully", "success");
+        showToast(locale === "ar" ? "تم حذف الموظفين المحددين بنجاح" : "Employees deleted successfully", "success");
         setSelectedIds(new Set());
         fetchEmployees();
       } else {
@@ -523,8 +523,8 @@ export default function EmployeesPage() {
                         <thead className="bg-[#f9fafb] border-b border-border">
                           <tr>
                             <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">ID</th>
-                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "الفترة" : "Period"}</th>
                             <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "النوع" : "Type"}</th>
+                            <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "التفاصيل" : "Type"}</th>
                             <th className="px-4 py-2.5 text-end font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "المبلغ" : "Amount"}</th>
                             <th className="px-4 py-2.5 text-start font-bold uppercase tracking-wider text-muted-foreground">{locale === "ar" ? "التاريخ" : "Date"}</th>
                             <th className="px-4 py-2.5 text-center font-bold uppercase tracking-wider text-muted-foreground">{t("hr.status", "Status")}</th>
@@ -535,9 +535,11 @@ export default function EmployeesPage() {
                             <tr key={p._id} className="hover:bg-muted/5">
                               <td className="px-4 py-2.5 font-mono font-semibold text-primary">{p.paymentId}</td>
                               <td className="px-4 py-2.5 font-semibold text-foreground">
-                                {p.paymentType} {p.status === "Cancelled" && "(Cancelled)"}
+                                {t(`salaryPayments.types.${p.paymentType}`, p.paymentType)} {p.status === "Cancelled" && `(${locale === "ar" ? "ملغى" : "Cancelled"})`}
                               </td>
-                              <td className="px-4 py-2.5 font-semibold text-muted-foreground">{p.paymentType}</td>
+                              <td className="px-4 py-2.5 font-semibold text-muted-foreground">
+                                {t(`salaryPayments.types.${p.paymentType}`, p.paymentType)}
+                              </td>
                               <td className="px-4 py-2.5 text-end font-mono font-bold text-primary">SAR {p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                               <td className="px-4 py-2.5 text-muted-foreground">{new Date(p.paymentDate).toLocaleDateString()}</td>
                               <td className="px-4 py-2.5 text-center">
@@ -548,7 +550,7 @@ export default function EmployeesPage() {
                                       : "bg-rose-500/10 text-rose-700 border-rose-500/20"
                                   }`}
                                 >
-                                  {p.status}
+                                  {t(`salaryPayments.statuses.${p.status}`, p.status)}
                                 </span>
                               </td>
                             </tr>
@@ -563,7 +565,7 @@ export default function EmployeesPage() {
 
                 <div className="flex justify-end pt-4 border-t border-border">
                   <Button type="button" onClick={() => setShowDetailsModal(false)}>
-                    {locale === "ar" ? "إغلاق الملف" : "Close File"}
+                    {t("common.cancel", "Close File")}
                   </Button>
                 </div>
               </div>
