@@ -22,6 +22,7 @@ export interface ITenant extends Document {
   zatcaCertificateId?: string;
   plan: 'starter' | 'growth' | 'pro' | 'enterprise';
   planExpiresAt?: Date;
+  status: 'active' | 'suspended';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -93,6 +94,12 @@ const tenantSchema = new Schema<ITenant>(
       default: 'starter',
     },
     planExpiresAt: Date,
+    status: {
+      type: String,
+      enum: ['active', 'suspended'],
+      default: 'active',
+      index: true,
+    },
   },
   {
     timestamps: true,

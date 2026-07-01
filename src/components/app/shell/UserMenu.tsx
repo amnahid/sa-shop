@@ -112,9 +112,9 @@ export function UserMenu({ name, email, role, permissionOverrides, isSuperAdmin 
 
             {isSuperAdmin && (
               <DropdownMenuItem asChild className="cursor-pointer rounded-md focus:bg-soft-primary focus:text-primary transition-colors py-2">
-                <Link href="/settings/tenants">
-                  <Building2 className="me-3 size-4" />
-                  <span className="text-[13px] font-bold">Manage Tenants</span>
+                <Link href="/admin">
+                  <ShieldCheck className="me-3 size-4" />
+                  <span className="text-[13px] font-bold">Admin Portal</span>
                 </Link>
               </DropdownMenuItem>
             )}

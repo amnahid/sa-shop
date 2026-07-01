@@ -102,14 +102,14 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </Card>
           </Link>
           {isSuperAdmin && (
-            <Link href="/settings/tenants">
+            <Link href="/admin">
               <Card className="hover:border-primary/40 transition-colors h-full">
                 <CardContent className="pt-6">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-soft-primary text-primary mb-3">
                     <Building2 className="size-5" />
                   </div>
-                  <p className="font-black text-gray-900 uppercase text-[11px] tracking-widest">Manage Tenants</p>
-                  <p className="mt-1 text-xs text-gray-500 font-medium">Manage multi-tenant subscriptions and limits.</p>
+                  <p className="font-black text-gray-900 uppercase text-[11px] tracking-widest">Admin Portal</p>
+                  <p className="mt-1 text-xs text-gray-500 font-medium">Access global platform, tenant, and user management.</p>
                 </CardContent>
               </Card>
             </Link>
