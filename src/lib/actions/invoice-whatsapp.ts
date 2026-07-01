@@ -36,9 +36,14 @@ function buildInvoiceMessage(
   );
 }
 
-export async function sendInvoiceViaWhatsApp(invoiceId: string) {
+export async function sendInvoiceViaWhatsAppToPhone(invoiceId: string, phone: string) {
   const auth = await getAuthorizedSessionMembership("pos:view");
   if ("error" in auth) return { error: auth.error };
+
+  const normalized = normalizeToE164(phone);
+  if (!isValidPhone(normalized)) {
+    return { error: "Invalid recipient phone number format. Must be in international format (e.g. +9665XXXXXXXX)" };
+  }
 
   const invoice = await Invoice.findById(invoiceId)
     .select({
@@ -48,6 +53,7 @@ export async function sendInvoiceViaWhatsApp(invoiceId: string) {
       status: 1,
       customerId: 1,
       tenantId: 1,
+      customerName: 1,
     })
     .lean();
 
@@ -64,26 +70,8 @@ export async function sendInvoiceViaWhatsApp(invoiceId: string) {
     return { error: "WhatsApp is not configured for this account" };
   }
 
-  let recipientPhone = "";
-  let recipientName = "";
-
-  if (invoice.customerId) {
-    const customer = await Customer.findById(invoice.customerId)
-      .select({ phone: 1, name: 1 })
-      .lean();
-    if (customer?.phone) {
-      const normalized = normalizeToE164(customer.phone);
-      if (isValidPhone(normalized)) {
-        recipientPhone = normalized;
-        recipientName = customer.name || "";
-      }
-    }
-  }
-
-  if (!recipientPhone) {
-    return { error: "Customer has no valid phone number" };
-  }
-
+  const recipientPhone = normalized;
+  const recipientName = invoice.customerName || "";
   const receiptUrl = `${RECEIPT_BASE_URL}/pos/receipt/${invoiceId}`;
 
   const template = await NotificationTemplate.findOne({
@@ -170,6 +158,36 @@ export async function sendInvoiceViaWhatsApp(invoiceId: string) {
 
     return { error: `Failed to send: ${errorMessage}` };
   }
+}
+
+export async function sendInvoiceViaWhatsApp(invoiceId: string) {
+  const auth = await getAuthorizedSessionMembership("pos:view");
+  if ("error" in auth) return { error: auth.error };
+
+  const invoice = await Invoice.findById(invoiceId)
+    .select({
+      customerId: 1,
+    })
+    .lean();
+
+  if (!invoice) return { error: "Invoice not found" };
+
+  let recipientPhone = "";
+
+  if (invoice.customerId) {
+    const customer = await Customer.findById(invoice.customerId)
+      .select({ phone: 1 })
+      .lean();
+    if (customer?.phone) {
+      recipientPhone = customer.phone;
+    }
+  }
+
+  if (!recipientPhone) {
+    return { error: "Customer has no valid phone number" };
+  }
+
+  return sendInvoiceViaWhatsAppToPhone(invoiceId, recipientPhone);
 }
 
 export async function resendInvoiceViaWhatsApp(invoiceId: string) {
